@@ -99,6 +99,8 @@ endfunction()
 assert_luca_source_target(
   luca::ledger luca_ledger "${LUCA_SOURCE_DIR}/libs/ledger/include")
 assert_luca_source_target(
+  luca::accounting luca_accounting "${LUCA_SOURCE_DIR}/libs/accounting/include")
+assert_luca_source_target(
   luca::portfolio luca_portfolio "${LUCA_SOURCE_DIR}/libs/portfolio/include")
 assert_luca_source_target(
   luca::reconciliation luca_reconciliation
@@ -133,6 +135,17 @@ target_link_libraries(luca_parent_consumer PRIVATE luca::luca)
 
 add_executable(luca_parent_ledger_consumer ledger.cpp)
 target_link_libraries(luca_parent_ledger_consumer PRIVATE luca::ledger)
+
+get_target_property(accounting_links luca::accounting INTERFACE_LINK_LIBRARIES)
+if(NOT accounting_links STREQUAL "luca::ledger")
+  message(FATAL_ERROR "luca::accounting has unexpected dependencies: ${accounting_links}")
+endif()
+add_executable(luca_parent_journal_balances_consumer
+  "${LUCA_SOURCE_DIR}/examples/journal-balances/main.cpp")
+target_link_libraries(luca_parent_journal_balances_consumer PRIVATE luca::accounting)
+add_test(NAME luca_parent_journal_balances_run COMMAND luca_parent_journal_balances_consumer)
+set_tests_properties(luca_parent_journal_balances_run PROPERTIES
+  PASS_REGULAR_EXPRESSION "trial_balance_currency=USD debit_balances_scaled=100000000000 credit_balances_scaled=100000000000")
 
 add_executable(luca_parent_portfolio_consumer main.cpp)
 target_link_libraries(luca_parent_portfolio_consumer PRIVATE luca::portfolio)

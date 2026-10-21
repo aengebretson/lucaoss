@@ -1,0 +1,29 @@
+{
+  "metadata": {"compiler": "AppleClang 17.0.0.17000604", "build_type": "Release", "os": "macOS", "architecture": "aarch64", "dataset_size": 10000, "repetitions": 5},
+  "memory": {"EconomicEvent": 216, "LedgerEntry": 224, "Position": 56, "CashBalance": 48, "SettlementObligation": 56, "PositionObservation": 168, "CashObservation": 168, "linux_process_rss_bytes": 0},
+  "benchmarks": [
+    {"name": "ledger_append", "input_count": 10000, "matching_or_result_count": 10000, "unit": "events", "median_seconds": 0.00185129, "min_seconds": 0.00178863, "max_seconds": 0.00195038, "per_second": 5.40164e+06},
+    {"name": "ledger_find_existing", "input_count": 10000, "matching_or_result_count": 10000, "unit": "lookups", "median_seconds": 0.000186291, "min_seconds": 0.000169959, "max_seconds": 0.000196083, "per_second": 5.36795e+07},
+    {"name": "ledger_find_missing", "input_count": 10000, "matching_or_result_count": 0, "unit": "lookups", "median_seconds": 0.000126792, "min_seconds": 0.000113542, "max_seconds": 0.000184834, "per_second": 7.88693e+07},
+    {"name": "economic_order_mostly_ordered", "input_count": 10000, "matching_or_result_count": 10000, "unit": "events", "median_seconds": 0.000103333, "min_seconds": 0.000102542, "max_seconds": 0.000105708, "per_second": 9.67745e+07},
+    {"name": "economic_order_out_of_order", "input_count": 10000, "matching_or_result_count": 10000, "unit": "events", "median_seconds": 0.000504625, "min_seconds": 0.000499833, "max_seconds": 0.000522292, "per_second": 1.98167e+07},
+    {"name": "economic_through_broad", "input_count": 10000, "matching_or_result_count": 9001, "unit": "events", "median_seconds": 0.000439834, "min_seconds": 0.000436667, "max_seconds": 0.000442709, "per_second": 2.27359e+07},
+    {"name": "economic_through_narrow", "input_count": 10000, "matching_or_result_count": 101, "unit": "events", "median_seconds": 2.0584e-05, "min_seconds": 1.8875e-05, "max_seconds": 2.4833e-05, "per_second": 4.85814e+08},
+    {"name": "economic_between_broad", "input_count": 10000, "matching_or_result_count": 8000, "unit": "events", "median_seconds": 0.000394541, "min_seconds": 0.000387208, "max_seconds": 0.000425459, "per_second": 2.53459e+07},
+    {"name": "economic_between_narrow", "input_count": 10000, "matching_or_result_count": 100, "unit": "events", "median_seconds": 1.9625e-05, "min_seconds": 1.8875e-05, "max_seconds": 1.9875e-05, "per_second": 5.09554e+08},
+    {"name": "project_positions", "input_count": 10000, "matching_or_result_count": 900, "unit": "events", "median_seconds": 0.000828583, "min_seconds": 0.000818625, "max_seconds": 0.000837917, "per_second": 1.20688e+07},
+    {"name": "project_cash_mostly_unsettled", "input_count": 10000, "matching_or_result_count": 57, "unit": "events", "median_seconds": 0.000618667, "min_seconds": 0.000592667, "max_seconds": 0.000707291, "per_second": 1.61638e+07},
+    {"name": "project_cash_mostly_settled", "input_count": 10000, "matching_or_result_count": 273, "unit": "events", "median_seconds": 0.00082725, "min_seconds": 0.000815333, "max_seconds": 0.00085, "per_second": 1.20882e+07},
+    {"name": "project_cash_mixed", "input_count": 10000, "matching_or_result_count": 165, "unit": "events", "median_seconds": 0.000679208, "min_seconds": 0.000673125, "max_seconds": 0.000784291, "per_second": 1.4723e+07},
+    {"name": "project_settlements_many_open", "input_count": 10000, "matching_or_result_count": 1701, "unit": "events", "median_seconds": 0.00106329, "min_seconds": 0.00103458, "max_seconds": 0.00114583, "per_second": 9.40476e+06},
+    {"name": "project_settlements_mostly_settled", "input_count": 10000, "matching_or_result_count": 189, "unit": "events", "median_seconds": 0.000649, "min_seconds": 0.00054675, "max_seconds": 0.000790083, "per_second": 1.54083e+07},
+    {"name": "reconcile_positions_0pct_breaks", "input_count": 10000, "matching_or_result_count": 0, "unit": "rows", "median_seconds": 0.000871541, "min_seconds": 0.000862125, "max_seconds": 0.000879583, "per_second": 1.14739e+07},
+    {"name": "reconcile_positions_1pct_breaks", "input_count": 10000, "matching_or_result_count": 100, "unit": "rows", "median_seconds": 0.000943792, "min_seconds": 0.000910875, "max_seconds": 0.00118342, "per_second": 1.05956e+07},
+    {"name": "reconcile_positions_10pct_breaks", "input_count": 10000, "matching_or_result_count": 1000, "unit": "rows", "median_seconds": 0.00108183, "min_seconds": 0.00105546, "max_seconds": 0.00109075, "per_second": 9.24357e+06},
+    {"name": "reconcile_cash_0pct_breaks", "input_count": 10000, "matching_or_result_count": 0, "unit": "rows", "median_seconds": 0.00087475, "min_seconds": 0.000857917, "max_seconds": 0.00101579, "per_second": 1.14318e+07},
+    {"name": "reconcile_cash_1pct_breaks", "input_count": 10000, "matching_or_result_count": 100, "unit": "rows", "median_seconds": 0.000863792, "min_seconds": 0.0008475, "max_seconds": 0.000868666, "per_second": 1.15769e+07},
+    {"name": "reconcile_cash_10pct_breaks", "input_count": 10000, "matching_or_result_count": 1000, "unit": "rows", "median_seconds": 0.000965208, "min_seconds": 0.000958125, "max_seconds": 0.00100296, "per_second": 1.03605e+07},
+    {"name": "journal_balances.full", "input_count": 10000, "matching_or_result_count": 303, "unit": "journal_entries", "median_seconds": 0.0112752, "min_seconds": 0.0112314, "max_seconds": 0.0120174, "per_second": 886902},
+    {"name": "journal_balances.merge_prepared_4", "input_count": 10000, "matching_or_result_count": 303, "unit": "journal_entries", "median_seconds": 0.00767496, "min_seconds": 0.00764867, "max_seconds": 0.00777071, "per_second": 1.30294e+06}
+  ]
+}

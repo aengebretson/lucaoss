@@ -1,0 +1,8 @@
+{
+  "metadata": {"compiler": "AppleClang 17.0.0.17000604", "build_type": "Release", "os": "macOS", "architecture": "aarch64", "dataset_size": 100000, "repetitions": 5},
+  "memory": {"EconomicEvent": 216, "LedgerEntry": 224, "Position": 56, "CashBalance": 48, "SettlementObligation": 56, "PositionObservation": 168, "CashObservation": 168, "linux_process_rss_bytes": 0},
+  "benchmarks": [
+    {"name": "journal_balances.full", "input_count": 100000, "matching_or_result_count": 303, "unit": "journal_entries", "median_seconds": 0.133912, "min_seconds": 0.133272, "max_seconds": 0.136232, "per_second": 746758},
+    {"name": "journal_balances.merge_prepared_4", "input_count": 100000, "matching_or_result_count": 303, "unit": "journal_entries", "median_seconds": 0.0907438, "min_seconds": 0.07896, "max_seconds": 0.0936631, "per_second": 1.102e+06}
+  ]
+}

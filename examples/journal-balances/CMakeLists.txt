@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(luca_journal_balance_walkthrough LANGUAGES CXX)
+find_package(Luca 0.1 CONFIG REQUIRED)
+add_executable(luca_journal_balance_walkthrough main.cpp)
+target_link_libraries(luca_journal_balance_walkthrough PRIVATE luca::accounting)

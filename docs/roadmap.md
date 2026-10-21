@@ -23,28 +23,37 @@ assignment source remains [Luca Platform planning](https://github.com/aengebrets
 
 ### Current position
 
-Implementation baseline: `fdde74b8cb91eb5d5b63370e4215b9d1d901bbbc`
-(2026-09-30), reviewed on 2026-10-21. "Partial" means useful implementation exists
+Original review baseline: `fdde74b8cb91eb5d5b63370e4215b9d1d901bbbc`
+(2026-09-30). The table includes the journal-balance increment and local
+verification on 2026-10-21. "Partial" means useful implementation exists
 but full scope or acceptance remains open. Implementation, compilation, executed
 correctness checks and measured performance are separate evidence.
 
 | Checkpoint | Required outcome | Position at the implementation baseline |
 | --- | --- | --- |
-| 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: these financial primitives exist; latest integrated runtime acceptance remains pending. |
-| 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Planned: journal factories/projections exist; no public reusable journal-balance/trial-balance reducer. |
+| 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: the narrow financial primitives pass all 34 root checks in both Debug and Release locally with AppleClang 17; wider compiler/CI acceptance remains open. |
+| 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Bounded implementation verified locally: ten policy/time views, whole-entry partition merge, owned evidence and sanitizer checks pass. Book assignment/coverage remain explicit caller responsibilities. |
 | 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Planned: core lifecycle acceptance is synchronous and rejects an invalid batch atomically; no durable staging host is supplied. |
-| 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: algebra descriptors and exact-cash contracts exist; general executable composition and parallel scheduling do not. |
+| 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: descriptors, exact-cash contracts and tested journal-balance partition contracts exist; general executable composition and parallel scheduling do not. |
 | 5. Shared batch preparation | Resolve/select/order once per compatible snapshot and reuse compact immutable batches across projections. | Planned: lifecycle projection reuses a resolved set, but projections prepare economic views separately; no shared prepared-batch public boundary. |
 | 6. Efficient incremental evidence | Update affected partitions and verified evidence without scanning all history for each small append; preserve full-replay equivalence. | Partial: canonical formats/checkpoints and bounded continuation exist. Refreshed manifests rebuild/hash full history; cutoffs cannot advance and prefix-targeting changes require replay. |
-| 7. Complete portable accounting report | One history produces portfolio views, both journal views, trial balances and an explained external discrepancy through C++ and bounded CLI/Python access. | Partial: cash-report/accounting examples and an exact-cash executable/Python client exist; the integrated journal-to-balance report and accounting host do not. |
-| 8. Representative performance acceptance | Declared latency/throughput/cost budgets, correctness-checked benchmarks, concurrent workloads and scaling evidence. | Partial: reproducible 10,000/100,000/1,000,000-event synthetic microbenchmarks exist; representative end-to-end ingestion/report and scaling acceptance is unestablished. |
-| 9. Package and release acceptance | An independent consumer installs a pinned package, reproduces results and sees documented platform/performance limits. | Partial: domain targets, install/export and consumers exist. Latest GCC compilation is recorded; runtime acceptance, Clang coverage and release remain open; current exact arithmetic blocks native MSVC. |
+| 7. Complete portable accounting report | One history produces portfolio views, both journal views, trial balances and an explained external discrepancy through C++ and bounded CLI/Python access. | Partial: the C++ journal-to-balance walkthrough now runs alongside existing cash-report examples and an exact-cash CLI/Python client; the complete external-observation accounting report/host remains open. |
+| 8. Representative performance acceptance | Declared latency/throughput/cost budgets, correctness-checked benchmarks, concurrent workloads and scaling evidence. | Partial: executed synthetic baselines are recorded in the journal-balance review; end-to-end ingestion/report, worker scaling and workload-specific service budgets remain open. |
+| 9. Package and release acceptance | An independent consumer installs a pinned package, reproduces results and sees documented platform/performance limits. | Partial: installed/embedded consumer execution and option checks pass with AppleClang 17 on macOS. Current Linux/GCC runtime, compiler CI and release remain open; current exact arithmetic blocks native MSVC. |
 
 Evidence: [integration review](reviews/OSS_FOUNDATIONS_20260930.md),
 [accounting](accounting-foundations.md), [algebras](financial-algebras.md),
 [transformation inventory](transformation-contract.md),
 [checkpoint continuation](checkpoint-result.md) and
 [benchmark infrastructure](../tests/benchmarks/README.md).
+
+The subsequent [journal-balance increment](journal-balances.md) adds checkpoint 2's
+public API and a ten-view accounting walkthrough, plus installed/embedded
+consumers and focused reduction/merge benchmarks. It does not complete checkpoint
+7's external-observation reporting host or checkpoint 8's representative service
+levels. Actual local results and limitations are recorded in
+[the verification report](reviews/JOURNAL_BALANCES_20261021.md); authored checks
+and compilation alone do not establish runtime acceptance.
 
 ### Durable staged ingestion
 
@@ -150,8 +159,8 @@ scheduler are not minimal-core dependencies.
    incremental evidence. Independent paths can proceed with explicit ownership.
 4. Integrate checkpoint 7's accounting report and portable clients.
 5. Complete correctness/performance and checkpoint 9's package/release acceptance.
-   Run software tests/benchmarks when the standing testing pause is explicitly
-   lifted; this documentation update does not lift it.
+   The user explicitly resumed correctness tests and benchmarks on 2026-10-21;
+   actual results and remaining platform limits are recorded in the verification report.
 
 Completion requires recorded acceptance of all nine checkpoints: received
 imports survive interruption, validation errors remain inspectable, accepted

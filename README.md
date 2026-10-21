@@ -67,6 +67,7 @@ source dependency uses `add_subdirectory(third_party/luca)` and the same targets
 | Target | Domain | Direct dependencies |
 | --- | --- | --- |
 | `luca::ledger` | Values, events, ledger, lifecycle, serialization, existing accounting headers | None |
+| `luca::accounting` | Exact journal balances, trial-balance controls and partition merge (opt-in) | `luca::ledger` |
 | `luca::portfolio` | Position, cash, settlement and replay projections | `luca::ledger` |
 | `luca::reconciliation` | Observations and exact reconciliation | `luca::portfolio`, `luca::ledger` |
 | `luca::luca` | Compatibility umbrella | All three domain targets |
@@ -74,6 +75,10 @@ source dependency uses `add_subdirectory(third_party/luca)` and the same targets
 The [complete external-consumer walkthrough](examples/package-consumer/README.md)
 creates a deposit and equity purchase, projects position/cash/settlement views,
 and reports a deliberate cash discrepancy against separate bank evidence.
+
+The [journal-balance walkthrough](examples/journal-balances/README.md) derives
+trial balances under both fixture accounting policies, preserving line/source
+evidence through the new opt-in [accounting API](docs/journal-balances.md).
 
 | Canonical option | Top-level default | Embedded default | Legacy alias |
 | --- | --- | --- | --- |
@@ -93,10 +98,10 @@ remove the corresponding legacy entry with `-UPACIOLI_BUILD_TESTS`.
 
 The source target `pacioli`, `<pacioli/ledger.hpp>` and `pacioli::Ledger` remain
 compatible. Installed consumers use `find_package(Luca)` and `luca::...` targets;
-there was no installed `pacioli` target. The repository remains
-`aengebretson/pacioli`; this change publishes no release or ABI guarantee.
+there was no installed `pacioli` target. The repository is now
+`aengebretson/lucaoss`; this change publishes no release or ABI guarantee.
 
-Developer commands, **pending while automated testing is paused**:
+Developer verification commands (tests and benchmarks resumed by the user on 2026-10-21):
 
 ```sh
 cmake --preset dev
@@ -105,9 +110,11 @@ ctest --preset dev
 ```
 
 The full developer build generates conformance fixtures. Use the library-only
-configuration above for packaging during the pause. Compiler workflow definitions
-are manual-only, default disabled, and unexecuted; they do not establish compiler
-or runtime acceptance.
+configuration above when consuming only the libraries. Local AppleClang 17
+Debug/Release and sanitizer results are recorded in the
+[journal-balance verification report](docs/reviews/JOURNAL_BALANCES_20261021.md).
+Compiler workflow definitions remain manual-only and unexecuted; local results
+do not establish the wider compiler CI matrix.
 
 ## Planned capabilities
 

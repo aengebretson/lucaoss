@@ -61,6 +61,7 @@ if(NOT inventory_result EQUAL 0)
     "${inventory_output}\n${inventory_error}")
 endif()
 foreach(parent_test IN ITEMS
+    luca_parent_journal_balances_run
     luca_parent_consumer_run
     luca_parent_ledger_consumer_run
     luca_parent_portfolio_consumer_run
@@ -75,9 +76,9 @@ foreach(parent_test IN ITEMS
       "${inventory_output}\n${inventory_error}")
   endif()
 endforeach()
-if(NOT inventory_output MATCHES "Total Tests: 8")
+if(NOT inventory_output MATCHES "Total Tests: 9")
   message(FATAL_ERROR
-    "Parent default test inventory was not limited to its eight consumer tests\n"
+    "Parent default test inventory was not limited to its nine consumer tests\n"
     "${inventory_output}\n${inventory_error}")
 endif()
 if(inventory_output MATCHES "pacioli_|luca_package_consumer|benchmark")
