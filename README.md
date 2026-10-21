@@ -101,7 +101,7 @@ compatible. Installed consumers use `find_package(Luca)` and `luca::...` targets
 there was no installed `pacioli` target. The repository is now
 `aengebretson/lucaoss`; this change publishes no release or ABI guarantee.
 
-Developer commands, **pending while automated testing is paused**:
+Developer verification commands (tests and benchmarks resumed by the user on 2026-10-21):
 
 ```sh
 cmake --preset dev
@@ -110,9 +110,11 @@ ctest --preset dev
 ```
 
 The full developer build generates conformance fixtures. Use the library-only
-configuration above for packaging during the pause. Compiler workflow definitions
-are manual-only, default disabled, and unexecuted; they do not establish compiler
-or runtime acceptance.
+configuration above when consuming only the libraries. Local AppleClang 17
+Debug/Release and sanitizer results are recorded in the
+[journal-balance verification report](docs/reviews/JOURNAL_BALANCES_20261021.md).
+Compiler workflow definitions remain manual-only and unexecuted; local results
+do not establish the wider compiler CI matrix.
 
 ## Planned capabilities
 

@@ -102,7 +102,8 @@ construction in timing. The latter excludes partial computation and is not an
 end-to-end parallel speedup measurement. The existing synthetic microbenchmark
 suite does not establish production ingestion/report service levels.
 
-Actual executed evidence and remaining baseline failures belong in the PR and
-handoff. Authoring or compiling these checks alone establishes no runtime
-acceptance. Full portable accounting/reconciliation reporting and durable staging
-remain the next separate increments of the minimal-core program.
+Actual executed results are recorded in the
+[verification report](reviews/JOURNAL_BALANCES_20261021.md) and PR handoff.
+Authoring or compiling checks alone establishes no runtime acceptance.
+Full portable accounting/reconciliation reporting and durable staging remain
+the next separate increments of the minimal-core program.

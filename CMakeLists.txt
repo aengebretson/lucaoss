@@ -203,15 +203,6 @@ if(LUCA_BUILD_TESTS)
     LUCA_TRADE_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/trade-reconciliation")
   add_test(NAME luca_trade_csv_test COMMAND luca_trade_csv_test)
 
-  # These semantic checks use assertions; keep them active in Release builds too.
-  foreach(luca_semantic_test IN ITEMS
-      pacioli_checkpoint_result_test pacioli_settlement_date_projection_test
-      luca_financial_algebra_test luca_trade_reconciliation_test luca_trade_csv_test)
-    target_compile_options(${luca_semantic_test} PRIVATE
-      "$<$<CXX_COMPILER_ID:MSVC>:/UNDEBUG>"
-      "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-UNDEBUG>")
-  endforeach()
-
   add_executable(pacioli_provenance_test tests/unit/provenance_test.cpp)
   target_link_libraries(pacioli_provenance_test PRIVATE pacioli)
   add_test(NAME pacioli_provenance_test COMMAND pacioli_provenance_test)
@@ -346,6 +337,17 @@ if(LUCA_BUILD_TESTS)
       -DLUCA_BUILD_CONFIG=$<CONFIG>
       -DLUCA_CTEST_COMMAND=${CMAKE_CTEST_COMMAND}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/parent_consumer/run_test.cmake)
+
+  # All financial test executables must retain their checks in optimized builds.
+  # Apply this after registration so older assertion-based suites are included.
+  get_property(luca_assertion_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(luca_test_target IN LISTS luca_assertion_targets)
+    if(luca_test_target MATCHES "_test$")
+      target_compile_options(${luca_test_target} PRIVATE
+        "$<$<CXX_COMPILER_ID:MSVC>:/UNDEBUG>"
+        "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-UNDEBUG>")
+    endif()
+  endforeach()
 endif()
 
 if(LUCA_BUILD_BENCHMARKS)

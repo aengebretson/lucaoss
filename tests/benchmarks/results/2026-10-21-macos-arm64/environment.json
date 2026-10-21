@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-21",
+  "cpu": "Apple M3 Max",
+  "reported_cpus": 16,
+  "memory_bytes": 51539607552,
+  "os": "macOS 15.7.8 (24G824)",
+  "compiler": "AppleClang 17.0.0.17000604",
+  "cmake": "3.29.2",
+  "generator": "Unix Makefiles",
+  "benchmark_flags": "-Wall -Wextra -O3 -DNDEBUG -std=c++2b; native arm64",
+  "measurement": "steady_clock; one untimed warmup and five measured repetitions per case",
+  "financial_implementation_commit": "eda02debdc0e926293ca47976755733fc9c06749",
+  "resource_scope": "/usr/bin/time -l; whole process including existing suite fixture setup, not memory per journal",
+  "resources": {
+    "benchmark-10000": {
+      "maximum_resident_set_size_bytes": 80838656,
+      "peak_memory_footprint_bytes": 68011328
+    },
+    "benchmark-100000-journals": {
+      "maximum_resident_set_size_bytes": 733184000,
+      "peak_memory_footprint_bytes": 653085440
+    },
+    "benchmark-1000000-journals": {
+      "maximum_resident_set_size_bytes": 5175721984,
+      "peak_memory_footprint_bytes": 5380845952
+    }
+  },
+  "limits": [
+    "Synthetic single-book journal mapping; 100 cash chart accounts, three currencies, unit contributions, 303 result rows.",
+    "Full case includes reduction and sorted evidence construction; parsing, ingestion, lifecycle and journal generation excluded.",
+    "Prepared-four-partial merge excludes partial computation and is not measured end-to-end parallel speedup.",
+    "No Geneva comparison or production service-level acceptance."
+  ]
+}

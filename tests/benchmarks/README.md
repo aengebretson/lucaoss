@@ -81,6 +81,10 @@ size per event.
 
 ## Interpreting baselines
 
+The [2026-10-21 verification report](../../docs/reviews/JOURNAL_BALANCES_20261021.md)
+records executed Debug/Release checks and an initial AppleClang/macOS benchmark
+baseline, with raw JSON under `results/2026-10-21-macos-arm64/`.
+
 The opt-in accounting surface also supplies `journal_balances.full` and
 `journal_balances.merge_prepared_4` cases: use `--filter journal_balances` to select
 them. Synthetic whole journals use one explicit book, 100 cash chart accounts,
