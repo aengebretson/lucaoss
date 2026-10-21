@@ -1,0 +1,575 @@
+{
+  "schema": "luca.processing-benchmark/1",
+  "python": "3.12.14 (main, Aug 25 2026, 13:50:33) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "platform": "macOS-15.7.8-arm64-arm-64bit",
+  "logical_cpus": 16,
+  "engine_sha256": "87f32edc381dd5513e624806ac99d85a787b259b008c69ad25b81b89644d4d58",
+  "scope": "Local durable receipt then single-worker parsing/native exact validation/atomic ledger admission; cached input, fresh stores. Declared atomic groups are workload semantics. No HTTP, report, GPU, production SLO or Geneva comparison.",
+  "samples": [
+    {
+      "records": 1000,
+      "group_size": 256,
+      "repetition": 0,
+      "bytes": 239780,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.043422124814242125,
+      "processing_seconds": 0.6982537498697639,
+      "records_per_processing_second": 1432.1441169295788,
+      "job_seconds": {
+        "parse_import": 0.26018429221585393,
+        "validate_group": 0.21161241689696908,
+        "admit_group": 0.21042333263903856
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 4,
+        "admit_group": 4
+      },
+      "warm_prepare_suffix_median_seconds": 6.13541342318058e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.04113845806568861,
+      "incremental_processing_seconds": 0.19525666674599051,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.08633029088377953,
+          "validate_group": 0.05431262496858835,
+          "admit_group": 0.05318541685119271
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 1000,
+      "group_size": 256,
+      "repetition": 1,
+      "bytes": 239780,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.037451792042702436,
+      "processing_seconds": 0.7155428747646511,
+      "records_per_processing_second": 1397.540294603464,
+      "job_seconds": {
+        "parse_import": 0.2607661671936512,
+        "validate_group": 0.21848100144416094,
+        "admit_group": 0.22115137614309788
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 4,
+        "admit_group": 4
+      },
+      "warm_prepare_suffix_median_seconds": 5.904119461774826e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.0429024170152843,
+      "incremental_processing_seconds": 0.19998279167339206,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.0857579167932272,
+          "validate_group": 0.06002033269032836,
+          "admit_group": 0.052856582682579756
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 1000,
+      "group_size": 256,
+      "repetition": 2,
+      "bytes": 239780,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.04061549995094538,
+      "processing_seconds": 0.7298737079836428,
+      "records_per_processing_second": 1370.1000447907777,
+      "job_seconds": {
+        "parse_import": 0.27350962487980723,
+        "validate_group": 0.2166247507557273,
+        "admit_group": 0.2170459176413715
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 4,
+        "admit_group": 4
+      },
+      "warm_prepare_suffix_median_seconds": 6.085401400923729e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.04004199989140034,
+      "incremental_processing_seconds": 0.1939778747037053,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.08574145939201117,
+          "validate_group": 0.05512299994006753,
+          "admit_group": 0.05187104223296046
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 10000,
+      "group_size": 256,
+      "repetition": 0,
+      "bytes": 2425220,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.03985308296978474,
+      "processing_seconds": 6.502891833893955,
+      "records_per_processing_second": 1537.7773851132881,
+      "job_seconds": {
+        "parse_import": 2.2043432500213385,
+        "validate_group": 2.075158293824643,
+        "admit_group": 2.208081040997058
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 40,
+        "admit_group": 40
+      },
+      "warm_prepare_suffix_median_seconds": 6.191665306687355e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.03871320886537433,
+      "incremental_processing_seconds": 0.19955266593024135,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.08565812464803457,
+          "validate_group": 0.055138624738901854,
+          "admit_group": 0.05754679208621383
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 10000,
+      "group_size": 256,
+      "repetition": 1,
+      "bytes": 2425220,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.03946220828220248,
+      "processing_seconds": 6.523142916150391,
+      "records_per_processing_second": 1533.0033587400633,
+      "job_seconds": {
+        "parse_import": 2.1770860832184553,
+        "validate_group": 2.101160665974021,
+        "admit_group": 2.229819704312831
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 40,
+        "admit_group": 40
+      },
+      "warm_prepare_suffix_median_seconds": 6.268755532801151e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.04213241720572114,
+      "incremental_processing_seconds": 0.21873024990782142,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.09258958278223872,
+          "validate_group": 0.06239091604948044,
+          "admit_group": 0.062133749946951866
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 10000,
+      "group_size": 256,
+      "repetition": 2,
+      "bytes": 2425220,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.0408916249871254,
+      "processing_seconds": 6.8388018338009715,
+      "records_per_processing_second": 1462.2444461798436,
+      "job_seconds": {
+        "parse_import": 2.242959124967456,
+        "validate_group": 2.247446959838271,
+        "admit_group": 2.331099627073854
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 40,
+        "admit_group": 40
+      },
+      "warm_prepare_suffix_median_seconds": 6.131315603852272e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.045800207648426294,
+      "incremental_processing_seconds": 0.2205260000191629,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.09538425039499998,
+          "validate_group": 0.06142525002360344,
+          "admit_group": 0.06235312484204769
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 100000,
+      "group_size": 256,
+      "repetition": 0,
+      "bytes": 24549620,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.06161604216322303,
+      "processing_seconds": 69.57328004203737,
+      "records_per_processing_second": 1437.3334121889652,
+      "job_seconds": {
+        "parse_import": 23.51511862501502,
+        "validate_group": 21.52507383050397,
+        "admit_group": 24.516397795639932
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 391,
+        "admit_group": 391
+      },
+      "warm_prepare_suffix_median_seconds": 5.600065924227238e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.04553583404049277,
+      "incremental_processing_seconds": 0.23037283308804035,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.09378508338704705,
+          "validate_group": 0.0667760418727994,
+          "admit_group": 0.06844362476840615
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 100000,
+      "group_size": 256,
+      "repetition": 1,
+      "bytes": 24549620,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.0610552909784019,
+      "processing_seconds": 68.76498516695574,
+      "records_per_processing_second": 1454.2284820858786,
+      "job_seconds": {
+        "parse_import": 23.17678066715598,
+        "validate_group": 21.18856308190152,
+        "admit_group": 24.382082504685968
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 391,
+        "admit_group": 391
+      },
+      "warm_prepare_suffix_median_seconds": 5.8541540056467056e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.04690883308649063,
+      "incremental_processing_seconds": 0.23232466680929065,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.09868116676807404,
+          "validate_group": 0.06309170788154006,
+          "admit_group": 0.0690910411067307
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    },
+    {
+      "records": 100000,
+      "group_size": 256,
+      "repetition": 2,
+      "bytes": 24549620,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.06901624985039234,
+      "processing_seconds": 70.56080370908603,
+      "records_per_processing_second": 1417.2174173679816,
+      "job_seconds": {
+        "parse_import": 24.304368749726564,
+        "validate_group": 21.921723081730306,
+        "admit_group": 24.318547026719898
+      },
+      "jobs": {
+        "parse_import": 1,
+        "validate_group": 391,
+        "admit_group": 391
+      },
+      "warm_prepare_suffix_median_seconds": 5.5582961067557335e-05,
+      "incremental_records": 256,
+      "incremental_receipt_seconds": 0.04019249975681305,
+      "incremental_processing_seconds": 0.21577187487855554,
+      "incremental": {
+        "job_seconds": {
+          "parse_import": 0.08914524968713522,
+          "validate_group": 0.05811508418992162,
+          "admit_group": 0.06708533270284534
+        },
+        "jobs": {
+          "parse_import": 1,
+          "validate_group": 1,
+          "admit_group": 1
+        }
+      }
+    }
+  ],
+  "concurrency": [
+    {
+      "workers": 1,
+      "separate_books": false,
+      "records": 400,
+      "invalid_records": 20,
+      "wall_seconds": 32.853857334237546,
+      "runs": [
+        {
+          "job_seconds": {
+            "parse_import": 0.34317420795559883,
+            "validate_group": 16.96354517294094,
+            "admit_group": 15.52070495299995
+          },
+          "jobs": {
+            "parse_import": 4,
+            "validate_group": 400,
+            "admit_group": 380
+          }
+        }
+      ]
+    },
+    {
+      "workers": 2,
+      "separate_books": false,
+      "records": 400,
+      "invalid_records": 20,
+      "wall_seconds": 12.539307292085141,
+      "runs": [
+        {
+          "job_seconds": {
+            "parse_import": 0.13579666567966342,
+            "validate_group": 5.958442207891494,
+            "admit_group": 6.320680666249245
+          },
+          "jobs": {
+            "parse_import": 3,
+            "validate_group": 226,
+            "admit_group": 194
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.18948754202574492,
+            "validate_group": 5.639506702776998,
+            "admit_group": 5.4734548279084265
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 174,
+            "admit_group": 186
+          }
+        }
+      ]
+    },
+    {
+      "workers": 4,
+      "separate_books": false,
+      "records": 400,
+      "invalid_records": 20,
+      "wall_seconds": 14.839314790908247,
+      "runs": [
+        {
+          "job_seconds": {
+            "parse_import": 0.10622087540104985,
+            "validate_group": 7.679326577112079,
+            "admit_group": 7.006632499862462
+          },
+          "jobs": {
+            "parse_import": 2,
+            "validate_group": 158,
+            "admit_group": 78
+          }
+        },
+        {
+          "job_seconds": {
+            "validate_group": 6.149008249863982,
+            "admit_group": 8.171020915266126
+          },
+          "jobs": {
+            "validate_group": 68,
+            "admit_group": 93
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.28844325011596084,
+            "validate_group": 6.0968139581382275,
+            "admit_group": 8.324155294336379
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 90,
+            "admit_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.5730126667767763,
+            "validate_group": 5.733332664240152,
+            "admit_group": 8.480622208677232
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 84,
+            "admit_group": 109
+          }
+        }
+      ]
+    },
+    {
+      "workers": 1,
+      "separate_books": true,
+      "records": 400,
+      "invalid_records": 20,
+      "wall_seconds": 31.082546333782375,
+      "runs": [
+        {
+          "job_seconds": {
+            "parse_import": 0.3157302928157151,
+            "validate_group": 16.173684841487557,
+            "admit_group": 14.56966091459617
+          },
+          "jobs": {
+            "parse_import": 4,
+            "validate_group": 400,
+            "admit_group": 380
+          }
+        }
+      ]
+    },
+    {
+      "workers": 2,
+      "separate_books": true,
+      "records": 400,
+      "invalid_records": 20,
+      "wall_seconds": 29.395001540891826,
+      "runs": [
+        {
+          "job_seconds": {
+            "parse_import": 0.3320287917740643,
+            "validate_group": 15.199336214922369,
+            "admit_group": 13.827636761125177
+          },
+          "jobs": {
+            "parse_import": 2,
+            "validate_group": 200,
+            "admit_group": 190
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.3053632494993508,
+            "validate_group": 15.196143126115203,
+            "admit_group": 13.81957025360316
+          },
+          "jobs": {
+            "parse_import": 2,
+            "validate_group": 200,
+            "admit_group": 190
+          }
+        }
+      ]
+    },
+    {
+      "workers": 4,
+      "separate_books": true,
+      "records": 400,
+      "invalid_records": 20,
+      "wall_seconds": 26.088923084083945,
+      "runs": [
+        {
+          "job_seconds": {
+            "parse_import": 0.3337808749638498,
+            "validate_group": 13.3993008332327,
+            "admit_group": 12.239535541739315
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 100,
+            "admit_group": 95
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.24416299955919385,
+            "validate_group": 13.38686191663146,
+            "admit_group": 12.327996669802815
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 100,
+            "admit_group": 95
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.31577950017526746,
+            "validate_group": 13.371601209975779,
+            "admit_group": 12.31752495560795
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 100,
+            "admit_group": 95
+          }
+        },
+        {
+          "job_seconds": {
+            "parse_import": 0.31564337480813265,
+            "validate_group": 13.44383000023663,
+            "admit_group": 12.266602247487754
+          },
+          "jobs": {
+            "parse_import": 1,
+            "validate_group": 100,
+            "admit_group": 95
+          }
+        }
+      ]
+    }
+  ],
+  "peak_python_rss_platform_units": 1001078784,
+  "peak_child_rss_platform_units": 203341824,
+  "source_sha256": {
+    "tests/benchmarks/processing_benchmark.py": "fec0927cec494d2b5e884d3118fba2c750d5bada63933f55af5ef491e3800e4a",
+    "apps/ingestion-host/luca_ingestion/__init__.py": "fef54ef42e8122b1200ca7a41e90c40fcd99763c5323d3f446b26ed7d68bd382",
+    "apps/ingestion-host/luca_ingestion/__main__.py": "1b159c2752b2e0c68a004018d5a6d73d08015e311724201df36dcad3eb73ec0c",
+    "apps/ingestion-host/luca_ingestion/engine.py": "937a3a68cc979e7e7ccd49518ba75e4851536c74b80fc2def7b2363a78d7c417",
+    "apps/ingestion-host/luca_ingestion/processing.py": "221c3d8d686ffddc974d8a75863df7c425aa97562183d8011b6bd05c3e17611e",
+    "apps/ingestion-host/luca_ingestion/store.py": "3fce19e8d12246ea54dc9555c5abd99557684f3f05c217b5eba03a4d783d2d97",
+    "apps/ingestion-host/luca_ingestion/transactions.py": "8000e68d67a97054dbe2bc31a2e37e1d6e9b1645d4db013e47b55601bf22d63c",
+    "apps/ingestion-host/luca_ingestion/worker.py": "f7705d67466fe417fa3eea4c1f8c2197d0c425eb97eed266a54fcf28a094f15c"
+  },
+  "post_measurement_changes": {
+    "description": "Removed one extra blank line at engine.py EOF; parsed Python AST unchanged.",
+    "final_source_sha256": {
+      "apps/ingestion-host/luca_ingestion/engine.py": "53d8768a572451fda4c2719663d96f85b89df799301d094fe5fc707f21f7f527"
+    }
+  }
+}

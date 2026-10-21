@@ -1,4 +1,4 @@
-"""Local CLI. Deliberately exposes no network listener or financial admission."""
+"""Local ingestion and background-processing CLI. No network listener."""
 
 import argparse
 import json
@@ -49,13 +49,58 @@ def main() -> int:
         if name == "receive-upload":
             command.add_argument("--metadata", required=True, type=Path)
             command.add_argument("--key", required=True)
+    worker = commands.add_parser("worker")
+    worker.add_argument("--engine", required=True, type=Path)
+    worker.add_argument("--mode", choices=("once", "drain", "watch"), default="once")
+    commands.add_parser("ledger-state")
+    for name in ("records", "diagnostics", "validation-runs", "commits", "work-attempts"):
+        command = commands.add_parser(name)
+        command.add_argument("import_id")
+        command.add_argument("--limit", type=int, default=100)
+        if name == "work-attempts": command.add_argument("--after", type=int, default=0)
+        else: command.add_argument("--cursor")
+    command = commands.add_parser("record")
+    command.add_argument("import_id"); command.add_argument("record_id"); command.add_argument("--run-id")
+    command = commands.add_parser("group")
+    command.add_argument("import_id"); command.add_argument("group_id")
+    for name in ("register-reference", "register-context"):
+        command = commands.add_parser(name)
+        command.add_argument("id"); command.add_argument("--definition", required=True, type=Path)
+    command = commands.add_parser("revalidate")
+    command.add_argument("import_id"); command.add_argument("--key", required=True)
+    command.add_argument("--request", required=True, type=Path)
     args = parser.parse_args()
     try:
         config = json.loads(args.config.read_text())
         if "limits" in config:
             config["limits"] = Limits(**config["limits"])
         store = IntakeStore(args.root, **config)
-        if args.command == "receive":
+        if args.command == "worker":
+            from .worker import Worker
+            with Worker(store,args.engine) as runner:
+                if args.mode == "watch":
+                    import signal
+                    import threading
+                    stop=threading.Event()
+                    signal.signal(signal.SIGINT,lambda *_: stop.set())
+                    signal.signal(signal.SIGTERM,lambda *_: stop.set())
+                    runner.run_forever(stop)
+                    result={"state":"stopped"}
+                elif args.mode == "drain": result={"jobs":runner.drain()}
+                else: result=runner.run_once()
+        elif args.command == "ledger-state": result=store.book_state()
+        elif args.command in ("records", "diagnostics", "validation-runs", "commits"):
+            result=getattr(store,args.command.replace("-","_"))(args.import_id,cursor=args.cursor,limit=args.limit)
+        elif args.command == "work-attempts": result=store.work_attempts(args.import_id,after=args.after,limit=args.limit)
+        elif args.command == "record": result=store.record(args.import_id,args.record_id,run_id=args.run_id)
+        elif args.command == "group": result=store.group(args.import_id,args.group_id)
+        elif args.command == "register-reference":
+            result=store.register_reference(args.id,**json.loads(args.definition.read_text()))
+        elif args.command == "register-context":
+            store.register_context(args.id,json.loads(args.definition.read_text())); result={"context_id":args.id}
+        elif args.command == "revalidate":
+            result=store.revalidate(args.import_id,args.key,**json.loads(args.request.read_text()))
+        elif args.command == "receive":
             with args.payload.open("rb") as source:
                 result = store.receive(json.loads(args.metadata.read_text()), args.key,
                                        source, args.payload.stat().st_size)

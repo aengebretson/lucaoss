@@ -1,0 +1,6 @@
+ordinal	validation	commitment	sequence
+1	valid	committed	1
+2	valid	committed	2
+3	valid	committed	3
+4	valid	committed	4
+5	invalid	not_committed	-

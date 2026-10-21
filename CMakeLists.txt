@@ -112,6 +112,7 @@ install(
 
 if(LUCA_BUILD_TOOLS)
   add_subdirectory(tools/exact-cash)
+  add_subdirectory(tools/ingestion-engine)
 endif()
 
 if(LUCA_BUILD_TESTS)
@@ -125,6 +126,16 @@ if(LUCA_BUILD_TESTS)
         -s ${CMAKE_CURRENT_SOURCE_DIR}/tests/ingestion -p "test_*.py")
     set_tests_properties(luca_durable_intake_test PROPERTIES TIMEOUT 120)
   endif()
+  if(UNIX AND TARGET luca-ingestion-engine)
+    add_test(NAME luca_processing_test
+      COMMAND ${CMAKE_COMMAND} -E env "LUCA_INGESTION_ENGINE=$<TARGET_FILE:luca-ingestion-engine>"
+        ${Python3_EXECUTABLE} -B -m unittest discover -s ${CMAKE_CURRENT_SOURCE_DIR}/tests/processing -v)
+    set_tests_properties(luca_processing_test PROPERTIES TIMEOUT 180)
+  endif()
+  add_executable(luca_prepared_admission_test tests/unit/prepared_admission_test.cpp)
+  target_link_libraries(luca_prepared_admission_test PRIVATE luca::adapters)
+  add_test(NAME luca_prepared_admission_test COMMAND luca_prepared_admission_test)
+
   add_executable(luca_journal_balances_test tests/unit/journal_balances_test.cpp)
   target_link_libraries(luca_journal_balances_test PRIVATE luca::accounting Threads::Threads)
   target_compile_definitions(luca_journal_balances_test PRIVATE

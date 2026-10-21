@@ -1,7 +1,7 @@
 """Durable receipt, immutable evidence and resumable transfer for a single book.
 
-This host performs storage work only. Queued parse work is retained for the next
-slice; it does not call transaction parsers or claim ledger acceptance.
+Receipt methods perform storage work only. Separate workers parse, validate and
+admit records, retaining outcomes without delaying or changing the receipt.
 """
 
 from __future__ import annotations
@@ -153,7 +153,10 @@ _SCHEMA = (
 )
 
 
-class IntakeStore:
+from .processing import ProcessingStore, migrate
+
+
+class IntakeStore(ProcessingStore):
     """Trusted local API, scoped to one tenant/book. Each operation owns its DB connection.
 
     The configured directory is private, local storage, not an untrusted shared
@@ -206,10 +209,15 @@ class IntakeStore:
                         db.execute(statement)
                     db.execute("INSERT INTO config VALUES (1,?)", (config,))
                     db.execute("PRAGMA user_version=1")
-                elif version != 1:
+                elif version not in (1, 2):
                     raise IntakeError("UNSUPPORTED_SCHEMA")
-                if db.execute("SELECT value FROM config WHERE id=1").fetchone()[0] != config:
+                persisted = json.loads(db.execute("SELECT value FROM config WHERE id=1").fetchone()[0])
+                requested = json.loads(config)
+                if any(persisted[k] != requested[k] for k in ("tenant", "book", "limits")) or any(
+                    persisted["contexts"].get(k) != v for k, v in requested["contexts"].items()):
                     raise IntakeError("CONFIGURATION_CONFLICT")
+                self.contexts = persisted["contexts"]
+                migrate(db)
         finally:
             os.close(fd)
 
@@ -347,7 +355,7 @@ class IntakeStore:
         if used[0] + size > self.limits.max_retained_bytes or used[1] >= self.limits.max_pending_imports:
             raise IntakeError("CAPACITY_UNAVAILABLE", retryable=True)
         now = self.clock()
-        db.execute("INSERT INTO transfers VALUES (?,?,?,?,?,?,?,?,?,?,1)",
+        db.execute("INSERT INTO transfers(id,kind,state,size,digest,chunk_size,upload_key,request_hash,created_ns,expires_ns,reserved) VALUES (?,?,?,?,?,?,?,?,?,?,1)",
                    (transfer_id, kind, "receiving" if kind == "direct" else "uploading", size,
                     digest, chunk_size, key, request_hash, now, now + self.limits.upload_ttl_seconds * 10**9))
         db.execute("UPDATE capacity SET bytes=bytes+?,slots=slots+1 WHERE id=1", (size,))
@@ -405,7 +413,7 @@ class IntakeStore:
                    (import_id, metadata["source_id"], key, fingerprint, _json(metadata),
                     _json(self.contexts[metadata["validation_context_id"]]), _json(receipt), transfer_id))
         db.execute("UPDATE transfers SET state='attached',digest=? WHERE id=?", (digest, transfer_id))
-        db.execute("INSERT INTO work VALUES (?,?,?,'queued')", (uuid4().hex, "parse_import", import_id))
+        db.execute("INSERT INTO work(id,kind,subject_id,state,import_id,ready_ns) VALUES (?,?,?,'queued',?,?)", (uuid4().hex, "parse_import", import_id, import_id, self.clock()))
         event = {"event_id": uuid4().hex, "import_id": import_id, "revision": "1",
                  "type": "import.received", "occurred_at": now, "subject_ids": [import_id],
                  "links": {"status": receipt["status_url"]}}
@@ -456,9 +464,9 @@ class IntakeStore:
                 path.unlink(missing_ok=True)
                 _sync_dir(path.parent)
             if row["reserved"]:
-                db.execute("UPDATE capacity SET bytes=bytes-?,slots=slots-1 WHERE id=1", (row["size"],))
+                db.execute("UPDATE capacity SET bytes=bytes-?,slots=slots-? WHERE id=1", (row["size"], row["queue_reserved"]))
             db.execute("UPDATE work SET state='complete' WHERE kind='verify_upload' AND subject_id=?", (transfer_id,))
-            db.execute("UPDATE transfers SET reserved=0,state='expired' WHERE id=?", (transfer_id,))
+            db.execute("UPDATE transfers SET reserved=0,queue_reserved=0,state='expired' WHERE id=?", (transfer_id,))
             if delete_row:
                 db.execute("DELETE FROM transfers WHERE id=?", (transfer_id,))
             return True
@@ -484,7 +492,7 @@ class IntakeStore:
                               chunk_size=chunk_size, key=key, request_hash=request_hash)
                 if not count:
                     db.execute("UPDATE transfers SET state='verifying' WHERE id=?", (transfer_id,))
-                    db.execute("INSERT INTO work VALUES (?,?,?,'queued')", (uuid4().hex, "verify_upload", transfer_id))
+                    db.execute("INSERT INTO work(id,kind,subject_id,state) VALUES (?,?,?,'queued')", (uuid4().hex, "verify_upload", transfer_id))
         return self.upload_status(transfer_id)
 
     def _upload(self, db: sqlite3.Connection, upload_id: str) -> sqlite3.Row:
@@ -531,7 +539,7 @@ class IntakeStore:
                 received = db.execute("SELECT count(*) FROM chunks WHERE transfer_id=?", (upload_id,)).fetchone()[0]
                 if received == count:
                     db.execute("UPDATE transfers SET state='verifying' WHERE id=?", (upload_id,))
-                    db.execute("INSERT INTO work VALUES (?,?,?,'queued')", (uuid4().hex, "verify_upload", upload_id))
+                    db.execute("INSERT INTO work(id,kind,subject_id,state) VALUES (?,?,?,'queued')", (uuid4().hex, "verify_upload", upload_id))
             self._fault("after_chunk_commit")
 
     def verify_upload(self, upload_id: str) -> dict:
@@ -608,13 +616,7 @@ class IntakeStore:
 
     def status(self, import_id: str) -> dict:
         with self._db() as db:
-            row = self._import(db, import_id)
-        return {"import_id": import_id, "revision": "1", "receipt": json.loads(row["receipt"]),
-                "metadata": json.loads(row["metadata"]), "validation_context": json.loads(row["context"]),
-                "enumeration": {"state": "pending", "records": None},
-                "validation_counts": {"pending": 0, "running": 0, "valid": 0, "invalid": 0, "blocked": 0},
-                "commitment_record_counts": {"not_committed": 0, "queued": 0, "committed": 0, "conflict": 0},
-                "work_health": "queued", "all_records_committed": False, "event_cursor": "1"}
+            return self._status(db, import_id)
 
     def copy_payload(self, import_id: str, target: BinaryIO, *, offset: int = 0, length: int | None = None) -> None:
         with self._db() as db:
@@ -642,11 +644,12 @@ class IntakeStore:
             raise IntakeError("INVALID_CURSOR")
         with self._db() as db:
             self._import(db, import_id)
+            high_watermark = db.execute("SELECT revision FROM progress WHERE import_id=?", (import_id,)).fetchone()[0]
             rows = db.execute("SELECT revision,body FROM events WHERE import_id=? AND revision>? ORDER BY revision LIMIT ?", (import_id, int(after), limit)).fetchall()
-        if int(after) > 1:
+        if int(after) > high_watermark:
             raise IntakeError("INVALID_CURSOR")
         return {"items": [json.loads(row["body"]) for row in rows],
-                "next_after": str(rows[-1]["revision"]) if rows else after, "high_watermark": "1"}
+                "next_after": str(rows[-1]["revision"]) if rows else after, "high_watermark": str(high_watermark)}
 
     def recover(self, *, after: str = "", limit: int = 100) -> dict:
         """Reclaim interrupted direct transfers and expired unattached uploads.
@@ -672,8 +675,10 @@ class IntakeStore:
     def capabilities(self) -> dict:
         with self._db() as db:
             used = dict(db.execute("SELECT bytes,slots FROM capacity WHERE id=1").fetchone())
-        return {"implementation": "durable-intake/1", "tenant_id": self.tenant, "book_id": self.book,
+            processing = db.execute("SELECT body FROM processing_config WHERE id=1").fetchone()
+        return {"implementation": "staged-ingestion/2", "tenant_id": self.tenant, "book_id": self.book,
                 "limits": asdict(self.limits), "contexts": json.loads(_json(self.contexts)),
                 "durability_profile": "local-fsync-" + self.mode + "-v1", "sqlite_version": sqlite3.sqlite_version,
                 "usage": used, "retention": "no automatic receipt/payload purge",
-                "validation_available": False, "http_available": False}
+                "validation_available": True, "admission_available": True, "native_engine_required": True, "http_available": False,
+                "processing_limits": json.loads(processing[0]) if processing else None}

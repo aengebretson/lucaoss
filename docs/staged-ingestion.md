@@ -2,15 +2,16 @@
 
 Status: design proposal, 2026-10-21. Based on merged main
 `6dbf9da86bacf8d8a0f290c081a7da3c531114ed` (journal balances, PR #19).
-No staging implementation, durable ledger store, worker, or HTTP service is
-provided by this document. The proposed wire contract is in
+This document defines the target design; implemented local behavior is identified below. The proposed wire contract is in
 [the API specification](staged-ingestion-api.md).
 
-Implementation progress: the first [local intake host](../apps/ingestion-host/README.md)
-provides durable bytes/receipt/work intent, retry identity, resumable transfer and
-restart cleanup. It is an optional Python storage host with no financial parsing
-or new C++ dependencies. Validation/status workers, durable ledger admission and
-HTTP are not implemented. See [executed evidence](reviews/DURABLE_INTAKE_20261021.md).
+Implementation progress: the optional [local host](../apps/ingestion-host/README.md)
+now implements durable intake, leased background validation, retained record
+outcomes/errors, immutable contexts/references, revalidation and atomic canonical
+ledger admission. Python owns orchestration; a persistent optional C++ helper
+invokes typed parsing and the exact financial core. No `libs/ingestion` target was
+needed for this bounded slice. HTTP, projection coverage and multi-node adapters
+remain proposed. See [executed evidence](reviews/VALIDATION_ADMISSION_20261021.md).
 
 ## Outcome and boundary
 

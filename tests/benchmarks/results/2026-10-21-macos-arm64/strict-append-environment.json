@@ -1,0 +1,17 @@
+{
+  "schema": "luca.strict-append-environment/1",
+  "base_commit": "b03b0cd478360b474ec41d04c7b606ee442c31cb",
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c++23",
+    "-O3",
+    "-DNDEBUG"
+  ],
+  "platform": "macOS 15.7.8 arm64; Apple M3 Max; 16 logical CPUs; 48 GiB RAM",
+  "workload": "Prebuilt prefix and 100 prebuilt independent exact cash records. Strict accept timing only; full canonical hash verified outside timing. Three repetitions.",
+  "result_hashes_match": true,
+  "source_sha256": {
+    "tests/benchmarks/prepared_append_benchmark.cpp": "19770988be44ac467026717139baf777641e011b139e9e6f48a957f53593e296",
+    "libs/ledger/include/luca/lifecycle.hpp": "e31b48a403ac29acdbd16fe3e608f4b8ef96976db72515d8f0345f2a9997cd77"
+  }
+}

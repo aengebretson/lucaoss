@@ -8,6 +8,7 @@
 #include <expected>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
@@ -320,6 +321,20 @@ class LifecycleResolution {
   std::vector<ResolvedLifecycleEvent> active_events_;
 };
 
+// Owned, validated suffix bound to one in-memory prefix identity. An exact ledger
+// copy shares that prefix identity; any successful append invalidates old plans.
+class PreparedLifecycleAppend {
+ public:
+  [[nodiscard]] std::span<const LifecycleRecord> records() const noexcept { return records_; }
+ private:
+  friend class LifecycleLedger;
+  PreparedLifecycleAppend(std::vector<LifecycleRecord> records,
+                          std::shared_ptr<const unsigned char> prefix)
+      : records_(std::move(records)), prefix_(std::move(prefix)) {}
+  std::vector<LifecycleRecord> records_;
+  std::shared_ptr<const unsigned char> prefix_;
+};
+
 // An append-only, in-memory lifecycle ledger. Acceptance and resolution are not
 // concurrently mutable. As with Ledger, references and spans can be invalidated
 // by later acceptance that reallocates storage.
@@ -345,7 +360,16 @@ class LifecycleLedger {
   // when any record is invalid.
   [[nodiscard]] std::expected<std::span<const LifecycleRecord>, LifecycleError>
   accept_batch(std::span<const LifecycleRecordDraft> drafts) {
-    if (drafts.empty()) return std::span<const LifecycleRecord>{};
+    auto prepared = prepare_batch(drafts);
+    if (!prepared) return std::unexpected(prepared.error());
+    return publish(std::move(*prepared));
+  }
+
+  // No mutation or I/O: the host can durably commit these owned canonical records
+  // before publishing. Validation touches the suffix and indexed causal targets.
+  [[nodiscard]] std::expected<PreparedLifecycleAppend, LifecycleError>
+  prepare_batch(std::span<const LifecycleRecordDraft> drafts) const {
+    if (drafts.empty()) return PreparedLifecycleAppend{{}, prefix_};
 
     const auto maximum = std::numeric_limits<std::uint64_t>::max();
     const auto available = maximum - next_sequence_ + 1;
@@ -363,10 +387,8 @@ class LifecycleLedger {
           drafts[index]});
     }
 
-    std::unordered_map<std::string, const LifecycleRecord*> combined_records;
-    combined_records.reserve(records_.size() + pending.size());
-    for (const auto& record : records_)
-      combined_records.emplace(record.record_id().value(), &record);
+    std::unordered_map<std::string, const LifecycleRecord*> pending_records;
+    pending_records.reserve(pending.size());
 
     std::unordered_map<std::string, const LifecycleRecord*> pending_origins;
     pending_origins.reserve(pending.size());
@@ -377,11 +399,12 @@ class LifecycleLedger {
             LifecycleDiagnosticCategory::invalid_record, record,
             "record, economic-event, and account identities must be non-empty"));
       }
-      if (combined_records.contains(record.record_id().value())) {
+      if (record_index_.contains(record.record_id().value()) ||
+          pending_records.contains(record.record_id().value())) {
         return std::unexpected(error(LifecycleDiagnosticCategory::duplicate_identity,
                                      record, "record identity is already accepted"));
       }
-      combined_records.emplace(record.record_id().value(), &record);
+      pending_records.emplace(record.record_id().value(), &record);
 
       if (record.action() == LifecycleAction::originate ||
           record.action() == LifecycleAction::reverse) {
@@ -413,24 +436,26 @@ class LifecycleLedger {
         return std::unexpected(error(LifecycleDiagnosticCategory::causal_self_reference,
                                      record, "lifecycle record targets itself"));
       }
-      if (!combined_records.contains(record.causal_record_id()->value())) {
+      if (!pending_records.contains(record.causal_record_id()->value()) &&
+          !record_index_.contains(record.causal_record_id()->value())) {
         return std::unexpected(error(
             LifecycleDiagnosticCategory::causal_reference_missing, record,
             "causal target does not identify an accepted or batched record"));
       }
     }
 
-    if (const auto cycle = find_cycle(combined_records)) {
+    if (const auto cycle = find_cycle(pending_records)) {
       return std::unexpected(LifecycleError{
           LifecycleDiagnosticCategory::causal_cycle, (*cycle)->record_id(),
           (*cycle)->causal_record_id(), "causal references form a cycle"});
     }
 
-    auto successors = successor_index_;
+    std::unordered_map<std::string, std::size_t> successors;
     for (const auto& record : pending) {
       if (!record.causal_record_id()) continue;
-      const auto& target =
-          *combined_records.find(record.causal_record_id()->value())->second;
+      const auto candidate = pending_records.find(record.causal_record_id()->value());
+      const auto& target = candidate != pending_records.end() ? *candidate->second
+          : *find(*record.causal_record_id());
       const auto target_key =
           std::pair{target.recorded_at(), target.acceptance_sequence()};
       const auto record_key =
@@ -445,7 +470,8 @@ class LifecycleLedger {
                                      record,
                                      "lifecycle relationship crosses accounts"));
       }
-      if (successors.contains(target.record_id().value())) {
+      if (successor_index_.contains(target.record_id().value()) ||
+          successors.contains(target.record_id().value())) {
         return std::unexpected(error(
             LifecycleDiagnosticCategory::conflicting_lifecycle_successor, record,
             "causal target already has a lifecycle successor"));
@@ -455,11 +481,38 @@ class LifecycleLedger {
       successors.emplace(target.record_id().value(), records_.size());
     }
 
+    return PreparedLifecycleAppend{std::move(pending), prefix_};
+  }
+
+  [[nodiscard]] std::expected<std::span<const LifecycleRecord>, LifecycleError>
+  publish(PreparedLifecycleAppend prepared) {
+    if (prepared.records_.empty()) return std::span<const LifecycleRecord>{};
+    if (prepared.prefix_ != prefix_)
+      return std::unexpected(error(LifecycleDiagnosticCategory::deterministic_ordering,
+          prepared.records_.front(), "prepared append belongs to a different ledger revision"));
+    auto& pending = prepared.records_;
+    const auto next_prefix = std::make_shared<const unsigned char>(0);
+    const auto maximum = std::numeric_limits<std::uint64_t>::max();
     const auto first = records_.size();
-    records_.reserve(records_.size() + pending.size());
-    record_index_.reserve(record_index_.size() + pending.size());
-    economic_origin_index_.reserve(economic_origin_index_.size() + pending.size());
-    successor_index_.reserve(successor_index_.size() + pending.size());
+    const auto needed = records_.size() + pending.size();
+    if (needed > records_.capacity())
+      records_.reserve(std::max(needed, records_.capacity() <= records_.max_size() / 2
+          ? records_.capacity() * 2 : needed));
+    const auto grow = [](auto& index, std::size_t additional) {
+      const auto target = index.size() + additional;
+      if (target > index.bucket_count())
+        index.reserve(std::max(target, index.bucket_count() <= index.max_size() / 2
+            ? index.bucket_count() * 2 : target));
+    };
+    const auto origins = std::count_if(pending.begin(), pending.end(), [](const auto& record) {
+      return record.action() == LifecycleAction::originate || record.action() == LifecycleAction::reverse;
+    });
+    const auto successors = std::count_if(pending.begin(), pending.end(), [](const auto& record) {
+      return record.causal_record_id().has_value();
+    });
+    grow(record_index_, pending.size());
+    grow(economic_origin_index_, static_cast<std::size_t>(origins));
+    grow(successor_index_, static_cast<std::size_t>(successors));
     for (auto& record : pending) {
       const auto index = records_.size();
       records_.push_back(std::move(record));
@@ -477,6 +530,7 @@ class LifecycleLedger {
       sequence_exhausted_ = true;
     else
       next_sequence_ = final_sequence + 1;
+    prefix_ = next_prefix;
     return std::span<const LifecycleRecord>{records_}.subspan(first, pending.size());
   }
 
@@ -556,21 +610,6 @@ class LifecycleLedger {
       const std::unordered_map<std::string, const LifecycleRecord*>& records) {
     std::unordered_map<std::string, unsigned char> state;
     state.reserve(records.size());
-    std::function<const LifecycleRecord*(const LifecycleRecord&)> visit =
-        [&](const LifecycleRecord& record) -> const LifecycleRecord* {
-      auto& current = state[record.record_id().value()];
-      if (current == 1) return &record;
-      if (current == 2) return nullptr;
-      current = 1;
-      if (record.causal_record_id()) {
-        const auto target = records.find(record.causal_record_id()->value());
-        if (target != records.end())
-          if (const auto* cycle = visit(*target->second)) return cycle;
-      }
-      current = 2;
-      return nullptr;
-    };
-
     std::vector<const LifecycleRecord*> ordered;
     ordered.reserve(records.size());
     for (const auto& [id, record] : records) {
@@ -580,8 +619,19 @@ class LifecycleLedger {
     std::sort(ordered.begin(), ordered.end(), [](const auto* lhs, const auto* rhs) {
       return lhs->acceptance_sequence() < rhs->acceptance_sequence();
     });
-    for (const auto* record : ordered)
-      if (const auto* cycle = visit(*record)) return cycle;
+    for (const auto* record : ordered) {
+      std::vector<const LifecycleRecord*> path;
+      auto* current = record;
+      while (current && state[current->record_id().value()] == 0) {
+        state[current->record_id().value()] = 1;
+        path.push_back(current);
+        if (!current->causal_record_id()) { current = nullptr; break; }
+        const auto target = records.find(current->causal_record_id()->value());
+        current = target == records.end() ? nullptr : target->second;
+      }
+      if (current && state[current->record_id().value()] == 1) return current;
+      for (const auto* item : path) state[item->record_id().value()] = 2;
+    }
     return std::nullopt;
   }
 
@@ -661,6 +711,7 @@ class LifecycleLedger {
   std::unordered_map<std::string, std::size_t> successor_index_;
   std::uint64_t next_sequence_ = LifecycleSequence::first_value;
   bool sequence_exhausted_ = false;
+  std::shared_ptr<const unsigned char> prefix_ = std::make_shared<const unsigned char>(0);
 };
 
 }  // namespace luca

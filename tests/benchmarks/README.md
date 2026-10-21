@@ -103,3 +103,32 @@ compiler/version, build type and flags, dataset size, repetitions, and the exact
 command. Use comparable Release builds, and do not infer an optimization mandate
 from one result. Algorithm changes and profiling-driven optimization are
 intentionally outside this initial measurement infrastructure.
+
+## Staged validation and admission
+
+`processing_benchmark.py` measures durable receipt separately from background
+parse, native exact validation, dependency-closed admission and incremental
+append. It verifies committed counts and canonical sequencing, probes a warm
+prepared suffix against growing prefixes, and exercises mixed valid/invalid
+singletons with 1/2/4 workers in shared versus separate book shards.
+
+```sh
+python3 -B tests/benchmarks/processing_benchmark.py \
+  --engine build/review-release/tools/ingestion-engine/luca-ingestion-engine \
+  --records 1000 10000 100000 --group-size 256 --repetitions 3 \
+  --output /tmp/luca-processing-benchmark.json
+```
+
+Groups are declared input atomicity, not an optimization the host may silently
+apply to independent transactions. Run `--group-size 1` separately for singleton
+costs. The timings include local full-sync metadata/canonical writes and exclude
+network/reporting. A warm suffix probe includes IPC and canonicalization, excludes
+persistence, and is not a service throughput figure. See the
+[validation/admission review](../../docs/reviews/VALIDATION_ADMISSION_20261021.md).
+
+`prepared_append_benchmark.cpp` compares the unchanged public strict `accept`
+contract before/after suffix preparation. Compile it with `-std=c++23 -O3` against
+each revision's ledger include directory. It seeds 1k/10k/100k records outside
+timing, appends 100 individual records for three repetitions and hashes the full
+result outside timing. Before/after canonical hashes must match; this is an
+in-memory acceptance comparison, not durable-ingestion throughput.

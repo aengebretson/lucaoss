@@ -340,12 +340,18 @@ Engine, policy, context and input identities accompany canonical results; operat
   retained diagnostics/status, resumable uploads, scoped idempotency and polling.
   The optional host owns storage/work intent and atomic canonical append/commit
   receipts; the financial core retains its synchronous validation semantics and
-  has no new I/O dependency. The first
-  [local intake host](../apps/ingestion-host/README.md) implements durable receipt,
-  original bytes, work intent, retries, resumable transfer and restart cleanup
-  using Python's standard SQLite/filesystem adapters. It adds no C++ target or
-  dependency. Validation workers, per-record diagnostics, ledger admission and
-  HTTP remain proposed. Patched SQLite uses WAL/FULL; older runtimes use
+  has no new I/O dependency. The
+  [local reference host](../apps/ingestion-host/README.md) implements durable receipt,
+  original bytes, resumable transfer, leased asynchronous validation, immutable
+  per-record diagnostics/outcomes and atomic ledger admission using Python's
+  standard SQLite/filesystem adapters. An optional persistent C++ helper invokes
+  the pure typed adapter and core prepare/publish API; storage and worker scheduling
+  remain in the host. Canonical record bytes, sequence, receipt, status and work
+  completion commit together; the in-memory ledger is a recoverable cache.
+  Prepared suffix validation uses indexed causal targets instead of copying the
+  whole prefix, and persists only new canonical records/hashes. This does not
+  change projection/checkpoint preparation. HTTP and projection coverage remain
+  proposed. Patched SQLite uses WAL/FULL; older runtimes use
   rollback/EXTRA to avoid the upstream WAL-reset bug, with the actual durability
   profile disclosed in receipts. This is a bounded local host, not a distributed
   storage or performance acceptance claim.

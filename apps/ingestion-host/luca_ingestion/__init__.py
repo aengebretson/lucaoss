@@ -1,4 +1,4 @@
-"""Optional local durable intake host; no financial validation is performed here."""
+"""Optional durable ingestion host; authoritative financial rules use the C++ engine."""
 
 from .store import IntakeError, IntakeStore, Limits
 

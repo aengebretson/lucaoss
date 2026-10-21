@@ -82,11 +82,13 @@ evidence through the new opt-in [accounting API](docs/journal-balances.md).
 
 The [durable intake reference host](apps/ingestion-host/README.md) now retains
 original payloads, durable receipts/work intent, scoped retry identities and
-resumable uploads through a local Python API/CLI. Financial libraries have no new
-storage dependency. The [architecture/design](docs/staged-ingestion.md) and
-[API specification](docs/staged-ingestion-api.md) describe the wider feature;
-asynchronous transaction validation, per-record diagnostics, ledger admission and
-HTTP remain subsequent increments.
+resumable uploads through a local Python API/CLI. Separate workers now retain
+per-record validation outcomes/errors and atomically admit valid groups to a
+durable canonical ledger. Exact values and lifecycle rules run in the optional
+C++ `luca-ingestion-engine`; financial libraries have no storage dependency.
+The [architecture/design](docs/staged-ingestion.md) and
+[API specification](docs/staged-ingestion-api.md) describe the wider feature.
+HTTP, projection coverage and distributed production adapters remain open.
 
 | Canonical option | Top-level default | Embedded default | Legacy alias |
 | --- | --- | --- | --- |

@@ -1,0 +1,5 @@
+{"record_id":"deposit","economic_event_id":"cash-economic","action":"originate","account_id":"portfolio-a","event":{"type":"cash_movement","effective_at":"2026-10-20T00:00:00Z","currency":"USD","amount":"100"}}
+{"record_id":"corrected","economic_event_id":"cash-economic","action":"correct","account_id":"portfolio-a","causal_record_id":"deposit","event":{"type":"cash_movement","effective_at":"2026-10-20T00:00:00Z","currency":"USD","amount":"80"}}
+{"record_id":"cancelled","economic_event_id":"cash-economic","action":"cancel","account_id":"portfolio-a","causal_record_id":"corrected"}
+{"record_id":"independent","economic_event_id":"independent-economic","action":"originate","account_id":"portfolio-a","event":{"type":"cash_movement","effective_at":"2026-10-20T00:00:00Z","currency":"USD","amount":"10"}}
+{"record_id":"bad-precision","economic_event_id":"bad-economic","action":"originate","account_id":"portfolio-a","event":{"type":"cash_movement","effective_at":"2026-10-20T00:00:00Z","currency":"USD","amount":"0.0000001"}}
