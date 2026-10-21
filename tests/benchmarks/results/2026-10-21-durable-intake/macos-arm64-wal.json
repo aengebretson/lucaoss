@@ -1,0 +1,327 @@
+{
+  "schema": "luca.durable-intake-benchmark/1",
+  "python": "3.12.14 (main, Aug 25 2026, 13:50:33) [Clang 22.1.3 ]",
+  "sqlite": "3.53.1",
+  "platform": "macOS-15.7.8-arm64-arm-64bit",
+  "machine": "arm64",
+  "logical_cpus": 16,
+  "samples": [
+    {
+      "records": 10000,
+      "bytes": 2167780,
+      "durability_profile": "local-fsync-wal-v1",
+      "runs": [
+        {
+          "receipt_seconds": 0.03751083370298147,
+          "post_last_byte_seconds": 0.022081333678215742
+        },
+        {
+          "receipt_seconds": 0.03898762492462993,
+          "post_last_byte_seconds": 0.02313083317130804
+        },
+        {
+          "receipt_seconds": 0.04207225004211068,
+          "post_last_byte_seconds": 0.023174124769866467
+        }
+      ],
+      "median_receipt_seconds": 0.03898762492462993,
+      "median_bytes_per_second": 55601745.53312
+    },
+    {
+      "records": 100000,
+      "bytes": 21877780,
+      "durability_profile": "local-fsync-wal-v1",
+      "runs": [
+        {
+          "receipt_seconds": 0.051657583098858595,
+          "post_last_byte_seconds": 0.026286541018635035
+        },
+        {
+          "receipt_seconds": 0.05329800024628639,
+          "post_last_byte_seconds": 0.025884625036269426
+        },
+        {
+          "receipt_seconds": 0.05325016612187028,
+          "post_last_byte_seconds": 0.026760625187307596
+        }
+      ],
+      "median_receipt_seconds": 0.05325016612187028,
+      "median_bytes_per_second": 410849046.9293506
+    },
+    {
+      "records": 1000000,
+      "bytes": 220777780,
+      "durability_profile": "local-fsync-wal-v1",
+      "runs": [
+        {
+          "receipt_seconds": 0.15588945941999555,
+          "post_last_byte_seconds": 0.027593000326305628
+        },
+        {
+          "receipt_seconds": 0.16287279082462192,
+          "post_last_byte_seconds": 0.02680770820006728
+        },
+        {
+          "receipt_seconds": 0.1616710419766605,
+          "post_last_byte_seconds": 0.027873416896909475
+        }
+      ],
+      "median_receipt_seconds": 0.1616710419766605,
+      "median_bytes_per_second": 1365598794.3213258
+    }
+  ],
+  "concurrency": [
+    {
+      "workers": 1,
+      "separate_books": false,
+      "imports": 8,
+      "bytes_per_import": 2167780,
+      "wall_seconds_including_output_verification": 0.3223356669768691,
+      "runs": [
+        {
+          "receipt_seconds": 0.039212499745190144,
+          "post_last_byte_seconds": 0.022819082718342543
+        },
+        {
+          "receipt_seconds": 0.03893687482923269,
+          "post_last_byte_seconds": 0.023779500275850296
+        },
+        {
+          "receipt_seconds": 0.0388436671346426,
+          "post_last_byte_seconds": 0.022980292327702045
+        },
+        {
+          "receipt_seconds": 0.03789766691625118,
+          "post_last_byte_seconds": 0.022012624889612198
+        },
+        {
+          "receipt_seconds": 0.03906245902180672,
+          "post_last_byte_seconds": 0.02392724994570017
+        },
+        {
+          "receipt_seconds": 0.03687174990773201,
+          "post_last_byte_seconds": 0.021935291588306427
+        },
+        {
+          "receipt_seconds": 0.03801191598176956,
+          "post_last_byte_seconds": 0.023050082847476006
+        },
+        {
+          "receipt_seconds": 0.036722291726619005,
+          "post_last_byte_seconds": 0.022104208823293447
+        }
+      ]
+    },
+    {
+      "workers": 2,
+      "separate_books": false,
+      "imports": 8,
+      "bytes_per_import": 2167780,
+      "wall_seconds_including_output_verification": 0.23253929195925593,
+      "runs": [
+        {
+          "receipt_seconds": 0.055663957726210356,
+          "post_last_byte_seconds": 0.026391874998807907
+        },
+        {
+          "receipt_seconds": 0.04202841594815254,
+          "post_last_byte_seconds": 0.025276375003159046
+        },
+        {
+          "receipt_seconds": 0.060451459139585495,
+          "post_last_byte_seconds": 0.0368474586866796
+        },
+        {
+          "receipt_seconds": 0.06007529189810157,
+          "post_last_byte_seconds": 0.03196949977427721
+        },
+        {
+          "receipt_seconds": 0.055228875018656254,
+          "post_last_byte_seconds": 0.03277395898476243
+        },
+        {
+          "receipt_seconds": 0.0505561251193285,
+          "post_last_byte_seconds": 0.02108650002628565
+        },
+        {
+          "receipt_seconds": 0.05512454221025109,
+          "post_last_byte_seconds": 0.033352500293403864
+        },
+        {
+          "receipt_seconds": 0.05789391603320837,
+          "post_last_byte_seconds": 0.02458595810458064
+        }
+      ]
+    },
+    {
+      "workers": 4,
+      "separate_books": false,
+      "imports": 8,
+      "bytes_per_import": 2167780,
+      "wall_seconds_including_output_verification": 0.19272108282893896,
+      "runs": [
+        {
+          "receipt_seconds": 0.05979420803487301,
+          "post_last_byte_seconds": 0.0315484581515193
+        },
+        {
+          "receipt_seconds": 0.1028405842371285,
+          "post_last_byte_seconds": 0.01731570903211832
+        },
+        {
+          "receipt_seconds": 0.13859624974429607,
+          "post_last_byte_seconds": 0.12518970761448145
+        },
+        {
+          "receipt_seconds": 0.06015979126095772,
+          "post_last_byte_seconds": 0.02069095801562071
+        },
+        {
+          "receipt_seconds": 0.024425040930509567,
+          "post_last_byte_seconds": 0.01797908265143633
+        },
+        {
+          "receipt_seconds": 0.1275396659038961,
+          "post_last_byte_seconds": 0.023957083001732826
+        },
+        {
+          "receipt_seconds": 0.05189029220491648,
+          "post_last_byte_seconds": 0.037056209053844213
+        },
+        {
+          "receipt_seconds": 0.030436500441282988,
+          "post_last_byte_seconds": 0.017884208355098963
+        }
+      ]
+    },
+    {
+      "workers": 1,
+      "separate_books": true,
+      "imports": 8,
+      "bytes_per_import": 2167780,
+      "wall_seconds_including_output_verification": 0.3225317499600351,
+      "runs": [
+        {
+          "receipt_seconds": 0.0391617501154542,
+          "post_last_byte_seconds": 0.02279220800846815
+        },
+        {
+          "receipt_seconds": 0.03891283320263028,
+          "post_last_byte_seconds": 0.023019582964479923
+        },
+        {
+          "receipt_seconds": 0.0368342911824584,
+          "post_last_byte_seconds": 0.02197637502104044
+        },
+        {
+          "receipt_seconds": 0.03799441596493125,
+          "post_last_byte_seconds": 0.022969332989305258
+        },
+        {
+          "receipt_seconds": 0.03787004202604294,
+          "post_last_byte_seconds": 0.022897958755493164
+        },
+        {
+          "receipt_seconds": 0.038228292018175125,
+          "post_last_byte_seconds": 0.023087707813829184
+        },
+        {
+          "receipt_seconds": 0.03977529192343354,
+          "post_last_byte_seconds": 0.02395787462592125
+        },
+        {
+          "receipt_seconds": 0.03660333389416337,
+          "post_last_byte_seconds": 0.021955625154078007
+        }
+      ]
+    },
+    {
+      "workers": 2,
+      "separate_books": true,
+      "imports": 8,
+      "bytes_per_import": 2167780,
+      "wall_seconds_including_output_verification": 0.28235466592013836,
+      "runs": [
+        {
+          "receipt_seconds": 0.06702095922082663,
+          "post_last_byte_seconds": 0.039705625269562006
+        },
+        {
+          "receipt_seconds": 0.06736812461167574,
+          "post_last_byte_seconds": 0.04016924975439906
+        },
+        {
+          "receipt_seconds": 0.06939616613090038,
+          "post_last_byte_seconds": 0.04251975007355213
+        },
+        {
+          "receipt_seconds": 0.06949341669678688,
+          "post_last_byte_seconds": 0.04240779159590602
+        },
+        {
+          "receipt_seconds": 0.06915741600096226,
+          "post_last_byte_seconds": 0.04206770798191428
+        },
+        {
+          "receipt_seconds": 0.06969620892778039,
+          "post_last_byte_seconds": 0.04263237491250038
+        },
+        {
+          "receipt_seconds": 0.06637387489899993,
+          "post_last_byte_seconds": 0.03778933361172676
+        },
+        {
+          "receipt_seconds": 0.06538462499156594,
+          "post_last_byte_seconds": 0.033044083043932915
+        }
+      ]
+    },
+    {
+      "workers": 4,
+      "separate_books": true,
+      "imports": 8,
+      "bytes_per_import": 2167780,
+      "wall_seconds_including_output_verification": 0.2566612916998565,
+      "runs": [
+        {
+          "receipt_seconds": 0.12013491708785295,
+          "post_last_byte_seconds": 0.07926020817831159
+        },
+        {
+          "receipt_seconds": 0.11918495781719685,
+          "post_last_byte_seconds": 0.07779670786112547
+        },
+        {
+          "receipt_seconds": 0.11874841619282961,
+          "post_last_byte_seconds": 0.07806020835414529
+        },
+        {
+          "receipt_seconds": 0.11414395878091455,
+          "post_last_byte_seconds": 0.0735871666111052
+        },
+        {
+          "receipt_seconds": 0.0966316252015531,
+          "post_last_byte_seconds": 0.05897745909169316
+        },
+        {
+          "receipt_seconds": 0.13132020831108093,
+          "post_last_byte_seconds": 0.08037862507626414
+        },
+        {
+          "receipt_seconds": 0.1253626667894423,
+          "post_last_byte_seconds": 0.07515549985691905
+        },
+        {
+          "receipt_seconds": 0.12991762487217784,
+          "post_last_byte_seconds": 0.07983449986204505
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "store.py": "350425e10e604642f5862cd3c5d6bcbe9530cc929cc0731d9261701d4de226d2",
+    "benchmark.py": "195a3ff061815f54695b9bdb70ae74c5690332d5d2cdef7b10feae4bdf79d4ef"
+  },
+  "timing_scope": "Local cached source reads, streaming hash, durable payload, reservation/receipt/work/status writes; output hash verification excluded. No parsing, validation, ledger admission, network or reporting.",
+  "max_rss_platform_units": 66748416
+}

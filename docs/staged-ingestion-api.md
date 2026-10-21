@@ -5,6 +5,10 @@ implemented. Read with [architecture and durability rules](staged-ingestion.md).
 This is the normative human-readable wire specification for implementation
 review. An OpenAPI document should be derived when signatures are accepted.
 
+The first [local reference host](../apps/ingestion-host/README.md) implements the
+receipt/transfer/status/work-intent subset through a Python API/CLI. There is no
+HTTP listener or transaction validator yet; the endpoints below remain proposed.
+
 ## Common rules
 
 Base path: `/v1/books/{book_id}`. Tenant identity comes from authenticated request
@@ -119,6 +123,16 @@ replacement links and verified payload SHA-256/length. Optional fields have
 explicit absent markers; replacement record IDs sort uniquely for hashing.
 Strings are exact UTF-8; no metadata-object ordering or upload ID affects this
 fingerprint. Publish exact fingerprint vectors with the implementation.
+
+The intake implementation fixes this encoding: the ordered fields are version
+`submission/1`, tenant, book, source, format, context ID, atomicity, optional client
+reference, optional predecessor import ID, optional predecessor record-ID array,
+payload SHA-256 and base-10 byte length. Each absent field is byte `00`. Each
+present field is byte `01`, an unsigned 8-byte big-endian UTF-8 byte length, then
+its UTF-8 bytes. The predecessor array is sorted/unique compact JSON with literal
+UTF-8 (no ASCII escaping). Concatenate the fields and hash with SHA-256. Defaults
+are materialized before hashing. Reusable vectors are in
+[submission-fingerprints.json](../tests/ingestion/fixtures/submission-fingerprints.json).
 
 ```http
 POST /v1/books/fund-a/imports

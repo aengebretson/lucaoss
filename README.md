@@ -80,11 +80,13 @@ The [journal-balance walkthrough](examples/journal-balances/README.md) derives
 trial balances under both fixture accounting policies, preserving line/source
 evidence through the new opt-in [accounting API](docs/journal-balances.md).
 
-The next ingestion increment has a proposed
-[architecture/design](docs/staged-ingestion.md) and
-[API specification](docs/staged-ingestion-api.md): fast durable receipt,
-asynchronous validation, retained errors/status and idempotent ledger admission.
-These documents do not introduce a staging runtime yet.
+The [durable intake reference host](apps/ingestion-host/README.md) now retains
+original payloads, durable receipts/work intent, scoped retry identities and
+resumable uploads through a local Python API/CLI. Financial libraries have no new
+storage dependency. The [architecture/design](docs/staged-ingestion.md) and
+[API specification](docs/staged-ingestion-api.md) describe the wider feature;
+asynchronous transaction validation, per-record diagnostics, ledger admission and
+HTTP remain subsequent increments.
 
 | Canonical option | Top-level default | Embedded default | Legacy alias |
 | --- | --- | --- | --- |

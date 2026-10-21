@@ -6,6 +6,12 @@ No staging implementation, durable ledger store, worker, or HTTP service is
 provided by this document. The proposed wire contract is in
 [the API specification](staged-ingestion-api.md).
 
+Implementation progress: the first [local intake host](../apps/ingestion-host/README.md)
+provides durable bytes/receipt/work intent, retry identity, resumable transfer and
+restart cleanup. It is an optional Python storage host with no financial parsing
+or new C++ dependencies. Validation/status workers, durable ledger admission and
+HTTP are not implemented. See [executed evidence](reviews/DURABLE_INTAKE_20261021.md).
+
 ## Outcome and boundary
 
 A caller submits transaction bytes and receives a durable import receipt as soon
@@ -83,6 +89,11 @@ see [SQLite synchronous](https://sqlite.org/pragma.html#pragma_synchronous).
 Acknowledgement covers the configured durable storage failure domain; local disk
 survival does not promise recovery from loss of that disk. Replicated durability
 is a separate host profile and must finish before acknowledgement when selected.
+The initial host enables WAL only with SQLite's WAL-reset fix (3.51.3+ or known
+patched 3.50.7+/3.44.6+ release lines). Older runtimes use DELETE/EXTRA rollback
+journaling and advertise that profile. This preserves local durability while
+avoiding the documented [upstream race](https://sqlite.org/wal.html#walreset);
+it does not claim the same reader/writer concurrency as WAL.
 
 ### Receipt transaction
 

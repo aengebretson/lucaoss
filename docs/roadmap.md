@@ -25,7 +25,7 @@ assignment source remains [Luca Platform planning](https://github.com/aengebrets
 
 Original review baseline: `fdde74b8cb91eb5d5b63370e4215b9d1d901bbbc`
 (2026-09-30). The table includes the journal-balance increment and local
-verification on 2026-10-21. "Partial" means useful implementation exists
+verification and first durable-intake increment on 2026-10-21. "Partial" means useful implementation exists
 but full scope or acceptance remains open. Implementation, compilation, executed
 correctness checks and measured performance are separate evidence.
 
@@ -33,12 +33,12 @@ correctness checks and measured performance are separate evidence.
 | --- | --- | --- |
 | 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: the narrow financial primitives pass all 34 root checks in both Debug and Release locally with AppleClang 17; wider compiler/CI acceptance remains open. |
 | 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Bounded implementation verified locally: ten policy/time views, whole-entry partition merge, owned evidence and sanitizer checks pass. Book assignment/coverage remain explicit caller responsibilities. |
-| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Design proposed: architecture and API specify durable receipt, versioned validation, retained diagnostics and atomic commit receipts. No durable staging host is implemented; existing core batch acceptance stays synchronous and strict. |
+| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Partial: local durable intake implements original bytes, atomic receipt/work intent, scoped retries, resumable transfer and crash recovery. Asynchronous transaction validation, per-record diagnostics, admission and HTTP remain open. Existing core acceptance stays strict. |
 | 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: descriptors, exact-cash contracts and tested journal-balance partition contracts exist; general executable composition and parallel scheduling do not. |
 | 5. Shared batch preparation | Resolve/select/order once per compatible snapshot and reuse compact immutable batches across projections. | Planned: lifecycle projection reuses a resolved set, but projections prepare economic views separately; no shared prepared-batch public boundary. |
 | 6. Efficient incremental evidence | Update affected partitions and verified evidence without scanning all history for each small append; preserve full-replay equivalence. | Partial: canonical formats/checkpoints and bounded continuation exist. Refreshed manifests rebuild/hash full history; cutoffs cannot advance and prefix-targeting changes require replay. |
 | 7. Complete portable accounting report | One history produces portfolio views, both journal views, trial balances and an explained external discrepancy through C++ and bounded CLI/Python access. | Partial: the C++ journal-to-balance walkthrough now runs alongside existing cash-report examples and an exact-cash CLI/Python client; the complete external-observation accounting report/host remains open. |
-| 8. Representative performance acceptance | Declared latency/throughput/cost budgets, correctness-checked benchmarks, concurrent workloads and scaling evidence. | Partial: executed synthetic baselines are recorded in the journal-balance review; end-to-end ingestion/report, worker scaling and workload-specific service budgets remain open. |
+| 8. Representative performance acceptance | Declared latency/throughput/cost budgets, correctness-checked benchmarks, concurrent workloads and scaling evidence. | Partial: executed synthetic journal-balance and durable-intake baselines include million-record inputs and bounded concurrent intake. Validation/admission/report workloads, worker scaling and workload-specific service budgets remain open. |
 | 9. Package and release acceptance | An independent consumer installs a pinned package, reproduces results and sees documented platform/performance limits. | Partial: installed/embedded consumer execution and option checks pass with AppleClang 17 on macOS. Current Linux/GCC runtime, compiler CI and release remain open; current exact arithmetic blocks native MSVC. |
 
 Evidence: [integration review](reviews/OSS_FOUNDATIONS_20260930.md),
@@ -57,11 +57,14 @@ and compilation alone do not establish runtime acceptance.
 
 ### Durable staged ingestion
 
-The [architecture/design proposal](staged-ingestion.md) and
-[API specification](staged-ingestion-api.md) define the next bounded increment.
-They are review material, not implementation or acceptance evidence. Proposed
-delivery is durable intake, validation/status, atomic admission/recovery, then
-coverage and representative performance verification. Existing shared-batch and
+The [architecture/design](staged-ingestion.md) and
+[API specification](staged-ingestion-api.md) define the bounded increments.
+The first [local intake host](../apps/ingestion-host/README.md) implements durable
+receipt, original bytes, work intent, retries, resumable transfer and restart
+cleanup. Actual verification and intake-only measurements are in
+[the intake review](reviews/DURABLE_INTAKE_20261021.md). Next is validation/status,
+then atomic admission/recovery, coverage and representative performance
+verification. The complete HTTP API remains proposed; shared-batch and
 incremental-evidence checkpoints remain separate work.
 
 Retain original submissions as immutable evidence, including invalid/unparseable
