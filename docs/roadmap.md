@@ -8,6 +8,164 @@ LUCA should grow outward from a small deterministic ledger core. Capabilities be
 
 The version milestones below describe capability groups, not rigid release gates. Engineering slices may establish cross-cutting foundations or introduce a narrow part of a later capability when that work reduces architectural risk for the whole project.
 
+## Minimal-core delivery roadmap (2026-10-21)
+
+The minimal core is a financial-algebra library plus bounded portable execution
+hosts. One immutable cash/equity history must produce reproducible positions,
+cash, settlement obligations, balanced journals, trial balances and reports with
+source evidence. Durable staged ingestion and efficient parallel reporting are
+part of the baseline alongside financial correctness.
+
+This section updates the completion sequence for the original four slices below.
+It records requirements and gaps; it does not dispatch tasks, change authoritative
+task state, resume paused software tests, or claim acceptance. The combined
+assignment source remains [Luca Platform planning](https://github.com/aengebretson/luca-platform/tree/main/planning).
+
+### Current position
+
+Implementation baseline: `fdde74b8cb91eb5d5b63370e4215b9d1d901bbbc`
+(2026-09-30), reviewed on 2026-10-21. "Partial" means useful implementation exists
+but full scope or acceptance remains open. Implementation, compilation, executed
+correctness checks and measured performance are separate evidence.
+
+| Checkpoint | Required outcome | Position at the implementation baseline |
+| --- | --- | --- |
+| 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: these financial primitives exist; latest integrated runtime acceptance remains pending. |
+| 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Planned: journal factories/projections exist; no public reusable journal-balance/trial-balance reducer. |
+| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Planned: core lifecycle acceptance is synchronous and rejects an invalid batch atomically; no durable staging host is supplied. |
+| 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: algebra descriptors and exact-cash contracts exist; general executable composition and parallel scheduling do not. |
+| 5. Shared batch preparation | Resolve/select/order once per compatible snapshot and reuse compact immutable batches across projections. | Planned: lifecycle projection reuses a resolved set, but projections prepare economic views separately; no shared prepared-batch public boundary. |
+| 6. Efficient incremental evidence | Update affected partitions and verified evidence without scanning all history for each small append; preserve full-replay equivalence. | Partial: canonical formats/checkpoints and bounded continuation exist. Refreshed manifests rebuild/hash full history; cutoffs cannot advance and prefix-targeting changes require replay. |
+| 7. Complete portable accounting report | One history produces portfolio views, both journal views, trial balances and an explained external discrepancy through C++ and bounded CLI/Python access. | Partial: cash-report/accounting examples and an exact-cash executable/Python client exist; the integrated journal-to-balance report and accounting host do not. |
+| 8. Representative performance acceptance | Declared latency/throughput/cost budgets, correctness-checked benchmarks, concurrent workloads and scaling evidence. | Partial: reproducible 10,000/100,000/1,000,000-event synthetic microbenchmarks exist; representative end-to-end ingestion/report and scaling acceptance is unestablished. |
+| 9. Package and release acceptance | An independent consumer installs a pinned package, reproduces results and sees documented platform/performance limits. | Partial: domain targets, install/export and consumers exist. Latest GCC compilation is recorded; runtime acceptance, Clang coverage and release remain open; current exact arithmetic blocks native MSVC. |
+
+Evidence: [integration review](reviews/OSS_FOUNDATIONS_20260930.md),
+[accounting](accounting-foundations.md), [algebras](financial-algebras.md),
+[transformation inventory](transformation-contract.md),
+[checkpoint continuation](checkpoint-result.md) and
+[benchmark infrastructure](../tests/benchmarks/README.md).
+
+### Durable staged ingestion
+
+Retain original submissions as immutable evidence, including invalid/unparseable
+records. Distinguish durable receipt from authoritative ledger acceptance. A
+bounded host acknowledges only after payload/reference and processing intent
+are durable, returning an import identity and status location; an HTTP adapter
+can use `202 Accepted`. Large uploads support resumable transfer.
+
+Validate asynchronously against explicit rule/reference-data versions. Retain
+per-record diagnostics and dependency status through received, validating,
+blocked/invalid, ready, committed and projected states. Corrections are new linked
+submissions. Define partial-import and dependent-group atomicity so an unrelated
+bad record need not prevent useful progress. Invalid staged data never bypasses
+canonical value/lifecycle checks; missing dependencies can remain blocked.
+
+Couple durable receipt with durable work intent. Stable submission identities
+and payload fingerprints make retries/promotion idempotent. Demonstrate recovery
+after interruption without lost or duplicated effects. Use bounded queues,
+backpressure and separate ingestion/report resource budgets. Status is durable;
+notifications are optional. Provide one bounded durable reference host, keeping
+storage, transport, queues and scheduling in replaceable adapters/hosts without
+hidden I/O or mandatory database/cloud/broker dependencies in the library.
+
+### Execution contracts and shared batches
+
+Every supported operation declares typed inputs/results, complete evaluation
+context, engine/policy/reference versions, financial partition keys, dependencies,
+ordering and supported merge laws. Descriptor strings alone do not validate
+composition or authorize optimization. Preserve exact arithmetic, rounding,
+diagnostics and evidence under every supported execution plan, including
+finite-width intermediate-overflow behavior.
+
+Parallelize independent validation and resolved event-to-journal maps. Resolve
+dependent lifecycle chains in order; merge balances only through compatible,
+evidenced reductions. Handle cross-partition economic dependencies explicitly;
+avoid a global lock/sequence across unrelated books. Hosts schedule ordinary
+deterministic operations across threads/processes; distributed/GPU executors
+remain optional.
+
+Prepare one immutable, lifetime-safe resolved/selected/ordered batch for a pinned
+snapshot and compatible cutoffs. Share it across position, cash, settlement and
+journal projections instead of repeating sorting/materialization. Use compact
+values and evidence IDs, with immutable detail available for drill-down.
+Columnar layouts/SIMD are measured implementation options, not external schemas
+imposed on the financial model.
+
+### Incremental state, evidence and report consistency
+
+Update affected partitions and reuse compatible derived views. Define
+correction/policy/reference-data invalidation and the earliest required replay
+boundary. Extend fixed-cutoff continuation deliberately for advancing cutoffs
+and settlement eligibility; until supported, keep explicit replay requirements.
+
+Design verified immutable segments and incremental evidence summaries so small
+appends do not routinely reconstruct/rehash all accepted history. Preserve
+existing canonical bytes/digests. Any new segment/manifest digest scheme needs a
+reviewed versioned format, verification rules and migration plan.
+
+Pin reports to input revision, complete cutoffs and policy/context versions while
+ingestion continues. Identify staged/blocked records excluded from that revision;
+disclose partial completion instead of presenting an incomplete import/partition
+set as final. Cache under complete financial identities and retain traceability
+from reports through balances, lines and events to source evidence.
+
+Prove supported incremental/partitioned execution equals full replay. Lifecycle,
+lot allocation and checked finite-width arithmetic carry no blanket
+commutativity, inverse or arbitrary-regrouping permission.
+
+### Performance acceptance and optional acceleration
+
+Capture representative slow user workflows and specify hardware, data shape,
+concurrency, financial completeness and numerical performance budgets before
+claiming speedups. Begin measurement with the baseline and carry it through every
+increment. Include cold/warm paths, skewed account sizes, concentrated activity,
+late corrections, invalid/dependent imports, concurrent reports/imports and
+worker failure/recovery. Exercise million-event workloads and larger
+10/100-million-event datasets where declared hardware permits; record resource
+limits rather than assuming all sizes fit memory.
+
+Measure durable receipt p50/p95/p99 separately from upload duration, validation/
+commit throughput, queue age/drain time, projection freshness, cold/warm report
+latency, correction-to-report latency, checkpoint/evidence cost, memory, bytes
+read/transferred, cost per workload and core/worker scaling efficiency. Include
+evidence construction and output materialization in end-to-end timing. Establish
+regression budgets. Compare Geneva on equivalent measured workloads and outputs;
+current microbenchmarks establish no service levels or Geneva advantage.
+
+Establish a strong multicore CPU baseline first. Evaluate optional GPU execution
+for measured large scans, reductions, joins or repeated numerical workloads,
+including packing, transfer and evidence costs. Accelerated financial operations
+must match the versioned CPU contract, exact rounding, overflow/errors and
+canonical output. Wider accumulators or changed reduction semantics require a
+reviewed versioned contract. GPU availability and a general distributed
+scheduler are not minimal-core dependencies.
+
+### Delivery sequence and completion
+
+1. Establish checkpoint 1 and checkpoint 8's representative workloads/budgets.
+2. Specify posting/book dimensions and execution contracts; deliver checkpoints
+   2 and 4 while designing the staged-ingestion boundary.
+3. Deliver checkpoint 3's durable host and checkpoints 5-6's shared batches and
+   incremental evidence. Independent paths can proceed with explicit ownership.
+4. Integrate checkpoint 7's accounting report and portable clients.
+5. Complete correctness/performance and checkpoint 9's package/release acceptance.
+   Run software tests/benchmarks when the standing testing pause is explicitly
+   lifted; this documentation update does not lift it.
+
+Completion requires recorded acceptance of all nine checkpoints: received
+imports survive interruption, validation errors remain inspectable, accepted
+events produce complete traceable accounting/portfolio reports, supported
+execution plans agree, and declared performance budgets pass on documented
+workloads. Compilation or a quick asynchronous acknowledgement alone is
+insufficient.
+
+Retain the narrow contribution/purchase/exact-reversal accounting policies.
+Ordinary sells/cost basis, income/accruals, FX, corporate actions, full
+P&L/NAV/tax, broad adapters and platform-scale orchestration remain separate
+extensions. Complete the accounting/reporting path before expanding the
+financial domain or building a generic execution framework.
+
 ## Core roadmap
 
 ### v0.1 — Ledger and basic state
@@ -83,6 +241,10 @@ Add brokerage/prime-brokerage economic events.
 - Securities-finance reconciliation
 
 ### v0.6 — Performance and large-scale state
+
+The minimal-core program above already requires staged ingestion, explicit
+parallel execution contracts, shared batches, incremental evidence and measured
+performance acceptance. This capability group expands scale beyond that baseline.
 
 Harden the compute model for very large datasets without changing financial semantics.
 
@@ -180,7 +342,9 @@ The next work should no longer repeat that original bootstrap checklist. It shou
 
 ## Current implementation program
 
-The next four slices are the active engineering sequence.
+The four original slices retain their technical scope below. The minimal-core
+delivery roadmap above now defines the completion sequence and performance
+acceptance; finishing the older slice checklist alone does not complete it.
 
 ### Slice 1 — LUCA identity and package
 
@@ -250,7 +414,10 @@ The four-slice program is complete when:
 - cash and equity activity produce positions, cash, settlement obligations, reconciliation breaks, and balanced journals from one authoritative event history;
 - all behavior is demonstrated through reusable conformance fixtures.
 
-Only after these foundations are stable should broader adapters, cloud execution, extensive UI, distributed orchestration, or agent layers become active open-source engineering priorities.
+The bounded portable ingestion/reporting hosts in the minimal-core program are
+part of its acceptance. Broader adapters, cloud products, extensive UI,
+platform-scale distributed orchestration and agent layers follow the accepted
+financial and performance foundations.
 
 ## Backlog clarification — transformations and portable accounting (2026-09-23)
 
@@ -283,6 +450,7 @@ and restrictions are linked from [the architecture](design.md#additive-public-in
 
 These are bounded implementations, not completion of O1–O5/F1 or a public release.
 General composition, portable accounting hosts, broader policies, corporate
-actions, lots/P&L, securities finance and scaling remain sequenced follow-ups.
+actions, lots/P&L, securities finance and broader scaling remain sequenced
+follow-ups; the minimal-core performance requirements above are now foundational.
 See [the eleven feature designs](oss-program-20260930/README.md). Runtime acceptance
 for this increment is pending while automated test execution is paused.
