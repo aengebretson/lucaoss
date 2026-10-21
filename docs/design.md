@@ -334,6 +334,14 @@ Engine, policy, context and input identities accompany canonical results; operat
 
 ## Additive public interfaces
 
+- [Durable staged ingestion proposal](staged-ingestion.md) separates immutable
+  durable receipt, versioned asynchronous validation, strict ledger admission
+  and projection coverage. Its [proposed API](staged-ingestion-api.md) specifies
+  retained diagnostics/status, resumable uploads, scoped idempotency and polling.
+  The optional host owns storage/work intent and atomic canonical append/commit
+  receipts; the financial core retains its synchronous validation semantics and
+  has no new I/O dependency. This is design-only, not an implemented interface.
+
 - [Journal balances](journal-balances.md) reduce whole journals under an explicit
   book/revision/policy/context contract and merge disjoint compatible partials.
   The opt-in `luca::accounting` target depends only on `luca::ledger`; existing

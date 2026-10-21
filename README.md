@@ -80,6 +80,12 @@ The [journal-balance walkthrough](examples/journal-balances/README.md) derives
 trial balances under both fixture accounting policies, preserving line/source
 evidence through the new opt-in [accounting API](docs/journal-balances.md).
 
+The next ingestion increment has a proposed
+[architecture/design](docs/staged-ingestion.md) and
+[API specification](docs/staged-ingestion-api.md): fast durable receipt,
+asynchronous validation, retained errors/status and idempotent ledger admission.
+These documents do not introduce a staging runtime yet.
+
 | Canonical option | Top-level default | Embedded default | Legacy alias |
 | --- | --- | --- | --- |
 | `LUCA_BUILD_TESTS` | ON | OFF | `PACIOLI_BUILD_TESTS` |

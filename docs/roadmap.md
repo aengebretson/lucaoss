@@ -33,7 +33,7 @@ correctness checks and measured performance are separate evidence.
 | --- | --- | --- |
 | 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: the narrow financial primitives pass all 34 root checks in both Debug and Release locally with AppleClang 17; wider compiler/CI acceptance remains open. |
 | 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Bounded implementation verified locally: ten policy/time views, whole-entry partition merge, owned evidence and sanitizer checks pass. Book assignment/coverage remain explicit caller responsibilities. |
-| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Planned: core lifecycle acceptance is synchronous and rejects an invalid batch atomically; no durable staging host is supplied. |
+| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Design proposed: architecture and API specify durable receipt, versioned validation, retained diagnostics and atomic commit receipts. No durable staging host is implemented; existing core batch acceptance stays synchronous and strict. |
 | 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: descriptors, exact-cash contracts and tested journal-balance partition contracts exist; general executable composition and parallel scheduling do not. |
 | 5. Shared batch preparation | Resolve/select/order once per compatible snapshot and reuse compact immutable batches across projections. | Planned: lifecycle projection reuses a resolved set, but projections prepare economic views separately; no shared prepared-batch public boundary. |
 | 6. Efficient incremental evidence | Update affected partitions and verified evidence without scanning all history for each small append; preserve full-replay equivalence. | Partial: canonical formats/checkpoints and bounded continuation exist. Refreshed manifests rebuild/hash full history; cutoffs cannot advance and prefix-targeting changes require replay. |
@@ -56,6 +56,13 @@ levels. Actual local results and limitations are recorded in
 and compilation alone do not establish runtime acceptance.
 
 ### Durable staged ingestion
+
+The [architecture/design proposal](staged-ingestion.md) and
+[API specification](staged-ingestion-api.md) define the next bounded increment.
+They are review material, not implementation or acceptance evidence. Proposed
+delivery is durable intake, validation/status, atomic admission/recovery, then
+coverage and representative performance verification. Existing shared-batch and
+incremental-evidence checkpoints remain separate work.
 
 Retain original submissions as immutable evidence, including invalid/unparseable
 records. Distinguish durable receipt from authoritative ledger acceptance. A
