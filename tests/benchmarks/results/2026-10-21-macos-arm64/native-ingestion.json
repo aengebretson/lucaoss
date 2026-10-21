@@ -1,0 +1,541 @@
+{
+  "concurrency": [
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 13.782134121000004,
+            "parse_import": 0.30542420800000003,
+            "validate_group": 15.06327791600001
+          },
+          "jobs": {
+            "admit_group": 380,
+            "parse_import": 4,
+            "validate_group": 400
+          }
+        }
+      ],
+      "separate_books": false,
+      "wall_seconds": 29.169988917,
+      "workers": 1
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 5.202191211,
+            "validate_group": 5.011211872000003
+          },
+          "jobs": {
+            "admit_group": 109,
+            "validate_group": 196
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 5.803495805000003,
+            "parse_import": 0.163026917,
+            "validate_group": 4.858508877000003
+          },
+          "jobs": {
+            "admit_group": 271,
+            "parse_import": 4,
+            "validate_group": 204
+          }
+        }
+      ],
+      "separate_books": false,
+      "wall_seconds": 10.848702584,
+      "workers": 2
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 8.750115242000001,
+            "parse_import": 0.113373,
+            "validate_group": 4.584347912999999
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 3,
+            "validate_group": 94
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 8.589562581000001,
+            "validate_group": 4.128813754000001
+          },
+          "jobs": {
+            "admit_group": 111,
+            "validate_group": 81
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 8.947879288000001,
+            "validate_group": 4.462849329000001
+          },
+          "jobs": {
+            "admit_group": 90,
+            "validate_group": 107
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 7.412966872,
+            "parse_import": 1.1733875,
+            "validate_group": 4.734044867
+          },
+          "jobs": {
+            "admit_group": 84,
+            "parse_import": 1,
+            "validate_group": 118
+          }
+        }
+      ],
+      "separate_books": false,
+      "wall_seconds": 13.471871625,
+      "workers": 4
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 13.313284455000007,
+            "parse_import": 0.29250975,
+            "validate_group": 15.002318957999991
+          },
+          "jobs": {
+            "admit_group": 380,
+            "parse_import": 4,
+            "validate_group": 400
+          }
+        }
+      ],
+      "separate_books": true,
+      "wall_seconds": 28.625780875,
+      "workers": 1
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 11.486136954000003,
+            "parse_import": 0.258336542,
+            "validate_group": 12.153343662000001
+          },
+          "jobs": {
+            "admit_group": 190,
+            "parse_import": 2,
+            "validate_group": 200
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 11.486439170999999,
+            "parse_import": 0.25844337500000003,
+            "validate_group": 12.152952041999997
+          },
+          "jobs": {
+            "admit_group": 190,
+            "parse_import": 2,
+            "validate_group": 200
+          }
+        }
+      ],
+      "separate_books": true,
+      "wall_seconds": 23.930145375,
+      "workers": 2
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 12.040193961000002,
+            "parse_import": 0.222064375,
+            "validate_group": 12.418680921000004
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 12.051142832000004,
+            "parse_import": 0.215959625,
+            "validate_group": 12.360849968
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 12.100707791000001,
+            "parse_import": 0.221279917,
+            "validate_group": 12.418946922999998
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 12.159580084000003,
+            "parse_import": 0.197609375,
+            "validate_group": 12.372746626000001
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        }
+      ],
+      "separate_books": true,
+      "wall_seconds": 24.789631167,
+      "workers": 4
+    }
+  ],
+  "language": "C++23",
+  "peak_rss_platform_units": 444678144,
+  "samples": [
+    {
+      "bytes": 239780,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.055463709,
+          "parse_import": 0.079487416,
+          "validate_group": 0.056285375
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.192269834,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 0.210665416,
+        "parse_import": 0.226612958,
+        "validate_group": 0.200695
+      },
+      "jobs": {
+        "admit_group": 4,
+        "parse_import": 1,
+        "validate_group": 4
+      },
+      "processing_seconds": 0.639215625,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.037500834,
+      "records": 1000,
+      "repetition": 0,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 239780,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.054582,
+          "parse_import": 0.081954667,
+          "validate_group": 0.056540583
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.194177416,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 0.216411541,
+        "parse_import": 0.199679708,
+        "validate_group": 0.203738375
+      },
+      "jobs": {
+        "admit_group": 4,
+        "parse_import": 1,
+        "validate_group": 4
+      },
+      "processing_seconds": 0.621227417,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.037130792,
+      "records": 1000,
+      "repetition": 1,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 239780,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.052582625,
+          "parse_import": 0.079412375,
+          "validate_group": 0.054285167
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.187292625,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 0.20480312499999997,
+        "parse_import": 0.244875167,
+        "validate_group": 0.20340529200000002
+      },
+      "jobs": {
+        "admit_group": 4,
+        "parse_import": 1,
+        "validate_group": 4
+      },
+      "processing_seconds": 0.654383333,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.040481917,
+      "records": 1000,
+      "repetition": 2,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 2425220,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.058750167,
+          "parse_import": 0.079512792,
+          "validate_group": 0.05525425
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.194481959,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 2.148820501,
+        "parse_import": 1.883904458,
+        "validate_group": 2.063398247
+      },
+      "jobs": {
+        "admit_group": 40,
+        "parse_import": 1,
+        "validate_group": 40
+      },
+      "processing_seconds": 6.097496875,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.039863791,
+      "records": 10000,
+      "repetition": 0,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 2425220,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.058919459,
+          "parse_import": 0.079580208,
+          "validate_group": 0.055346375
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.195003333,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 2.1661004200000002,
+        "parse_import": 1.761583167,
+        "validate_group": 2.0221351660000004
+      },
+      "jobs": {
+        "admit_group": 40,
+        "parse_import": 1,
+        "validate_group": 40
+      },
+      "processing_seconds": 5.950960542,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.037739875,
+      "records": 10000,
+      "repetition": 1,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 2425220,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.061989625,
+          "parse_import": 0.086432083,
+          "validate_group": 0.056298125
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.205837459,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 2.221115419,
+        "parse_import": 1.804978042,
+        "validate_group": 2.1734698329999995
+      },
+      "jobs": {
+        "admit_group": 40,
+        "parse_import": 1,
+        "validate_group": 40
+      },
+      "processing_seconds": 6.200702625,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.038972708,
+      "records": 10000,
+      "repetition": 2,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 24549620,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.065678666,
+          "parse_import": 0.07760325,
+          "validate_group": 0.054378417
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.198853125,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 23.37107025600002,
+        "parse_import": 17.823320667,
+        "validate_group": 20.477310036999995
+      },
+      "jobs": {
+        "admit_group": 391,
+        "parse_import": 1,
+        "validate_group": 391
+      },
+      "processing_seconds": 61.675278167,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.055153167,
+      "records": 100000,
+      "repetition": 0,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 24549620,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.064460125,
+          "parse_import": 0.077465,
+          "validate_group": 0.054601333
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.197715667,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 23.245386833999977,
+        "parse_import": 17.040037208,
+        "validate_group": 20.128616369
+      },
+      "jobs": {
+        "admit_group": 391,
+        "parse_import": 1,
+        "validate_group": 391
+      },
+      "processing_seconds": 60.416087041,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.055600208,
+      "records": 100000,
+      "repetition": 1,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 24549620,
+      "group_size": 256,
+      "hash_backend": "CommonCrypto-SHA256",
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.065957375,
+          "parse_import": 0.080420792,
+          "validate_group": 0.057935625
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.205550792,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 23.102115985999983,
+        "parse_import": 17.367306917,
+        "validate_group": 20.158978084000022
+      },
+      "jobs": {
+        "admit_group": 391,
+        "parse_import": 1,
+        "validate_group": 391
+      },
+      "processing_seconds": 60.629995667,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.062065875,
+      "records": 100000,
+      "repetition": 2,
+      "sqlite": "3.53.1"
+    }
+  ],
+  "schema": "luca.native-ingestion-benchmark/1",
+  "scope": "Native durable receipt and direct in-process validation/admission; same synthetic cash/group workloads as Python baseline; no HTTP/report/GPU timing"
+}

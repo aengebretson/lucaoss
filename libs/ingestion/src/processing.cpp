@@ -485,6 +485,7 @@ Result<Json> SqliteStore::capabilities() const {
                 {"contexts", cfg["contexts"]},
                 {"durability_profile", "local-fsync-" + s.mode + "-v1"},
                 {"sqlite_version", sqlite3_libversion()},
+                {"hash_backend", hash_backend},
                 {"usage", db.one("SELECT bytes,slots FROM capacity WHERE id=1")},
                 {"retention", "no automatic receipt/payload purge"},
                 {"validation_available", true},

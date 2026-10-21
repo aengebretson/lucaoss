@@ -1,0 +1,24 @@
+{
+  "schema": "luca.native-ingestion-environment/1",
+  "before_native_commit": "e2b523d",
+  "compiler": "AppleClang 17.0.0.17000604",
+  "build": "Release -O3 -DNDEBUG -Wall -Wextra",
+  "sqlite": "3.53.1 WAL/FULL; macOS fullfsync",
+  "hash_backend": "CommonCrypto-SHA256",
+  "platform": "macOS 15.7.8 arm64 Apple M3 Max 16 logical CPUs 48 GiB",
+  "source_sha256": {
+    "libs/adapters/include/luca/adapters/transaction.hpp": "aa571acf011350d69ea5784495571fb74123375495d1fcdf33ff61ed11e1397a",
+    "libs/ingestion/CMakeLists.txt": "4285a58f44e020bf9a516bf0c0322e6c2db5a2c65dc388e8c75e70fe2dad08fc",
+    "libs/ingestion/include/luca/ingestion/sqlite.hpp": "d02951b2daed56ffcde30611230c9c07d3e6c936c556f6b41ef3eb677c7cf332",
+    "libs/ingestion/src/internal.hpp": "0c367f183dce7e4a0ceb2f9e9a542aee4f054891f9f34c13aed22ceb86cb9016",
+    "libs/ingestion/src/processing.cpp": "3b45402746f085731465f2dfea83ae377f021eda97c990bba3a0f6843eb29e35",
+    "libs/ingestion/src/schema.hpp": "3742163e83fe6975579f09d5c49870924c0e421a017b72aa970f82fcb6e7dc46",
+    "libs/ingestion/src/store.cpp": "b4e89686297037f145a89b3ab6d6000411be4849e9b1e7355e147ffdf7c9d2c7",
+    "libs/ingestion/src/transactions.hpp": "f296cb8a03ab615225bf757b8eb4af8bbbd11dd2225180c3ac5ca6665f69ec93",
+    "libs/ingestion/src/worker.cpp": "6d401ce7d0ff5d8a0876f0f1d765a7af76127554b2bcce236f99033215a21ace",
+    "libs/ledger/include/luca/lifecycle.hpp": "e31b48a403ac29acdbd16fe3e608f4b8ef96976db72515d8f0345f2a9997cd77",
+    "tests/benchmarks/native_ingestion_benchmark.cpp": "6a84b814897aaffdac2bbdb429f34262c66e10080354f6870254b791dd3cb05a"
+  },
+  "runner_sha256": "9b6ebe382d2ba1602334db282ed1f5e46fef8fcf211536c2ea3e2976890a0ef9",
+  "sqlite_library_sha256": "0820b8e1ecae8bb3be16281d839fc53b6bd3e3f21f7984ac2215775291561d6d"
+}

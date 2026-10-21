@@ -114,6 +114,15 @@ nanosecond range; unavailable reference contexts keep structurally sound members
 blocked even when another group member is invalid. Neither case can cause a
 false ledger admission.
 
+The same expanded native scenarios also pass with
+`-DLUCA_INGESTION_PORTABLE_SHA256=ON`. Long valid/oversized records exercise streaming
+hash chunk boundaries and verify payload/locator digests independently against
+the canonical codec's SHA-256. The native runtime and CLI also build with tests
+disabled and `-DCMAKE_DISABLE_FIND_PACKAGE_Python3=TRUE`; no Python executable is
+discovered in that build. A cross-runtime check creates a WAL store with native
+SQLite 3.53.1, verifies that the native 3.45.3 build rejects it with
+`UNPATCHED_WAL_RUNTIME`, and confirms the newer runtime can still reopen it as WAL.
+
 ## Performance evidence
 
 The native Release runner measures the same synthetic cash shapes, group sizes,
@@ -128,6 +137,56 @@ HTTP/GPU/reporting acceptance, or a comparison with Geneva.
 build/native-release/libs/ingestion/luca_native_ingestion_benchmark \
   tests/benchmarks/results/2026-10-21-macos-arm64/native-ingestion.json
 ```
+
+The initial native measurement at commit `e2b523d` is retained as
+`native-ingestion-before.json`. It exposed unnecessary all-import copies of full
+transaction documents and a slow portable receipt-hash path on this machine.
+The follow-up keeps compact identity/link data for group sealing, returns only
+sealed member identities from closure, and uses the macOS SHA-256 provider at the
+storage boundary. Other POSIX hosts keep a block-oriented portable fallback.
+Buffered hash updates preserve exact original bytes even for oversized records;
+no financial arithmetic, canonical format or identity framing changes.
+
+Final medians over three fresh stores per size, using SQLite 3.53.1 WAL/FULL,
+macOS full-sync and declared groups of at most 256:
+
+| Records | Durable receipt | Background processing | Durable incremental 256-record processing |
+| --- | --- | --- | --- |
+| 1,000 | 37.5 ms | 0.639 s | 0.192 s |
+| 10,000 | 39.0 ms | 6.097 s | 0.195 s |
+| 100,000 | 55.6 ms | 60.630 s | 0.199 s |
+
+The initial native 100k baseline was 162.7 ms receipt / 62.723 s processing.
+The final measured peak process RSS drops from **1,578,745,856 bytes (1,506 MiB)**
+to **444,678,144 bytes (424 MiB)**. RSS includes the runner, fixture creation,
+allocator retention and all live caches; it is not retained bytes per record.
+The historical Python measurement was 61.6 ms / 69.573 s for that workload,
+with parent and child process memory reported separately. These observations
+compare concrete implementations; they do not establish an intrinsic language
+speed ratio or production latency guarantees.
+
+Independent singleton workloads use four 100-record imports with 20 retained
+invalid and 380 verified committed records. One observation per matrix cell:
+
+| Native workers | Shared book | Separate books |
+| --- | --- | --- |
+| 1 | 29.170 s | 28.626 s |
+| 2 | 10.849 s | 23.930 s |
+| 4 | 13.472 s | 24.790 s |
+
+This does not demonstrate linear scaling. Per-group transactions, connection
+lifetime/checkpoint behavior, scheduler overhead and storage contention remain
+profiling candidates. Input grouping changes atomicity and cannot be silently
+used as a substitute for independent outcomes. Production commit coalescing must
+preserve group-level failures, receipts and ordering.
+
+Raw artifacts: [final native run](../../tests/benchmarks/results/2026-10-21-macos-arm64/native-ingestion.json),
+[final environment/source hashes](../../tests/benchmarks/results/2026-10-21-macos-arm64/native-ingestion-environment.json),
+[initial native run](../../tests/benchmarks/results/2026-10-21-macos-arm64/native-ingestion-before.json),
+[initial source hashes](../../tests/benchmarks/results/2026-10-21-macos-arm64/native-ingestion-before-environment.json),
+and [historical Python run](../../tests/benchmarks/results/2026-10-21-macos-arm64/processing-grouped.json).
+All nine final native samples and six partition workloads passed their correctness
+assertions. No HTTP framework, GPU or report throughput was measured.
 
 ## Remaining scope
 

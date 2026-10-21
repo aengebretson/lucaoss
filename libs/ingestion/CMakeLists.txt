@@ -5,6 +5,10 @@ add_library(luca_ingestion_sqlite STATIC src/store.cpp src/processing.cpp src/wo
 add_library(luca::ingestion_sqlite ALIAS luca_ingestion_sqlite)
 set_target_properties(luca_ingestion_sqlite PROPERTIES EXPORT_NAME ingestion_sqlite)
 target_compile_features(luca_ingestion_sqlite PUBLIC cxx_std_23)
+option(LUCA_INGESTION_PORTABLE_SHA256 "Use portable storage SHA256 even when a platform provider exists" OFF)
+if(LUCA_INGESTION_PORTABLE_SHA256)
+  target_compile_definitions(luca_ingestion_sqlite PRIVATE LUCA_INGESTION_PORTABLE_SHA256=1)
+endif()
 target_include_directories(luca_ingestion_sqlite PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)

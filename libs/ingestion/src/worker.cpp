@@ -192,10 +192,19 @@ struct Worker::Impl {
       Hash line_hash;
       bool blank = true, too_long = false;
       char c;
+      std::array<char, 4096> hash_buffer{};
+      std::size_t buffered = 0;
+      auto hash_chunk = [&] {
+        std::string_view bytes(hash_buffer.data(), buffered);
+        digest.update(bytes);
+        line_hash.update(bytes);
+        buffered = 0;
+      };
       while (input.get(c)) {
         ++offset;
-        digest.update(std::string_view(&c, 1));
-        line_hash.update(std::string_view(&c, 1));
+        hash_buffer[buffered++] = c;
+        if (buffered == hash_buffer.size())
+          hash_chunk();
         if (c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != '\v' && c != '\f')
           blank = false;
         if (raw.size() < limits.max_record_bytes)
@@ -205,6 +214,8 @@ struct Worker::Impl {
         if (c == '\n')
           break;
       }
+      if (buffered)
+        hash_chunk();
       if (blank && !too_long)
         continue;
       if (++ordinal > limits.max_records) {
@@ -233,19 +244,34 @@ struct Worker::Impl {
              "PAYLOAD_CORRUPT");
     auto db = s->db(true);
     lease(db, job);
-    auto rows = db.rows("SELECT * FROM staged_records WHERE import_id=? ORDER BY ordinal",
-                        {job["import_id"]});
+    // Group closure needs identities/links, not raw payloads, typed packets or
+    // retained diagnostics. Extract compact fields once instead of decoding and
+    // copying every complete document into a second all-import JSON graph.
+    auto rows =
+        db.rows("SELECT id,json_extract(body,'$.raw_id') AS raw_id,"
+                "json_extract(body,'$.raw_causal') AS raw_causal,"
+                "json_extract(body,'$.atomic_group') AS atomic_group,"
+                "json_extract(body,'$.economic_id') AS economic_id,"
+                "json_extract(body,'$.raw.action') AS action,"
+                "coalesce(json_extract(body,'$.membership_unknown'),0) AS membership_unknown,"
+                "json_type(body,'$.raw')='null' AS unparsed "
+                "FROM staged_records WHERE import_id=? ORDER BY ordinal",
+                {job["import_id"]});
+    const auto record_count = rows.size();
     Json records = Json::array(), ids = Json::array();
     bool declared = false, unknown = false, unparsed = false;
-    for (const auto &row : rows) {
-      auto data = parse(row["body"]);
-      data["id"] = row["id"];
+    for (auto &row : rows) {
       ids.push_back(row["id"]);
-      declared = declared || !data["atomic_group"].is_null();
-      unknown = unknown || data.value("membership_unknown", false);
-      unparsed = unparsed || data["raw"].is_null();
-      records.push_back(std::move(data));
+      declared = declared || !row["atomic_group"].is_null();
+      unknown = unknown || row["membership_unknown"] == 1;
+      unparsed = unparsed || row["unparsed"] == 1;
+      row["raw"] = {{"action", row["action"]}};
+      row.erase("action");
+      row.erase("membership_unknown");
+      row.erase("unparsed");
+      records.push_back(std::move(row));
     }
+    rows = Json();
     if (unknown || (declared && unparsed))
       failure = issue("GROUP_MEMBERSHIP_UNKNOWN");
     auto at = s->event(db, job["import_id"], "import.enumerated");
@@ -268,7 +294,7 @@ struct Worker::Impl {
         s->enqueue(db, "validate_group", group_id, job["import_id"]);
       }
       db.exec("UPDATE progress SET enumeration='complete',total=? WHERE import_id=?",
-              {rows.size(), job["import_id"]});
+              {record_count, job["import_id"]});
     }
     s->history(db, ids, at);
     complete(db, job);

@@ -228,7 +228,7 @@ inline std::vector<Json> groups_for(const Json &records, bool whole) {
     auto [it, inserted] = group_index.emplace(root(i), groups.size());
     if (inserted)
       groups.push_back(Json::array());
-    groups[it->second].push_back(records[i]);
+    groups[it->second].push_back(Json{{"id", records[i]["id"]}});
   }
   return groups;
 }

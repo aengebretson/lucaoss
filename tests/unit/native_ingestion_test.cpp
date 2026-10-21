@@ -544,6 +544,24 @@ void operational_failures_and_group_bounds() {
 }
 void malformed_limits_and_corruption() {
   {
+    Temp long_lines;
+    auto store = opened(long_lines);
+    const auto first = cash("long-line", "long-e").dump() + std::string(10000, ' ') + "\n";
+    const auto body = first + std::string(70000, ' ') + "\n";
+    auto id = receive(store, body);
+    drain(store);
+    auto status = take(store.status(id));
+    check(status["validation_counts"]["invalid"] == 1);
+    check(status["commitment_record_counts"]["committed"] == 1);
+    const auto digest = luca::serialization::detail::sha256_hex(std::as_bytes(std::span{body}));
+    check(status["receipt"]["payload"]["digest"].get<std::string>() == digest);
+    auto records = items(store, "records", id);
+    check(records[0]["locator"]["sha256"].get<std::string>() ==
+          luca::serialization::detail::sha256_hex(std::as_bytes(std::span{first})));
+    check(items(store, "diagnostics", id, {{"code", "RECORD_LIMIT_EXCEEDED"}}).size() >= 1);
+  }
+
+  {
     Temp metadata_root;
     auto metadata_store = opened(metadata_root);
     auto historical = cash("historical", "historical-e");

@@ -19,6 +19,9 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#if defined(__APPLE__) && !defined(LUCA_INGESTION_PORTABLE_SHA256)
+#include <CommonCrypto/CommonDigest.h>
+#endif
 
 namespace luca::ingestion::detail {
 [[noreturn]] inline void fail(std::string code, bool retry = false) {
@@ -87,8 +90,34 @@ inline std::string unhex(std::string_view data) {
     result += static_cast<char>(digit(data[i]) * 16 + digit(data[i + 1]));
   return result;
 }
-// Streaming SHA-256 reuses the financial codec's compression primitive. No
-// OpenSSL, shell commands, or unbounded whole-file allocation is required.
+// Storage hashing is an adapter concern. macOS uses its native digest provider;
+// other POSIX hosts retain the portable codec implementation. Digests/framing
+// are byte-identical and checked against published cross-language vectors.
+#if defined(__APPLE__) && !defined(LUCA_INGESTION_PORTABLE_SHA256)
+inline constexpr const char *hash_backend = "CommonCrypto-SHA256";
+class Hash {
+  CC_SHA256_CTX state_{};
+
+public:
+  Hash() { ensure(CC_SHA256_Init(&state_) == 1, "HASH_UNAVAILABLE"); }
+  void update(std::span<const std::byte> data) {
+    while (!data.empty()) {
+      auto count = std::min<std::size_t>(data.size(), UINT32_MAX);
+      ensure(CC_SHA256_Update(&state_, data.data(), static_cast<CC_LONG>(count)) == 1,
+             "HASH_UNAVAILABLE");
+      data = data.subspan(count);
+    }
+  }
+  void update(std::string_view data) { update(std::as_bytes(std::span{data})); }
+  std::string finish() {
+    std::array<std::byte, 32> out{};
+    ensure(CC_SHA256_Final(reinterpret_cast<unsigned char *>(out.data()), &state_) == 1,
+           "HASH_UNAVAILABLE");
+    return hex(out);
+  }
+};
+#else
+inline constexpr const char *hash_backend = "portable-SHA256";
 class Hash {
   std::array<std::uint32_t, 8> state_{0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
                                       0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19};
@@ -99,11 +128,19 @@ class Hash {
 public:
   void update(std::span<const std::byte> data) {
     size_ += data.size();
-    for (auto b : data) {
-      block_[used_++] = b;
-      if (used_ == 64) {
-        serialization::detail::sha256_compress(state_, block_.data());
-        used_ = 0;
+    while (!data.empty()) {
+      if (used_ == 0 && data.size() >= 64) {
+        serialization::detail::sha256_compress(state_, data.data());
+        data = data.subspan(64);
+      } else {
+        auto count = std::min(data.size(), block_.size() - used_);
+        std::copy_n(data.begin(), count, block_.begin() + used_);
+        used_ += count;
+        data = data.subspan(count);
+        if (used_ == 64) {
+          serialization::detail::sha256_compress(state_, block_.data());
+          used_ = 0;
+        }
       }
     }
   }
@@ -127,6 +164,7 @@ public:
     return hex(out);
   }
 };
+#endif
 inline std::string sha(std::string_view value) {
   Hash hash;
   hash.update(value);

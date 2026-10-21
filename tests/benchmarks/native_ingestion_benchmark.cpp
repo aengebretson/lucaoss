@@ -85,13 +85,13 @@ int main(int argc, char **argv) {
     return 1;
   std::filesystem::path root = directory;
   try {
-    Json result = {
-        {"schema", "luca.native-ingestion-benchmark/1"},
-        {"language", "C++23"},
-        {"scope", "Native durable receipt and direct in-process validation/admission; same "
-                  "synthetic cash/group workloads as Python baseline; no HTTP/report/GPU timing"},
-        {"samples", Json::array()},
-        {"concurrency", Json::array()}};
+    Json result = {{"schema", "luca.native-ingestion-benchmark/1"},
+                   {"language", "C++23"},
+                   {"scope",
+                    "Native durable receipt and direct in-process validation/admission; same "
+                    "synthetic cash/group workloads as Python baseline; no HTTP/report/GPU timing"},
+                   {"samples", Json::array()},
+                   {"concurrency", Json::array()}};
     for (const std::size_t count : {1000, 10000, 100000})
       for (unsigned repetition = 0; repetition < 3; ++repetition) {
         auto store = open(root, "book-" + std::to_string(count) + "-" + std::to_string(repetition));
@@ -128,7 +128,8 @@ int main(int argc, char **argv) {
                        {"incremental_processing_seconds", incremental_seconds},
                        {"incremental", incremental},
                        {"profile", take(store.capabilities())["durability_profile"]},
-                       {"sqlite", take(store.capabilities())["sqlite_version"]}};
+                       {"sqlite", take(store.capabilities())["sqlite_version"]},
+                       {"hash_backend", take(store.capabilities())["hash_backend"]}};
         sample.update(stages);
         result["samples"].push_back(sample);
       }

@@ -27,7 +27,11 @@ The standard library does not supply a JSON parser or a transactional durable
 store, so these dependencies remain at the external/storage adapter boundary.
 Its public JSON objects represent versioned external documents; authoritative
 financial values remain typed C++ objects. The separate package component export
-keeps dependencies out of financial-only consumers. No generic scheduler,
+keeps dependencies out of financial-only consumers. Group closure uses compact
+identity/link records; complete transaction documents remain in durable staging.
+Storage hashing uses the native macOS digest provider when available, with a
+checked portable fallback; canonical financial encoding/hashes are unchanged.
+No generic scheduler,
 interpreter, cloud framework or broker is added to financial targets.
 
 ## REST choice

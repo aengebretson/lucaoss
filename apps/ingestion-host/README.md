@@ -4,6 +4,8 @@ Luca's reusable ingestion runtime, durable store, background workers and CLI are
 C++23. No Python interpreter, subprocess financial engine, or HTTP server is
 required. Financial values/lifecycle rules remain in the pure C++ libraries.
 Storage and scheduling belong to the optional `luca::ingestion_sqlite` component.
+Group sealing keeps compact identity/link data rather than copying complete
+transaction documents into an all-import graph.
 
 ## Build and embed
 
@@ -166,7 +168,10 @@ new submission. Transfer locks use a bounded 4,096-stripe namespace.
 Durability mode is pinned before opening SQLite. Patched SQLite uses WAL/FULL;
 older SQLite uses DELETE/EXTRA to avoid the upstream WAL-reset bug. Reopening a
 WAL store on an unpatched runtime is rejected. macOS full-sync settings are
-preserved. Schema-1 stores from the original intake host migrate atomically to
+preserved. Storage SHA-256 uses CommonCrypto on macOS and a portable implementation
+on other POSIX hosts; `LUCA_INGESTION_PORTABLE_SHA256=ON` forces the portable
+backend. Both produce identical published hashes; the financial codec is unchanged.
+Schema-1 stores from the original intake host migrate atomically to
 schema 2; receipts, payloads, keys and resumable transfers retain their identities.
 Older hosts cannot reopen schema 2. No automatic profile conversion, evidence
 purge, backup/restore or power-loss certification is implied.
