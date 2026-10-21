@@ -1,0 +1,14 @@
+{
+  "tenant_id": "example-tenant",
+  "book_id": "fund-a",
+  "source_ids": ["custodian-a"],
+  "contexts": {
+    "cash-equity-v1-ref42": {
+      "adapter": "luca.transactions.jsonl/1",
+      "normalization": "source-book-identity/1",
+      "rules": "cash-equity/1",
+      "engine": "luca/0.1",
+      "reference_snapshot": "ref42"
+    }
+  }
+}

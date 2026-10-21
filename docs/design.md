@@ -334,6 +334,22 @@ Engine, policy, context and input identities accompany canonical results; operat
 
 ## Additive public interfaces
 
+- [Durable staged ingestion](staged-ingestion.md) separates immutable
+  durable receipt, versioned asynchronous validation, strict ledger admission
+  and projection coverage. Its [proposed API](staged-ingestion-api.md) specifies
+  retained diagnostics/status, resumable uploads, scoped idempotency and polling.
+  The optional host owns storage/work intent and atomic canonical append/commit
+  receipts; the financial core retains its synchronous validation semantics and
+  has no new I/O dependency. The first
+  [local intake host](../apps/ingestion-host/README.md) implements durable receipt,
+  original bytes, work intent, retries, resumable transfer and restart cleanup
+  using Python's standard SQLite/filesystem adapters. It adds no C++ target or
+  dependency. Validation workers, per-record diagnostics, ledger admission and
+  HTTP remain proposed. Patched SQLite uses WAL/FULL; older runtimes use
+  rollback/EXTRA to avoid the upstream WAL-reset bug, with the actual durability
+  profile disclosed in receipts. This is a bounded local host, not a distributed
+  storage or performance acceptance claim.
+
 - [Journal balances](journal-balances.md) reduce whole journals under an explicit
   book/revision/policy/context contract and merge disjoint compatible partials.
   The opt-in `luca::accounting` target depends only on `luca::ledger`; existing

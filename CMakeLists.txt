@@ -118,6 +118,13 @@ if(LUCA_BUILD_TESTS)
   enable_testing()
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_package(Threads REQUIRED)
+  if(UNIX)
+    add_test(
+      NAME luca_durable_intake_test
+      COMMAND ${Python3_EXECUTABLE} -B -m unittest discover
+        -s ${CMAKE_CURRENT_SOURCE_DIR}/tests/ingestion -p "test_*.py")
+    set_tests_properties(luca_durable_intake_test PROPERTIES TIMEOUT 120)
+  endif()
   add_executable(luca_journal_balances_test tests/unit/journal_balances_test.cpp)
   target_link_libraries(luca_journal_balances_test PRIVATE luca::accounting Threads::Threads)
   target_compile_definitions(luca_journal_balances_test PRIVATE

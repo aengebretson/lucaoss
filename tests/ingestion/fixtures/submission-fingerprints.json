@@ -1,0 +1,28 @@
+{
+  "version": "submission/1",
+  "tenant_id": "example-tenant",
+  "book_id": "fund-a",
+  "vectors": [
+    {
+      "payload_hex": "",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42"
+      },
+      "expected_submission_sha256": "0f605b4f51b01ddb653b75264e103e7af3ac4a191ed1ad56d774a533f3541ff2"
+    },
+    {
+      "payload_hex": "616263",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "whole_import",
+        "client_reference": "batch-A",
+        "replaces": {"import_id": "imp-old", "record_ids": ["z", "a", "a"]}
+      },
+      "expected_submission_sha256": "fd8bb7b2dd186646bd08d67dd2b1be632d82111e29b2c4e3f7a85b2845d04220"
+    }
+  ]
+}
