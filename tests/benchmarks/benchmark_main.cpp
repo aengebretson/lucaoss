@@ -149,6 +149,7 @@ int main(int argc, char** argv) {
     luca::bench::add_ledger_benchmarks(benchmarks, configuration);
     luca::bench::add_projection_benchmarks(benchmarks, configuration);
     luca::bench::add_reconciliation_benchmarks(benchmarks, configuration);
+    luca::bench::add_journal_balance_benchmarks(benchmarks, configuration);
     std::vector<luca::bench::Measurement> measurements;
     for (const auto& benchmark : benchmarks)
       if (configuration.filter.empty() || benchmark.name.find(configuration.filter) != std::string::npos)

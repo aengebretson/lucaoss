@@ -334,6 +334,14 @@ Engine, policy, context and input identities accompany canonical results; operat
 
 ## Additive public interfaces
 
+- [Journal balances](journal-balances.md) reduce whole journals under an explicit
+  book/revision/policy/context contract and merge disjoint compatible partials.
+  The opt-in `luca::accounting` target depends only on `luca::ledger`; existing
+  journal headers and umbrella dependencies stay compatible. Debit and credit
+  turnover accumulate separately, with sorted owned evidence and per-currency
+  trial-balance controls. Parallel merge laws apply only within the documented
+  monotone gross-total range; book assignment and input completeness are explicit
+  caller responsibilities, not inferred from chart-account names.
 - [Checkpoint continuation](checkpoint-result.md) returns state plus a refreshed canonical manifest under the existing conservative compatibility rules. Changed cutoffs or corrections targeting the old prefix still require full replay.
 - [Settlement-date journals](settlement-date-projection.md) implement the narrow USD fixture policy alongside the existing trade-date projection. These are financial projection foundations, not production GAAP/IFRS/tax coverage.
 - [Trade reconciliation](trade-reconciliation.md) compares explicitly mapped trade identities with separate immutable observations. The bounded CSV adapter is available through opt-in `luca::adapters`; core targets keep their existing dependency graph.

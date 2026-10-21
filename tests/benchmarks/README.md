@@ -81,6 +81,17 @@ size per event.
 
 ## Interpreting baselines
 
+The opt-in accounting surface also supplies `journal_balances.full` and
+`journal_balances.merge_prepared_4` cases: use `--filter journal_balances` to select
+them. Synthetic whole journals use one explicit book, 100 cash chart accounts,
+three currencies and unit contributions. Setup and four-partial construction are
+outside timing; measured work includes sorted evidence construction. Validation
+compares full/merged results and independently checks the expected gross total.
+The merge-only case excludes partial computation and is not an end-to-end
+parallel speedup. The suite still prepares other existing benchmark fixtures;
+its process memory includes that setup. Production staged-ingestion/report latency,
+worker scaling and larger representative datasets remain separate acceptance.
+
 Numbers depend on the processor, memory, operating system, compiler, standard
 library, build flags, system load, and dataset. They are observations, not
 architectural guarantees. Any performance claim must include hardware details,

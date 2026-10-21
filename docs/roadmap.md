@@ -31,7 +31,7 @@ correctness checks and measured performance are separate evidence.
 | Checkpoint | Required outcome | Position at the implementation baseline |
 | --- | --- | --- |
 | 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: these financial primitives exist; latest integrated runtime acceptance remains pending. |
-| 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Planned: journal factories/projections exist; no public reusable journal-balance/trial-balance reducer. |
+| 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Partial: the journal-balance increment adds the public reducer, compatible partition merge and owned evidence. Book assignment/coverage remain caller responsibilities; acceptance evidence is tracked separately. |
 | 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Planned: core lifecycle acceptance is synchronous and rejects an invalid batch atomically; no durable staging host is supplied. |
 | 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: algebra descriptors and exact-cash contracts exist; general executable composition and parallel scheduling do not. |
 | 5. Shared batch preparation | Resolve/select/order once per compatible snapshot and reuse compact immutable batches across projections. | Planned: lifecycle projection reuses a resolved set, but projections prepare economic views separately; no shared prepared-batch public boundary. |
@@ -45,6 +45,13 @@ Evidence: [integration review](reviews/OSS_FOUNDATIONS_20260930.md),
 [transformation inventory](transformation-contract.md),
 [checkpoint continuation](checkpoint-result.md) and
 [benchmark infrastructure](../tests/benchmarks/README.md).
+
+The subsequent [journal-balance increment](journal-balances.md) adds checkpoint 2's
+public API and a ten-view accounting walkthrough, plus installed/embedded
+consumers and focused reduction/merge benchmarks. It does not complete checkpoint
+7's external-observation reporting host or checkpoint 8's representative service
+levels. The table's other positions retain the reviewed baseline; authored checks
+and compilation do not by themselves establish runtime acceptance.
 
 ### Durable staged ingestion
 

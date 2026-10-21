@@ -13,6 +13,7 @@ get_filename_component(
 set(expected_include_dir "${LUCA_EXPECTED_INSTALL_PREFIX}/include")
 
 foreach(luca_target IN ITEMS
+    luca::accounting
     luca::ledger
     luca::portfolio
     luca::reconciliation
@@ -39,6 +40,16 @@ foreach(luca_target IN ITEMS
       "${include_dirs}; expected ${expected_include_dir}")
   endif()
 endforeach()
+
+get_target_property(accounting_links luca::accounting INTERFACE_LINK_LIBRARIES)
+if(NOT accounting_links STREQUAL "luca::ledger")
+  message(FATAL_ERROR "luca::accounting has unexpected dependencies: ${accounting_links}")
+endif()
+add_executable(luca_package_journal_balances_consumer ../../examples/journal-balances/main.cpp)
+target_link_libraries(luca_package_journal_balances_consumer PRIVATE luca::accounting)
+add_test(NAME luca_package_journal_balances_run COMMAND luca_package_journal_balances_consumer)
+set_tests_properties(luca_package_journal_balances_run PROPERTIES
+  PASS_REGULAR_EXPRESSION "trial_balance_currency=USD debit_balances_scaled=100000000000 credit_balances_scaled=100000000000")
 
 get_target_property(portfolio_links luca::portfolio INTERFACE_LINK_LIBRARIES)
 if(NOT portfolio_links STREQUAL "luca::ledger")

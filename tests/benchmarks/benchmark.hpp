@@ -59,5 +59,6 @@ inline Measurement measure(const Benchmark& benchmark, std::size_t repetitions) 
 void add_ledger_benchmarks(std::vector<Benchmark>&, const Configuration&);
 void add_projection_benchmarks(std::vector<Benchmark>&, const Configuration&);
 void add_reconciliation_benchmarks(std::vector<Benchmark>&, const Configuration&);
+void add_journal_balance_benchmarks(std::vector<Benchmark>&, const Configuration&);
 
 }  // namespace luca::bench

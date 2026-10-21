@@ -19,6 +19,16 @@ target_include_directories(luca_ledger INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/ledger/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
+# New accounting functionality is opt-in; existing umbrella dependencies stay compatible.
+add_library(luca_accounting INTERFACE)
+add_library(luca::accounting ALIAS luca_accounting)
+set_target_properties(luca_accounting PROPERTIES EXPORT_NAME accounting)
+target_compile_features(luca_accounting INTERFACE cxx_std_23)
+target_include_directories(luca_accounting INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/accounting/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_link_libraries(luca_accounting INTERFACE luca::ledger)
+
 add_library(luca_portfolio INTERFACE)
 add_library(luca::portfolio ALIAS luca_portfolio)
 set_target_properties(luca_portfolio PROPERTIES EXPORT_NAME portfolio)
@@ -64,6 +74,7 @@ target_link_libraries(pacioli INTERFACE
 install(
   TARGETS
     luca_ledger
+    luca_accounting
     luca_portfolio
     luca_reconciliation
     luca_adapters
@@ -72,6 +83,7 @@ install(
 install(
   DIRECTORY
     libs/ledger/include/
+    libs/accounting/include/
     libs/portfolio/include/
     libs/reconciliation/include/
     libs/adapters/include/
@@ -105,6 +117,12 @@ endif()
 if(LUCA_BUILD_TESTS)
   enable_testing()
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  find_package(Threads REQUIRED)
+  add_executable(luca_journal_balances_test tests/unit/journal_balances_test.cpp)
+  target_link_libraries(luca_journal_balances_test PRIVATE luca::accounting Threads::Threads)
+  target_compile_definitions(luca_journal_balances_test PRIVATE
+    LUCA_JOURNAL_BALANCE_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/journal-balances/walkthrough.tsv")
+  add_test(NAME luca_journal_balances_test COMMAND luca_journal_balances_test)
   add_executable(pacioli_smoke_test tests/smoke.cpp)
   target_link_libraries(pacioli_smoke_test PRIVATE pacioli)
   add_test(NAME pacioli_smoke_test COMMAND pacioli_smoke_test)
@@ -335,8 +353,9 @@ if(LUCA_BUILD_BENCHMARKS)
     tests/benchmarks/benchmark_main.cpp
     tests/benchmarks/ledger_benchmark.cpp
     tests/benchmarks/projection_benchmark.cpp
-    tests/benchmarks/reconciliation_benchmark.cpp)
-  target_link_libraries(pacioli_benchmarks PRIVATE pacioli)
+    tests/benchmarks/reconciliation_benchmark.cpp
+    tests/benchmarks/journal_balance_benchmark.cpp)
+  target_link_libraries(pacioli_benchmarks PRIVATE pacioli luca::accounting)
   target_compile_definitions(pacioli_benchmarks PRIVATE
     LUCA_BENCHMARK_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
     LUCA_BENCHMARK_COMPILER="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

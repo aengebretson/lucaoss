@@ -200,6 +200,11 @@ separately from compilation evidence.
 
 ### Result and portfolio cross-check
 
+The later [public journal-balance API](journal-balances.md) supplies owned exact
+balances, currency controls and entry/line evidence from these projected journals.
+It is an opt-in accounting target with explicit book/context and partition rules;
+the richer portable result/cross-check shape below remains fixture vocabulary.
+
 A result has a stable `result_id`, all version and context inputs, declared
 resolved input identities, selected journal-entry identities, exact currency
 totals, exact account balances, a portfolio cross-check, and an explanation of
