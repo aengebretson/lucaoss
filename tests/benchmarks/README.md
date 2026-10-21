@@ -104,27 +104,28 @@ command. Use comparable Release builds, and do not infer an optimization mandate
 from one result. Algorithm changes and profiling-driven optimization are
 intentionally outside this initial measurement infrastructure.
 
-## Staged validation and admission
+## Native staged validation and admission
 
-`processing_benchmark.py` measures durable receipt separately from background
-parse, native exact validation, dependency-closed admission and incremental
-append. It verifies committed counts and canonical sequencing, probes a warm
-prepared suffix against growing prefixes, and exercises mixed valid/invalid
-singletons with 1/2/4 workers in shared versus separate book shards.
+Enable `LUCA_BUILD_INGESTION=ON` and `LUCA_BUILD_BENCHMARKS=ON`, then run:
 
 ```sh
-python3 -B tests/benchmarks/processing_benchmark.py \
-  --engine build/review-release/tools/ingestion-engine/luca-ingestion-engine \
-  --records 1000 10000 100000 --group-size 256 --repetitions 3 \
-  --output /tmp/luca-processing-benchmark.json
+build/native-release/libs/ingestion/luca_native_ingestion_benchmark \
+  /tmp/luca-native-ingestion.json
 ```
 
-Groups are declared input atomicity, not an optimization the host may silently
-apply to independent transactions. Run `--group-size 1` separately for singleton
-costs. The timings include local full-sync metadata/canonical writes and exclude
-network/reporting. A warm suffix probe includes IPC and canonicalization, excludes
-persistence, and is not a service throughput figure. See the
-[validation/admission review](../../docs/reviews/VALIDATION_ADMISSION_20261021.md).
+The native C++ runner separately measures durable receipt and background parse,
+exact validation and atomic admission, with 1k/10k/100k records and three fresh-store
+repetitions. Declared input groups contain at most 256 records. It also measures
+256-record incremental appends with the same worker/cache and a six-cell worker/
+book matrix with 400 independent mixed-validity records. Every result checks
+committed/invalid counts. Grouping is input atomicity, not a permitted silent
+optimization. No HTTP, reports or GPU work is measured.
+
+The older `processing-grouped.json` artifact describes the Python prototype at
+commit `22353bf`, which remains reproducible from Git history. Its source script
+and runtime are removed from the application. Do not infer a language speedup from
+unmatched durability profiles, compiler flags or workloads; see
+[the native verification report](../../docs/reviews/NATIVE_INGESTION_20261021.md).
 
 `prepared_append_benchmark.cpp` compares the unchanged public strict `accept`
 contract before/after suffix preparation. Compile it with `-std=c++23 -O3` against

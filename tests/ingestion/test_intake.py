@@ -16,7 +16,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-HOST = Path(__file__).resolve().parents[2] / "apps" / "ingestion-host"
+HOST = Path(__file__).resolve().parent / "legacy_reference"
 sys.path.insert(0, str(HOST))
 from luca_ingestion import IntakeError, IntakeStore, Limits
 from luca_ingestion.store import _patched_wal

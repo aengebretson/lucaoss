@@ -1,4 +1,8 @@
-# Transaction validation and ledger admission — 2026-10-21
+# Initial Python orchestration prototype — historical verification
+
+This report describes commit `22353bf` and its measured Python host. It is
+superseded by the [native C++ implementation and evidence](NATIVE_INGESTION_20261021.md).
+Its results are retained as the before baseline; they do not verify the current runtime.
 
 Base: merged main `b03b0cd` (PR #21 durable intake). This increment adds the
 bounded local worker/validation/admission path. It does not deploy a service or

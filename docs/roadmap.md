@@ -31,9 +31,9 @@ correctness checks and measured performance are separate evidence.
 
 | Checkpoint | Required outcome | Position at the implementation baseline |
 | --- | --- | --- |
-| 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: the financial primitives and optional host pass all 37 root checks in both Debug and Release locally with AppleClang 17; wider compiler/CI acceptance remains open. |
+| 1. Accepted financial baseline | Exact values, immutable lifecycle, portfolio projections, both journal policies and executable full-path conformance. | Partial: the financial primitives and optional host pass all 38 root checks in both Debug and Release locally with AppleClang 17; wider compiler/CI acceptance remains open. |
 | 2. Posting and balance algebra | Public exact journal reduction by explicit book, chart account and currency; trial balances with contributing line identities. | Bounded implementation verified locally: ten policy/time views, whole-entry partition merge, owned evidence and sanitizer checks pass. Book assignment/coverage remain explicit caller responsibilities. |
-| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Bounded local implementation: durable bytes/receipts, leased asynchronous validation, retained per-record errors/status, versioned revalidation and atomic canonical ledger admission pass crash/concurrency checks. HTTP, report coverage and distributed production adapters remain open. Existing core acceptance stays strict. |
+| 3. Durable staged ingestion | Fast durable receipt, asynchronous validation, retained transaction errors/status and idempotent promotion to accepted events. | Bounded native C++ implementation: durable bytes/receipts, leased asynchronous validation, retained per-record errors/status, versioned revalidation and atomic canonical ledger admission pass crash/concurrency checks. HTTP, report coverage and distributed production adapters remain open. Existing core acceptance stays strict. |
 | 4. Execution and partition contracts | Typed context/dependency boundaries, complete financial keys, deterministic ordering and permitted merge rules. | Partial: descriptors, exact-cash contracts and tested journal-balance partition contracts exist; general executable composition and parallel scheduling do not. |
 | 5. Shared batch preparation | Resolve/select/order once per compatible snapshot and reuse compact immutable batches across projections. | Planned: lifecycle projection reuses a resolved set, but projections prepare economic views separately; no shared prepared-batch public boundary. |
 | 6. Efficient incremental evidence | Update affected partitions and verified evidence without scanning all history for each small append; preserve full-replay equivalence. | Partial: canonical formats/checkpoints and bounded continuation exist. Admission now prepares suffixes against indexed causal targets and persists only new canonical records/hashes. Projection manifests still rebuild/hash full history; cutoffs cannot advance and prefix-targeting changes require replay. |
@@ -63,11 +63,12 @@ The first [local intake host](../apps/ingestion-host/README.md) implements durab
 receipt, original bytes, work intent, retries, resumable transfer and restart
 cleanup. Actual verification and intake-only measurements are in
 [the intake review](reviews/DURABLE_INTAKE_20261021.md). The next
-[validation/admission increment](reviews/VALIDATION_ADMISSION_20261021.md) adds
+[native validation/admission increment](reviews/NATIVE_INGESTION_20261021.md) adds
 retained per-record errors/status, context-pinned runs, dependency wakeups,
 lease fencing and atomic canonical admission/recovery, plus local processing
-benchmarks. Next: projection coverage over pinned accepted revisions and an HTTP
-adapter; shared projection batches and incremental projection evidence remain
+benchmarks. Runtime APIs/workers are C++; Python is retained only in tests and
+analysis. The optional REST adapter will use µWebSockets/µSockets. Next:
+projection coverage over pinned accepted revisions and an HTTP adapter; shared projection batches and incremental projection evidence remain
 separate checkpoints.
 
 Retain original submissions as immutable evidence, including invalid/unparseable

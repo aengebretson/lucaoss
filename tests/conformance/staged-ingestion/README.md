@@ -6,5 +6,5 @@ precision. `expected.tsv` records per-record validation, commitment and accepted
 sequence. Two groups commit exactly four records; the invalid record remains
 inspectable with `EXCESS_PRECISION`. Replay resolves the cancelled economic chain
 to no active event, leaving the independent USD 10 movement. Existing lifecycle
-projection conformance tests establish that cancellation rule. The processing
-test checks staging outcomes, accepted order, receipts and strict canonical replay.
+projection conformance tests establish that cancellation rule. The native ingestion
+checks cover staging outcomes, accepted order, receipts and strict canonical replay.

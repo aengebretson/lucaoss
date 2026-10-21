@@ -6,8 +6,8 @@ review. An OpenAPI document should be derived when signatures are accepted.
 
 The first [local reference host](../apps/ingestion-host/README.md) implements the
 receipt/transfer, record/status/error/history reads, revalidation and automatic
-ledger admission through a Python API/CLI and optional C++ engine. HTTP endpoints
-remain proposed; the local mappings and bounded differences are documented in
+ledger admission through a native C++ API/runtime and CLI. The optional future
+HTTP adapter will use µWebSockets over µSockets. HTTP endpoints remain proposed; the local mappings and bounded differences are documented in
 [the host guide](../apps/ingestion-host/README.md).
 
 ## Common rules

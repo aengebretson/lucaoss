@@ -1,0 +1,534 @@
+{
+  "concurrency": [
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 13.942669045999995,
+            "parse_import": 0.315649833,
+            "validate_group": 14.574181106
+          },
+          "jobs": {
+            "admit_group": 380,
+            "parse_import": 4,
+            "validate_group": 400
+          }
+        }
+      ],
+      "separate_books": false,
+      "wall_seconds": 28.854027917,
+      "workers": 1
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 5.559712164000001,
+            "validate_group": 5.235689379999998
+          },
+          "jobs": {
+            "admit_group": 173,
+            "validate_group": 204
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 5.134847952999995,
+            "parse_import": 0.175416833,
+            "validate_group": 6.0801121259999995
+          },
+          "jobs": {
+            "admit_group": 207,
+            "parse_import": 4,
+            "validate_group": 196
+          }
+        }
+      ],
+      "separate_books": false,
+      "wall_seconds": 11.915762417,
+      "workers": 2
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 8.018811957,
+            "parse_import": 0.342206583,
+            "validate_group": 5.501981333000001
+          },
+          "jobs": {
+            "admit_group": 94,
+            "parse_import": 1,
+            "validate_group": 137
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 8.330848375999995,
+            "parse_import": 0.04300125,
+            "validate_group": 5.634231086000001
+          },
+          "jobs": {
+            "admit_group": 106,
+            "parse_import": 1,
+            "validate_group": 135
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 7.886682453999997,
+            "validate_group": 5.943368875000001
+          },
+          "jobs": {
+            "admit_group": 79,
+            "validate_group": 80
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 8.168332622999996,
+            "parse_import": 0.092064791,
+            "validate_group": 5.820149543999999
+          },
+          "jobs": {
+            "admit_group": 101,
+            "parse_import": 2,
+            "validate_group": 48
+          }
+        }
+      ],
+      "separate_books": false,
+      "wall_seconds": 14.125191042,
+      "workers": 4
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 13.376916552999996,
+            "parse_import": 0.305352874,
+            "validate_group": 15.002298758000002
+          },
+          "jobs": {
+            "admit_group": 380,
+            "parse_import": 4,
+            "validate_group": 400
+          }
+        }
+      ],
+      "separate_books": true,
+      "wall_seconds": 28.704097333,
+      "workers": 1
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 11.785487999000006,
+            "parse_import": 0.27652579099999997,
+            "validate_group": 12.842487237000007
+          },
+          "jobs": {
+            "admit_group": 190,
+            "parse_import": 2,
+            "validate_group": 200
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 11.785716746999999,
+            "parse_import": 0.282109084,
+            "validate_group": 12.836921328999999
+          },
+          "jobs": {
+            "admit_group": 190,
+            "parse_import": 2,
+            "validate_group": 200
+          }
+        }
+      ],
+      "separate_books": true,
+      "wall_seconds": 24.936124834,
+      "workers": 2
+    },
+    {
+      "invalid_records": 20,
+      "records": 400,
+      "runs": [
+        {
+          "job_seconds": {
+            "admit_group": 11.404469667000004,
+            "parse_import": 0.216180208,
+            "validate_group": 12.952257088000003
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 11.446379381000002,
+            "parse_import": 0.211277291,
+            "validate_group": 12.982102413999995
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 11.520553284999998,
+            "parse_import": 0.2121155,
+            "validate_group": 12.840568374000002
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        },
+        {
+          "job_seconds": {
+            "admit_group": 11.511833915999999,
+            "parse_import": 0.211139084,
+            "validate_group": 12.916244502999998
+          },
+          "jobs": {
+            "admit_group": 95,
+            "parse_import": 1,
+            "validate_group": 100
+          }
+        }
+      ],
+      "separate_books": true,
+      "wall_seconds": 24.682529458,
+      "workers": 4
+    }
+  ],
+  "language": "C++23",
+  "peak_rss_platform_units": 1578745856,
+  "samples": [
+    {
+      "bytes": 239780,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.052389167,
+          "parse_import": 0.081574209,
+          "validate_group": 0.057393625
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.192576209,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 0.211473625,
+        "parse_import": 0.245586792,
+        "validate_group": 0.20749358299999998
+      },
+      "jobs": {
+        "admit_group": 4,
+        "parse_import": 1,
+        "validate_group": 4
+      },
+      "processing_seconds": 0.665686958,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.038897709,
+      "records": 1000,
+      "repetition": 0,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 239780,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.055936,
+          "parse_import": 0.082227167,
+          "validate_group": 0.058274292
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.19763466700000001,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 0.222842042,
+        "parse_import": 0.230905542,
+        "validate_group": 0.210158041
+      },
+      "jobs": {
+        "admit_group": 4,
+        "parse_import": 1,
+        "validate_group": 4
+      },
+      "processing_seconds": 0.665257125,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.039669,
+      "records": 1000,
+      "repetition": 1,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 239780,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.054541084,
+          "parse_import": 0.084389834,
+          "validate_group": 0.055907625
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.195982708,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 0.208622416,
+        "parse_import": 0.232445875,
+        "validate_group": 0.20273600099999997
+      },
+      "jobs": {
+        "admit_group": 4,
+        "parse_import": 1,
+        "validate_group": 4
+      },
+      "processing_seconds": 0.645056375,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.040543209,
+      "records": 1000,
+      "repetition": 2,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 2425220,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.058084292,
+          "parse_import": 0.084384333,
+          "validate_group": 0.054266292
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.197808792,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 2.245025377,
+        "parse_import": 2.013576291,
+        "validate_group": 2.087721457
+      },
+      "jobs": {
+        "admit_group": 40,
+        "parse_import": 1,
+        "validate_group": 40
+      },
+      "processing_seconds": 6.347593125,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.050921292,
+      "records": 10000,
+      "repetition": 0,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 2425220,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.061895084,
+          "parse_import": 0.088322333,
+          "validate_group": 0.062324042
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.213852458,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 2.3258900419999997,
+        "parse_import": 1.9128155,
+        "validate_group": 2.077359587
+      },
+      "jobs": {
+        "admit_group": 40,
+        "parse_import": 1,
+        "validate_group": 40
+      },
+      "processing_seconds": 6.318353917,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.049785333,
+      "records": 10000,
+      "repetition": 1,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 2425220,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.063345459,
+          "parse_import": 0.08762675,
+          "validate_group": 0.058424875
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.210780917,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 2.3099252899999994,
+        "parse_import": 2.062043458,
+        "validate_group": 2.2462683749999997
+      },
+      "jobs": {
+        "admit_group": 40,
+        "parse_import": 1,
+        "validate_group": 40
+      },
+      "processing_seconds": 6.619812541,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.052200917,
+      "records": 10000,
+      "repetition": 2,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 24549620,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.061605458,
+          "parse_import": 0.07966625,
+          "validate_group": 0.051176292
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.193721583,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 23.230449410000006,
+        "parse_import": 18.739250333,
+        "validate_group": 20.079915668000005
+      },
+      "jobs": {
+        "admit_group": 391,
+        "parse_import": 1,
+        "validate_group": 391
+      },
+      "processing_seconds": 62.053780125,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.160988834,
+      "records": 100000,
+      "repetition": 0,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 24549620,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.065610958,
+          "parse_import": 0.081597666,
+          "validate_group": 0.054224417
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.202769542,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 23.732829116000012,
+        "parse_import": 18.744685625,
+        "validate_group": 20.242370252999983
+      },
+      "jobs": {
+        "admit_group": 391,
+        "parse_import": 1,
+        "validate_group": 391
+      },
+      "processing_seconds": 62.722949833,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.162667958,
+      "records": 100000,
+      "repetition": 1,
+      "sqlite": "3.53.1"
+    },
+    {
+      "bytes": 24549620,
+      "group_size": 256,
+      "incremental": {
+        "job_seconds": {
+          "admit_group": 0.065827208,
+          "parse_import": 0.082642958,
+          "validate_group": 0.053251333
+        },
+        "jobs": {
+          "admit_group": 1,
+          "parse_import": 1,
+          "validate_group": 1
+        }
+      },
+      "incremental_processing_seconds": 0.20313475,
+      "incremental_records": 256,
+      "job_seconds": {
+        "admit_group": 23.537443875000005,
+        "parse_import": 19.217814083,
+        "validate_group": 20.603764504000004
+      },
+      "jobs": {
+        "admit_group": 391,
+        "parse_import": 1,
+        "validate_group": 391
+      },
+      "processing_seconds": 63.36100975,
+      "profile": "local-fsync-wal-v1",
+      "receipt_seconds": 0.167183792,
+      "records": 100000,
+      "repetition": 2,
+      "sqlite": "3.53.1"
+    }
+  ],
+  "schema": "luca.native-ingestion-benchmark/1",
+  "scope": "Native durable receipt and direct in-process validation/admission; same synthetic cash/group workloads as Python baseline; no HTTP/report/GPU timing"
+}
