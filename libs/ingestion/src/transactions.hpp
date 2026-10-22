@@ -7,13 +7,20 @@ inline Json issue(std::string code, std::string field = "",
   return {{"code", code}, {"field_path", field}, {"message", message}};
 }
 inline bool supported(const Json &context) {
-  return context["adapter"] == "luca.transactions.jsonl/1" &&
+  return (context["adapter"] == "luca.transactions.jsonl/1" ||
+          context["adapter"] == "luca.transactions.envelope.jsonl/1") &&
          context["normalization"] == "source-book-identity/1" &&
-         context["rules"] == "cash-equity/1" && context["engine"] == "luca/0.1";
+         (context["rules"] == "cash-equity/1" || context["rules"] == "cash-equity/2") && context["engine"] == "luca/0.1";
 }
 inline adapters::TransactionFields fields(const Json &p, std::int64_t recorded = 0) {
-  return {p[0],  p[1],  p[2],  p[3],  p[4],  p[5], std::to_string(recorded), p[7], p[8], p[9],
+  adapters::TransactionFields result{p[0],  p[1],  p[2],  p[3],  p[4],  p[5], std::to_string(recorded), p[7], p[8], p[9],
           p[10], p[11], p[12], p[13], p[14], p[15]};
+  if (p.size() == 17) {
+    result.charges.emplace();
+    for (const auto& c : p[16])
+      result.charges->push_back({c["id"],c["category"],c["payee"],c["schedule_version"],c["state"],c["amount"],c["currency"]});
+  }
+  return result;
 }
 inline std::string pointer(std::string key) {
   std::string out;
@@ -87,6 +94,18 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
     result["issues"].push_back(issue("RECORD_TYPE"));
     return result;
   }
+  if (context["adapter"] == "luca.transactions.envelope.jsonl/1") {
+    // The source object is evidence only; it can never override transaction fields.
+    // The complete original envelope remains in the immutable payload/byte locator.
+    if (data.size() != 2 || !data.contains("transaction") || !data.contains("source") ||
+        !data["transaction"].is_object() || !data["source"].is_object() ||
+        data["source"].empty()) {
+      result["issues"].push_back(issue("INVALID_SOURCE_ENVELOPE"));
+      result["membership_unknown"] = true;
+      return result;
+    }
+    data = Json(data["transaction"]);
+  }
   result["raw"] = data;
   const std::set<std::string> allowed = {
       "record_id",          "economic_event_id", "action",       "account_id", "causal_record_id",
@@ -149,7 +168,7 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
           : std::set<std::string>{"type",  "effective_at",   "instrument_id",  "quantity",
                                   "price", "quote_currency", "settlement_date"};
   for (const auto &[key, value] : event.items())
-    if (!event_keys.contains(key))
+    if (!event_keys.contains(key) && !(key == "charges" && event_type == "equity_trade" && context["rules"] == "cash-equity/2"))
       result["issues"].push_back(issue("FIELD_UNKNOWN", "/event/" + pointer(key)));
   Json values = Json::object();
   for (const auto &key : event_keys)
@@ -165,6 +184,19 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
                    errors.end());
       errors.push_back(issue("INVALID_DECIMAL", path));
     }
+  if (event.contains("charges") && event_type == "equity_trade" && context["rules"] == "cash-equity/2") {
+    const auto& charges = event["charges"];
+    if (!charges.is_array() || charges.size() > 64)
+      result["issues"].push_back(issue("INVALID_CHARGES", "/event/charges"));
+    else for (const auto& charge : charges) {
+      if (!charge.is_object() || charge.size() != 7) {
+        result["issues"].push_back(issue("INVALID_CHARGES", "/event/charges")); continue;
+      }
+      for (const auto* key : {"id", "category", "payee", "schedule_version", "state", "amount", "currency"})
+        if (!charge.contains(key) || !charge[key].is_string())
+          result["issues"].push_back(issue("FIELD_TYPE", std::string("/event/charges/") + key));
+    }
+  }
   if (result["issues"].empty()) {
     result["packet"] = Json::array(
         {result["canonical_id"], result["economic_id"], action, account, identity("event", causal),
@@ -174,6 +206,7 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
          values.value("amount", Json("")), values.value("instrument_id", Json("")),
          values.value("quantity", Json("")), values.value("price", Json("")),
          values.value("settlement_date", Json("")), context["normalization"]});
+    if (event.contains("charges")) result["packet"].push_back(event["charges"]);
     if (supported(context)) {
       auto value = adapters::transaction(fields(result["packet"]));
       if (!value)

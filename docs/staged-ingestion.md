@@ -10,8 +10,11 @@ now implements durable intake, leased background validation, retained record
 outcomes/errors, immutable contexts/references, revalidation and atomic canonical
 ledger admission. The optional compiled `luca::ingestion_sqlite` library owns native C++
 execution and SQLite storage; workers call the exact financial core directly.
-No interpreter or subprocess bridge is required. HTTP, projection coverage and multi-node adapters
-remain proposed. See [executed evidence](reviews/NATIVE_INGESTION_20261021.md).
+No interpreter or subprocess bridge is required. Direct C++ integration and native
+CLI tools are the default; a shared reporting API and optional MCP adapter remain
+planned, with HTTP/gRPC hosts deferred. Projection coverage and multi-node
+adapters also remain open. See [integration direction](native-ingestion.md#integration-direction)
+and [executed evidence](reviews/NATIVE_INGESTION_20261021.md).
 
 ## Outcome and boundary
 
@@ -59,14 +62,15 @@ flowchart LR
 | Transaction parsing and normalization | Opt-in `libs/adapters` extension | Own parsed output; preserve source identity and offsets; malformed values are diagnostic results. |
 | Staging/orchestration and durable reference runtime | Opt-in native `libs/ingestion`, exported as `luca::ingestion_sqlite` | Explicit optional storage/JSON/thread dependencies, isolated from financial-only targets. |
 | Durable storage, leases, retries, admission coordination | Native optional component; reference CLI under `apps/ingestion-host` | All I/O/concurrency remains outside financial targets; no interpreter or process bridge. |
-| HTTP and polling | Host adapter | Same receipts/outcomes as local APIs; no duplicated financial rules. |
+| CLI and optional MCP tools | Application adapters | Same receipts/outcomes as direct C++ APIs; no duplicated financial rules; MCP remains planned. |
 | Production database/object store/queue bindings | Replaceable host adapters | Must pass the same durability, fencing and idempotency contract. |
 
 The native component's current C++ API and exact dependency/build requirements
 are documented in [the host guide](../apps/ingestion-host/README.md). General
-storage-independent orchestration and the complete HTTP representations remain
-future boundaries. The existing umbrella target and `SourceRecord` ownership do
-not change.
+storage-independent orchestration, reporting operations and MCP representations
+remain future boundaries. The deferred HTTP proposal is not the next delivery
+requirement. The existing umbrella target and `SourceRecord` ownership do not
+change.
 
 ## Durable storage design
 

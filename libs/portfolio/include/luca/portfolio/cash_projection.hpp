@@ -57,9 +57,7 @@ project_cash(std::span<const LedgerEntry> entries, CashProjectionContext context
             return apply(event.header().account(), event.amount());
           } else {
             if (event.settlement_date().value() > context.settlement_as_of_date) return {};
-            const auto gross = value(event.quantity(), event.price(), event.quote_currency());
-            if (!gross) return std::unexpected(CashProjectionError::valuation_overflow);
-            const auto cash = Money::from_scaled(0, event.quote_currency()).subtract(*gross);
+            const auto cash = trade_cash(event);
             if (!cash) return std::unexpected(CashProjectionError::valuation_overflow);
             return apply(event.header().account(), *cash);
           }

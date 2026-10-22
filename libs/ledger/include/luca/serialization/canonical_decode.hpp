@@ -750,7 +750,36 @@ read_cash_movement(decode_detail::Reader &reader) {
 }
 
 [[nodiscard]] inline std::expected<EconomicEvent, DecodeError>
-read_equity_trade(decode_detail::Reader &reader) {
+read_equity_trade(decode_detail::Reader &reader, bool charged = false) {
+  std::optional<TradeCharges> charges;
+  if (charged) {
+    std::string_view previous;
+    auto key = reader.read_key("charges", previous);
+    if (!key) return std::unexpected(key.error());
+    auto count = reader.read_array_count("charges");
+    if (!count) return std::unexpected(count.error());
+    if (*count > 64) return std::unexpected(reader.error(DecodeDiagnosticCategory::schema_shape, "too many charges"));
+    charges.emplace();
+    for (std::uint64_t i = 0; i < *count; ++i) {
+      auto members = reader.read_map_count();
+      if (!members) return std::unexpected(members.error());
+      if (*members != 6) return std::unexpected(reader.error(DecodeDiagnosticCategory::schema_shape, "invalid charge shape"));
+      previous = {};
+      key = reader.read_key("amount", previous);
+      if (!key) return std::unexpected(key.error());
+      auto amount = read_money(reader);
+      if (!amount) return std::unexpected(amount.error());
+      std::vector<std::string> texts;
+      for (const auto name : {"category", "id", "payee", "schedule_version", "state"}) {
+        key = reader.read_key(name, previous);
+        if (!key) return std::unexpected(key.error());
+        auto value = reader.read_text();
+        if (!value) return std::unexpected(value.error());
+        texts.emplace_back(*value);
+      }
+      charges->push_back({texts[1],texts[0],texts[2],texts[3],texts[4],*amount});
+    }
+  }
   std::string_view previous;
   auto key = reader.read_key("header", previous);
   if (!key)
@@ -790,7 +819,7 @@ read_equity_trade(decode_detail::Reader &reader) {
   key = reader.read_key("schema_version", previous);
   if (!key)
     return std::unexpected(key.error());
-  if (auto version = require_version(reader, "luca.economic-event.v1", "economic-event"); !version)
+  if (auto version = require_version(reader, charged ? "luca.economic-event.v2" : "luca.economic-event.v1", "economic-event"); !version)
     return std::unexpected(version.error());
 
   key = reader.read_key("settlement_date", previous);
@@ -815,7 +844,7 @@ read_equity_trade(decode_detail::Reader &reader) {
   }
 
   auto trade = EquityTrade::create(std::move(*header), InstrumentId{std::move(*instrument)},
-                                   *quantity, *price, *quote_currency, *settlement_date);
+                                   *quantity, *price, *quote_currency, *settlement_date, std::move(charges));
   if (!trade) {
     return std::unexpected(reader.error(DecodeDiagnosticCategory::schema_shape,
                                         "equity trade violates the v1 domain invariants"));
@@ -830,8 +859,8 @@ read_economic_event(decode_detail::Reader &reader) {
     return std::unexpected(count.error());
   if (*count == 4U)
     return read_cash_movement(reader);
-  if (*count == 8U)
-    return read_equity_trade(reader);
+  if (*count == 8U || *count == 9U)
+    return read_equity_trade(reader, *count == 9U);
   return std::unexpected(reader.error(DecodeDiagnosticCategory::schema_shape,
                                       "economic-event has a missing or extra map member"));
 }

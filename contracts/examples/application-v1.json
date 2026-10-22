@@ -1,0 +1,769 @@
+[
+  {
+    "operation": "capabilities",
+    "request": {
+      "book_id": "fund-a"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "api_version": "luca.application/1",
+        "book_id": "fund-a",
+        "formats": [
+          "luca.transactions.jsonl/1"
+        ],
+        "validation_contexts": [
+          {
+            "context_id": "cash-equity-v1-ref42",
+            "description": "Cash/equity reference fixture"
+          }
+        ],
+        "calculation_contexts": [
+          {
+            "context_id": "cash-ref42",
+            "description": "Settled cash fixture"
+          }
+        ],
+        "report_kinds": [
+          "settled_cash"
+        ],
+        "max_page_size": 1000,
+        "max_inline_bytes": 65536,
+        "max_payload_bytes": "268435456",
+        "max_queued_bytes": "67108864",
+        "snapshot_ttl_seconds": 900,
+        "result_ttl_seconds": 86400,
+        "command_ttl_seconds": 604800,
+        "stage_file_enabled": true,
+        "input_root_ids": [
+          "imports"
+        ],
+        "source_ids": [
+          "custodian-a"
+        ]
+      }
+    }
+  },
+  {
+    "operation": "stage_file",
+    "request": {
+      "book_id": "fund-a",
+      "root_id": "imports",
+      "relative_path": "trades.jsonl"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "payload_id": "payload-1",
+        "bytes": "42",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "expires_at": "2026-10-22T12:00:00Z"
+      }
+    }
+  },
+  {
+    "operation": "submit_import",
+    "request": {
+      "book_id": "fund-a",
+      "idempotency_key": "batch-1",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "independent_groups"
+      },
+      "payload": {
+        "kind": "staged",
+        "payload_id": "payload-1"
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "import_id": "import-1",
+        "received_at": "2026-10-21T12:00:00Z"
+      }
+    }
+  },
+  {
+    "operation": "get_import_status",
+    "request": {
+      "book_id": "fund-a",
+      "import_id": "import-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "import_id": "import-1",
+        "status_revision": "import-rev-2",
+        "enumeration": "complete",
+        "validation": {
+          "pending": "0",
+          "validating": "0",
+          "valid": "1",
+          "invalid": "1",
+          "blocked": "0"
+        },
+        "commitment": {
+          "not_committed": "1",
+          "queued": "0",
+          "committed": "1",
+          "conflict": "0"
+        },
+        "enumeration_error": null
+      }
+    }
+  },
+  {
+    "operation": "read_records",
+    "request": {
+      "book_id": "fund-a",
+      "import_id": "import-1",
+      "validation": "invalid",
+      "page": {
+        "limit": 100
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "snapshot_id": "page-1",
+        "expires_at": "2026-10-22T12:00:00Z",
+        "items": [
+          {
+            "record_id": "staged-2",
+            "ordinal": "2",
+            "validation": "invalid",
+            "commitment": "not_committed",
+            "validation_context_id": "cash-equity-v1-ref42",
+            "run_id": "run-1",
+            "group_id": "group-2",
+            "canonical_record_id": null,
+            "accepted_revision": null,
+            "diagnostic_count": "1",
+            "source": {
+              "offset": "0",
+              "length": "42",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ],
+        "next_cursor": null
+      }
+    }
+  },
+  {
+    "operation": "read_diagnostics",
+    "request": {
+      "book_id": "fund-a",
+      "import_id": "import-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "snapshot_id": "page-1",
+        "expires_at": "2026-10-22T12:00:00Z",
+        "items": [
+          {
+            "diagnostic_id": "diagnostic-1",
+            "code": "INVALID_DECIMAL",
+            "field": "/event/amount",
+            "message": "Expected representable exact amount",
+            "record_id": "staged-2",
+            "group_id": "group-2",
+            "run_id": "run-1",
+            "severity": "error"
+          }
+        ],
+        "next_cursor": null
+      }
+    }
+  },
+  {
+    "operation": "revalidate_import",
+    "request": {
+      "book_id": "fund-a",
+      "import_id": "import-1",
+      "idempotency_key": "reval-1",
+      "validation_context_id": "cash-equity-v1-ref43",
+      "groups": [
+        {
+          "group_id": "group-1",
+          "expected_revision": "group-rev-1"
+        }
+      ]
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "revalidation_id": "reval-1",
+        "import_id": "import-1"
+      }
+    }
+  },
+  {
+    "operation": "request_report",
+    "request": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-10-21"
+      },
+      "selection": {
+        "mode": "current_at_request"
+      },
+      "readiness": {
+        "mode": "available"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ]
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "accepted_at": "2026-10-21T12:00:00Z"
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "available",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": {
+          "result_id": "result-1",
+          "book_id": "fund-a",
+          "kind": "settled_cash",
+          "calculation": {
+            "context_id": "cash-ref42",
+            "engine_version": "luca/0.1",
+            "projection_version": "cash/1",
+            "normalization_version": "source-book-identity/1",
+            "reference_snapshot_id": "ref42",
+            "accounting_policy": null
+          },
+          "cutoffs": {
+            "economic_as_of": "2026-10-21T12:00:00Z",
+            "recorded_through": "2026-10-21T12:00:00Z",
+            "settlement_as_of_date": "2026-10-21"
+          },
+          "coverage": {
+            "snapshot_id": "coverage-1",
+            "captured_at": "2026-10-21T12:00:00Z",
+            "accepted_revision": "revision-42",
+            "enumeration_complete": true,
+            "pending": "0",
+            "invalid": "1",
+            "blocked": "0",
+            "valid_uncommitted": "0",
+            "admitted_after_selection": "0"
+          },
+          "row_count": "1",
+          "currency_controls": [],
+          "expires_at": "2026-10-22T12:00:00Z",
+          "control_scope": "none"
+        },
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "cash",
+              "row_id": "row-1",
+              "account_id": "portfolio-a",
+              "currency": "USD",
+              "amount": "1000.000000"
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "get_evidence",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1",
+      "target_id": "row-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "target_id": "row-1",
+        "evidence": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "evidence_id": "evidence-1",
+              "canonical_record_id": "record-1",
+              "economic_id": "economic-1",
+              "causal_record_id": null,
+              "causal_evidence_id": null,
+              "source_record_id": "source-record-1",
+              "import_id": "import-1",
+              "staged_record_id": "staged-1",
+              "journal_entry_id": null,
+              "journal_line_id": null,
+              "source": {
+                "offset": "0",
+                "length": "42",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "submit_import",
+    "request": {
+      "book_id": "fund-a",
+      "idempotency_key": "batch-1",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "independent_groups"
+      },
+      "payload": {
+        "kind": "staged",
+        "payload_id": "payload-1"
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": false,
+      "error": {
+        "code": "RESOURCE_LIMIT",
+        "detail": "Receipt queue is full",
+        "request_id": "req-1",
+        "retryable": true,
+        "retry_after_ms": 100
+      }
+    }
+  },
+  {
+    "operation": "submit_import",
+    "request": {
+      "book_id": "fund-a",
+      "idempotency_key": "batch-1",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "independent_groups"
+      },
+      "payload": {
+        "kind": "inline",
+        "utf8": "{}\n"
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "import_id": "import-1",
+        "received_at": "2026-10-21T12:00:00Z"
+      }
+    }
+  },
+  {
+    "operation": "request_report",
+    "request": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-10-21"
+      },
+      "selection": {
+        "mode": "current_at_request"
+      },
+      "readiness": {
+        "mode": "require_imports",
+        "import_ids": [
+          "import-1"
+        ],
+        "deadline": "2026-10-21T13:00:00Z"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ]
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "accepted_at": "2026-10-21T12:00:00Z"
+      }
+    }
+  },
+  {
+    "operation": "request_report",
+    "request": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-10-21"
+      },
+      "selection": {
+        "mode": "exact",
+        "revision": "revision-42"
+      },
+      "readiness": {
+        "mode": "available"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ]
+      }
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "accepted_at": "2026-10-21T12:00:00Z"
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "waiting_for_inputs",
+        "selection": null,
+        "manifest": null,
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "queued",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": null,
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "running",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": null,
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "failed",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": null,
+        "failure": {
+          "code": "REQUIRED_INPUTS_INVALID",
+          "detail": "A required import contains an invalid group",
+          "request_id": "req-report-1",
+          "retryable": false
+        }
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "position",
+              "row_id": "position-1",
+              "account_id": "portfolio-a",
+              "instrument_id": "ABC",
+              "quantity": "10.00000000"
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "settlement",
+              "row_id": "settlement-1",
+              "account_id": "portfolio-a",
+              "settlement_date": "2026-10-22",
+              "direction": "payable",
+              "currency": "USD",
+              "amount": "100.000000"
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "journal_line",
+              "row_id": "journal-1",
+              "entry_id": "entry-1",
+              "line_id": "line-1",
+              "chart_account_id": "cash",
+              "currency": "USD",
+              "debit": "1000.000000",
+              "credit": "0.000000"
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "trial_balance",
+              "row_id": "balance-1",
+              "chart_account_id": "cash",
+              "currency": "USD",
+              "debits": "1000.000000",
+              "credits": "100.000000",
+              "net": "900.000000"
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "get_evidence",
+    "request": {
+      "book_id": "fund-a",
+      "report_id": "report-1",
+      "target_id": "ancestor-evidence-1"
+    },
+    "response": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "target_id": "ancestor-evidence-1",
+        "evidence": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "evidence_id": "evidence-1",
+              "canonical_record_id": "record-1",
+              "economic_id": "economic-1",
+              "causal_record_id": "prior-record-1",
+              "causal_evidence_id": "prior-evidence-1",
+              "source_record_id": "source-record-1",
+              "import_id": "import-1",
+              "staged_record_id": "staged-1",
+              "journal_entry_id": null,
+              "journal_line_id": null,
+              "source": {
+                "offset": "0",
+                "length": "42",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  }
+]

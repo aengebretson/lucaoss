@@ -18,10 +18,14 @@ struct TransactionDiagnostic {
 
 // External representation only. Identity/reference mapping is explicit and must
 // already have supplied the actual book-scoped identifiers and evidence identity.
+struct ChargeFields {
+  std::string id, category, payee, schedule_version, state, amount, currency;
+};
 struct TransactionFields {
   std::string record_id, economic_id, action, account, causal_id, evidence_id;
   std::string recorded_ns, type, effective_at, currency, amount;
   std::string instrument, quantity, price, settlement, normalization;
+  std::optional<std::vector<ChargeFields>> charges;
 };
 
 namespace transaction_detail {
@@ -85,6 +89,17 @@ template<class T> inline std::expected<T, TransactionDiagnostic> decimal(
 
 } // namespace transaction_detail
 
+// Public source-adapter parsers. Enterprise/CLI adapters must not depend on
+// transaction_detail; financial value construction remains in the shared core.
+[[nodiscard]] inline std::expected<SettlementDate, TransactionDiagnostic>
+parse_transaction_date(std::string_view text, std::string field = "/event/settlement_date") {
+  return transaction_detail::date(text, std::move(field));
+}
+[[nodiscard]] inline std::expected<Timestamp, TransactionDiagnostic>
+parse_transaction_timestamp(std::string_view text) {
+  return transaction_detail::timestamp(text);
+}
+
 inline std::expected<LifecycleRecordDraft, TransactionDiagnostic> transaction(const TransactionFields& f) {
   using namespace transaction_detail;
   for (const auto* text : {&f.record_id,&f.economic_id,&f.account,&f.causal_id,&f.evidence_id,&f.instrument,&f.normalization})
@@ -123,7 +138,23 @@ inline std::expected<LifecycleRecordDraft, TransactionDiagnostic> transaction(co
     if (!quantity) return std::unexpected(quantity.error());
     if (!price) return std::unexpected(price.error());
     if (!settlement) return std::unexpected(settlement.error());
-    auto trade=EquityTrade::create(*header,InstrumentId{f.instrument},*quantity,*price,*currency,*settlement);
+    std::optional<TradeCharges> charges;
+    if (f.charges) {
+      charges.emplace();
+      for (const auto& c : *f.charges) {
+        auto denomination = Currency::from_code(c.currency);
+        if (!denomination) return invalid("INVALID_CURRENCY", "/event/charges", "Invalid charge currency");
+        auto amount = Money::parse(c.amount, *denomination);
+        if (!amount) return invalid("INVALID_DECIMAL", "/event/charges", "Invalid charge amount");
+        for (const auto* text : {&c.id, &c.payee, &c.schedule_version})
+          if (serialization::detail::unicode_nfc::validate(*text) != serialization::detail::unicode_nfc::ValidationResult::valid)
+            return invalid("INVALID_IDENTIFIER", "/event/charges", "Charge text must be NFC UTF-8");
+        charges->push_back({c.id,c.category,c.payee,c.schedule_version,c.state,*amount});
+      }
+      if (!validate_charges(*charges, *currency))
+        return invalid("INVALID_CHARGES", "/event/charges", "Expected unique nonnegative same-currency charges with category, payee and provenance");
+    }
+    auto trade=EquityTrade::create(*header,InstrumentId{f.instrument},*quantity,*price,*currency,*settlement,std::move(charges));
     if (!trade) return invalid(trade.error()==ValueError::zero_quantity ? "ZERO_QUANTITY" : "FIELD_REQUIRED","/event/quantity","Invalid equity trade");
     event=*trade;
   } else return invalid("UNSUPPORTED_EVENT_TYPE","/event/type","Unsupported event type");

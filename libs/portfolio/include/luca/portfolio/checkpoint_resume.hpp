@@ -339,7 +339,8 @@ verify_event_relationship(const LifecycleRecord &record, const LifecycleRecord &
                      "equity lifecycle relationship changes its natural key");
     }
     if (record.action() == LifecycleAction::reverse &&
-        (trade.price() != target_trade.price() ||
+        (trade.charges().has_value() || target_trade.charges().has_value() ||
+          trade.price() != target_trade.price() ||
          !exact_opposite(trade.quantity().scaled_value(),
                          target_trade.quantity().scaled_value()))) {
       return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,

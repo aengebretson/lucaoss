@@ -20,6 +20,8 @@ install(EXPORT LucaIngestionSqliteTargets FILE LucaIngestionSqliteTargets.cmake 
 if(LUCA_BUILD_TOOLS)
   add_executable(luca-ingest ${PROJECT_SOURCE_DIR}/apps/ingestion-host/main.cpp)
   target_link_libraries(luca-ingest PRIVATE luca::ingestion_sqlite)
+  # Retain explicitly supplied shared-library paths for the installed native CLI.
+  set_target_properties(luca-ingest PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
   install(TARGETS luca-ingest RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 if(LUCA_BUILD_BENCHMARKS)

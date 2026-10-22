@@ -85,9 +85,13 @@ durable receipts, resumable uploads, asynchronous validation, retained per-recor
 errors/status and atomic ledger admission. Embed the optional
 `luca::ingestion_sqlite` component or use the native `luca-ingest` application.
 There is no Python runtime or subprocess bridge. Financial-only targets retain
-no storage or network dependency. [µWebSockets over µSockets](docs/native-ingestion.md)
-is selected for the optional future REST adapter; HTTP and projection coverage
-remain open.
+no storage or network dependency. Direct C++ integration is the default; native
+CLI tools and an optional MCP adapter use the same application operations.
+The CLI ingestion commands exist today; the common reporting API, CLI reporting
+commands, projection coverage and MCP server remain planned. OSS has no graphical
+UI. See the [integration direction](docs/native-ingestion.md#integration-direction),
+[draft shared C++ API](docs/application-api.md), [CLI contract](docs/cli.md) and
+[MCP tool schemas](contracts/mcp/v1.tools.json).
 
 | Canonical option | Top-level default | Embedded default | Legacy alias |
 | --- | --- | --- | --- |
@@ -289,3 +293,7 @@ At least initially, this project is **not**:
 - an AI system that decides financial truth
 
 The objective is narrower: **make investment state reproducible from economic events, and make disagreements with external systems explicit and explainable.**
+
+## Custodian lots and charges implementation
+
+C++ LIFO long/short lot relief, separate exact trade charges, economic P&L and firm aggregation are implemented in the [lot accounting contract](docs/lots-and-charges.md). Native `cash-equity/2` ingestion retains charge errors and canonical v2 amounts. Next: general-ledger sale/short recognition, broker schedule selection/administration, affected-pool lot checkpoints and broader workload benchmarks. This implementation supersedes the earlier long-only/FIFO proposal for the first lot slice; no tax-compliance or deployment claim is implied.

@@ -689,7 +689,8 @@ class LifecycleLedger {
                      record, "equity relationship changes its natural key");
       }
       if (record.action() == LifecycleAction::reverse &&
-          (trade.price() != target_trade.price() ||
+          (trade.charges().has_value() || target_trade.charges().has_value() ||
+          trade.price() != target_trade.price() ||
            !exact_opposite(trade.quantity().scaled_value(),
                            target_trade.quantity().scaled_value()))) {
         return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
