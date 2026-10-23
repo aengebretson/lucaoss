@@ -27,7 +27,10 @@ constexpr std::string_view names[] = {"books",
                                       "submit_settlement",
                                       "submit_refund",
                                       "settlement_status",
-                                      "query_transactions"};
+                                      "query_transactions",
+                                      "edit_transaction",
+                                      "delete_transaction",
+                                      "transaction_evidence"};
 const Json &catalog() {
   static const auto value = Json::parse(foundations_schemas).at("tools");
   return value;
@@ -114,6 +117,8 @@ struct SqliteApplication::Impl {
       auto c = take(b.store.capabilities());
       require(seen.insert(c.at("book_id")).second, "DUPLICATE_BOOK_BINDING");
       require(!b.submit || !b.submit_sources.empty(), "INVALID_APPLICATION_BINDING");
+      require(!b.transaction_actor.empty() && b.transaction_actor.size() <= 128,
+              "INVALID_APPLICATION_BINDING");
       require(!b.settlement_actor.empty() && b.settlement_actor.size() <= 128,
               "INVALID_APPLICATION_BINDING");
       require(b.mapping_version.size() <= 256, "INVALID_APPLICATION_BINDING");
@@ -144,10 +149,7 @@ Json SqliteApplication::tools() const {
                                    [](const auto &b) { return b.inspect; });
   for (const auto &t : catalog())
     if (t.at("name") == "luca_books" ||
-        ((t.at("name") == "luca_submit_import" || t.at("name") == "luca_submit_settlement" ||
-          t.at("name") == "luca_submit_refund")
-             ? submit
-             : inspect))
+        (detail::submission(*operation(t.at("name").get<std::string>())) ? submit : inspect))
       tools.push_back(t);
   return tools;
 }
@@ -170,9 +172,7 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       return Json{{"items", rows}};
     }
     const auto &b = impl_->book(a.at("book_id").get<std::string>());
-    const bool mutation = op == Operation::submit_import || op == Operation::submit_settlement ||
-                          op == Operation::submit_refund;
-    require(mutation ? b.submit : b.inspect, "PERMISSION_DENIED");
+    require(detail::submission(op) ? b.submit : b.inspect, "PERMISSION_DENIED");
     const auto &store = b.store;
     const auto id = a.value("import_id", std::string{});
     switch (op) {
@@ -187,9 +187,7 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       result["source_ids"] = b.submit_sources;
       result["operations"] = Json::array();
       for (const auto &t : tools())
-        if (b.submit ||
-            (t.at("name") != "luca_submit_import" && t.at("name") != "luca_submit_settlement" &&
-             t.at("name") != "luca_submit_refund"))
+        if (b.submit || !detail::submission(*operation(t.at("name").get<std::string>())))
           result["operations"].push_back(t.at("name"));
       auto state = take(store.book_state());
       for (auto &[key, value] : state.items())
@@ -272,6 +270,11 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       receipt["completion"] = "pending_or_in_progress";
       return receipt;
     }
+    case Operation::edit_transaction:
+    case Operation::delete_transaction:
+      return detail::submit_version(b, a, op == Operation::delete_transaction);
+    case Operation::transaction_evidence:
+      return detail::transaction_evidence(b, a);
     case Operation::settlement_status: {
       auto result = take(store.settlement_status(a.at("idempotency_key")));
       if (result.contains("event"))
@@ -373,11 +376,9 @@ Json document(Operation op, Result<Json> result) {
         {"code", e.code},
         {"retryable", e.retryable},
         {"exit_code", code},
-        {"outcome", code == 9 ? "unknown"
-                    : (op == Operation::submit_import || op == Operation::submit_settlement ||
-                       op == Operation::submit_refund)
-                        ? "not_accepted"
-                        : "read_failed"},
+        {"outcome", code == 9                ? "unknown"
+                    : detail::submission(op) ? "not_accepted"
+                                             : "read_failed"},
         {"retry", code == 9
                       ? "Retry the identical book, request, trusted actor and idempotency key to "
                         "recover the receipt."

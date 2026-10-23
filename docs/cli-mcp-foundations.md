@@ -1,5 +1,9 @@
 # Implemented CLI and stdio MCP foundations
 
+The dependent [immutable-version adapter increment](cli-mcp-versions.md) adds
+schema-6 replay compatibility, edit/delete and hash-verified source evidence.
+Earlier limits in this guide describe its original implemented slice.
+
 The additive [reporting increment](cli-mcp-reporting.md) exposes bounded accounting
 reports, filtered accepted history, settlement and refund operations. Earlier
 foundation limitations below describe the original slice.

@@ -11,6 +11,7 @@ Usage: luca --profile FILE COMMAND [--request JSONFILE]
   transactions | lots | transactions query
   report (collection: journals, trial_balance, obligations, actual_settlements, reconciliation)
   settlement submit | settlement refund | settlement status
+  transactions edit | transactions delete | transactions evidence
   worker run --book ID [--max-jobs N]   bounded drain; requires process grant
   schemas                             permitted MCP schemas for this profile
   --help | --version                   no profile, storage, migration or worker
@@ -72,7 +73,10 @@ int main(int argc, char **argv) {
         {"transactions query", Operation::query_transactions},
         {"settlement submit", Operation::submit_settlement},
         {"settlement refund", Operation::submit_refund},
-        {"settlement status", Operation::settlement_status}};
+        {"settlement status", Operation::settlement_status},
+        {"transactions edit", Operation::edit_transaction},
+        {"transactions delete", Operation::delete_transaction},
+        {"transactions evidence", Operation::transaction_evidence}};
     if (mapping.contains(command))
       op = mapping.at(command);
     else if (command != "schemas" && command != "worker run")

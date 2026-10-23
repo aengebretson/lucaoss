@@ -574,6 +574,21 @@ Result<Json> SqliteStore::ledger_records(std::uint64_t after, std::size_t limit)
     return rows;
   });
 }
+Result<Json> SqliteStore::transaction_input(std::string record_id) const {
+  return guarded([&] {
+    token(record_id);
+    auto db = impl_->db();
+    auto row = db.one("SELECT r.body AS staged, i.metadata, c.import_id FROM ledger_records l "
+      "JOIN commits c ON c.id=l.commit_id JOIN imports i ON i.id=c.import_id "
+      "JOIN staged_records r ON r.group_id=c.group_id AND json_extract(r.body,'$.canonical_id')=l.record_id "
+      "WHERE l.record_id=?", {record_id});
+    ensure(!row.is_null(), "NOT_FOUND");
+    const auto staged = parse(row.at("staged"));
+    return Json{{"record_id",record_id},{"import_id",row.at("import_id")},
+      {"source_metadata",parse(row.at("metadata"))},{"source_record_id",staged.at("evidence_id")},
+      {"locator",staged.at("locator")},{"transaction",staged.at("raw")}};
+  });
+}
 Result<Json> SqliteStore::ledger_evidence(std::uint64_t after, std::size_t limit) const {
   return guarded([&] {
     integer(limit, 1, impl_->limits["max_page_size"]);

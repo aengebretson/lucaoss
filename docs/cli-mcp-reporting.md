@@ -1,5 +1,9 @@
 # Bounded CLI and stdio MCP accounting reports
 
+The dependent [immutable-version adapter increment](cli-mcp-versions.md) adds
+schema-6 replay compatibility, edit/delete and hash-verified source evidence.
+Earlier limits in this guide describe its original implemented slice.
+
 This increment is implemented in the optional `luca::application_sqlite` C++
 facade. Enterprise can call the same `SqliteApplication::call` operations without
 starting either adapter. Authoritative settlement, LIFO, recognition, journal,
