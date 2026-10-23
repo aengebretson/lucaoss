@@ -1,5 +1,12 @@
 # Shared application API — v1 design
 
+Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
+It exposes existing ingestion/status/errors, policy inspection, canonical
+transactions and economic LIFO lots through the optional SQLite application facade.
+The broader storage-independent API, report jobs and unfinished accounting
+operations described below remain proposals; use `foundations-v1.tools.json`
+for the executable MCP catalog.
+
 Status: reviewable contract proposal, 2026-10-21. No new application service,
 unified CLI, MCP server or report-job implementation is delivered by these
 contracts. The existing native ingestion runtime and `luca-ingest` remain usable.

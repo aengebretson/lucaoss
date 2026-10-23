@@ -1,0 +1,2 @@
+#pragma once
+inline constexpr char foundations_schemas[] = R"luca(@LUCA_FOUNDATIONS_SCHEMAS@)luca";

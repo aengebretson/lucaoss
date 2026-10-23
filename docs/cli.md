@@ -1,5 +1,12 @@
 # Native CLI contract — proposed v1
 
+Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
+It exposes existing ingestion/status/errors, policy inspection, canonical
+transactions and economic LIFO lots through the optional SQLite application facade.
+The broader storage-independent API, report jobs and unfinished accounting
+operations described below remain proposals; use `foundations-v1.tools.json`
+for the executable MCP catalog.
+
 Status: design only. `luca-ingest` already implements native ingestion and worker
 commands; the unified `luca` command, reporting operations, output modes and exit
 contract below are not implemented. See [current commands](../apps/ingestion-host/README.md#cli)

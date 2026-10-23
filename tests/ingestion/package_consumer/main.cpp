@@ -1,5 +1,6 @@
 #include <iostream>
 #include <luca/ingestion/sqlite.hpp>
+#include <luca/application/sqlite.hpp>
 int main(int argc, char **argv) {
   if (argc != 2)
     return 2;
@@ -42,5 +43,9 @@ int main(int argc, char **argv) {
   auto status = opened->status((*receipt)["import_id"]);
   if (!status || !(*status)["all_records_committed"])
     return 8;
-  std::cout << "Installed native library accepted one record without Python\n";
+  luca::application::SqliteApplication app({{*opened,{},"",true,false,false,{}}});
+  auto shared = app.call(luca::application::Operation::import_status,
+                         {{"book_id","book"},{"import_id",(*receipt)["import_id"]}});
+  if (!shared || *shared != *status) return 9;
+  std::cout << "Installed ingestion and application libraries accepted and inspected one record without Python\n";
 }

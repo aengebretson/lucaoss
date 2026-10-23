@@ -117,6 +117,7 @@ if(LUCA_BUILD_INGESTION)
   endif()
   find_package(SQLite3 3.38 REQUIRED)
   add_subdirectory(libs/ingestion)
+  add_subdirectory(libs/application)
 endif()
 
 if(LUCA_BUILD_TOOLS)
@@ -145,11 +146,19 @@ if(LUCA_BUILD_TESTS)
     add_executable(luca_actual_settlement_test tests/unit/actual_settlement_test.cpp)
     target_link_libraries(luca_actual_settlement_test PRIVATE luca::ingestion_sqlite)
     add_test(NAME luca_actual_settlement_test COMMAND luca_actual_settlement_test)
+    add_executable(luca_application_test tests/application/application_test.cpp)
+    target_link_libraries(luca_application_test PRIVATE luca::application_sqlite)
+    add_test(NAME luca_application_test COMMAND luca_application_test)
     add_executable(luca_policy_test tests/unit/policy_test.cpp)
     target_link_libraries(luca_policy_test PRIVATE luca::ingestion_sqlite)
     add_test(NAME luca_policy_test COMMAND luca_policy_test)
     set_tests_properties(luca_native_ingestion_test PROPERTIES TIMEOUT 180)
     if(TARGET luca-ingest)
+      add_test(NAME luca_application_adapters_test
+        COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/application/adapters_test.py
+          $<TARGET_FILE:luca> $<TARGET_FILE:luca-mcp> $<TARGET_FILE:luca-ingest>
+          ${CMAKE_CURRENT_SOURCE_DIR}/contracts/mcp/foundations-v1.tools.json)
+      set_tests_properties(luca_application_adapters_test PROPERTIES TIMEOUT 120)
       add_test(NAME luca_native_ingestion_consumer_test
         COMMAND ${CMAKE_COMMAND}
           "-DLUCA_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
