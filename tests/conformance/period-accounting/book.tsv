@@ -1,0 +1,17 @@
+# UTC day 0 is 2026-01-01. Decimal amounts are exact USD. Trades are known on their day.
+# type id day quantity price commission fee expected_position expected_carrying expected_cumulative_economic_pnl
+contribution capital 0 1000 - - - - - -
+trade b1 1 10 10 1 1 10 102 0
+trade b2 2 5 12 0.5 0.5 15 163 0
+trade s1 3 -8 15 1 1 7 71.4 26.4
+trade s2 4 -10 14 1 1 -3 41.4 51.6
+trade c1 5 2 11 0.2 0.2 -1 13.8 56.8
+trade c2 6 2 9 0.2 0.2 1 9.2 61.4
+# type id trade actual_day knowledge_day signed_actual_cash
+settlement b1-half b1 2 6 -51
+settlement b2-full b2 3 6 -61
+settlement s1-full s1 5 6 118
+settlement s2-full s2 6 6 138
+settlement b1-rest b1 7 7 -51
+settlement c1-full c1 7 7 -22.4
+settlement c2-full c2 8 8 -18.4

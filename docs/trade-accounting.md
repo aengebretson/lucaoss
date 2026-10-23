@@ -132,8 +132,9 @@ These are **regenerated snapshot journals**, not a persisted posted journal.
 Dated voids preserve historical reports before the void cutoff and original
 source/lifecycle evidence. They do not emit a conventional cancellation-date
 adjustment journal. Do not compute period activity by filtering the current
-journal table's entry dates. An append-only posting/adjustment contract and
-financial statements remain later work; this limitation follows the existing
+journal table's entry dates. The additive [period-accounting/1 contract](period-accounting.md) supplies
+balanced derived period adjustments and bounded statements through a separate
+API. These snapshot rows retain their existing semantics, following the
 [dated-void projection contract](dated-void-periods.md).
 
 Trade admission, settlement admission, policy edits and closes share the same

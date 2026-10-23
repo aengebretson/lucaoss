@@ -598,6 +598,16 @@ class LifecycleLedger {
   // acceptance sequence of the selected payload record.
   [[nodiscard]] LifecycleResolution resolve(Timestamp recorded_through,
                                             Timestamp economic_as_of) const {
+    return resolve(recorded_through, economic_as_of, Timestamp::max());
+  }
+
+  // Report-only activation gate. The two-argument economic snapshot API keeps
+  // its retrospective correction semantics. Corrections (including linked
+  // replacements) activate only after their recorded gate and any dated
+  // predecessor gate. Undated cancellations use the same recorded gate.
+  [[nodiscard]] LifecycleResolution resolve(Timestamp recorded_through,
+                                            Timestamp economic_as_of,
+                                            Timestamp correction_recorded_through) const {
     struct WorkingChain {
       std::vector<LifecycleRecordReference> lineage;
     };
@@ -607,10 +617,18 @@ class LifecycleLedger {
     std::set<std::string> gated;
     for (const auto& record : records_) {
       if (record.recorded_at() > recorded_through) continue;
+      const bool deferred_correction =
+          (record.action() == LifecycleAction::correct ||
+           (record.action() == LifecycleAction::cancel && !record.cancellation_at())) &&
+          record.recorded_at() > correction_recorded_through;
+      // A recognized dated void removes the economic identity even if a
+      // corrected target has not reached its recorded recognition boundary.
+      // The legacy two-cutoff resolver keeps its existing descendant gating.
+      const bool effective_void = record.cancellation_at() &&
+          *record.cancellation_at() <= economic_as_of && correction_recorded_through != Timestamp::max();
       if ((record.cancellation_at() && *record.cancellation_at() > economic_as_of) ||
-          (record.causal_record_id() && gated.contains(record.causal_record_id()->value()))) {
-        gated.insert(record.record_id().value());
-        continue;
+          deferred_correction || (!effective_void && record.causal_record_id() && gated.contains(record.causal_record_id()->value()))) {
+        gated.insert(record.record_id().value()); continue;
       }
       const auto& id = record.economic_event_id().value();
       auto found = chain_by_economic_id.find(id);
@@ -619,7 +637,17 @@ class LifecycleLedger {
         working.push_back(WorkingChain{{std::cref(record)}});
         chain_by_economic_id.emplace(id, index);
       } else {
-        working[found->second].lineage.emplace_back(std::cref(record));
+        auto& lineage = working[found->second].lineage;
+        if (effective_void) {
+          std::vector<LifecycleRecordReference> deferred_ancestors;
+          auto* ancestor = record.causal_record_id() ? find(*record.causal_record_id()) : nullptr;
+          while (ancestor && ancestor->acceptance_sequence() > lineage.back().get().acceptance_sequence()) {
+            deferred_ancestors.push_back(std::cref(*ancestor));
+            ancestor = ancestor->causal_record_id() ? find(*ancestor->causal_record_id()) : nullptr;
+          }
+          for (auto it = deferred_ancestors.rbegin(); it != deferred_ancestors.rend(); ++it) lineage.push_back(*it);
+        }
+        lineage.emplace_back(std::cref(record));
       }
     }
 

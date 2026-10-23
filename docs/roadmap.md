@@ -1,5 +1,11 @@
 # LUCA Roadmap
 
+The additive [period accounting contract](period-accounting.md) implements
+recorded-date corrections, dated void/replacement adjustments, classified
+activity, daily/period realized P&L and bounded comparative cash/equity statements.
+Its full boundary replay is bounded; affected-pool checkpoints, broader
+statement coverage and native retained-period report adapters remain future work.
+
 Equity trade journals and actual settlement are implemented by the bounded
 [trade accounting contract](trade-accounting.md). It supersedes forecast-date
 cash for this reporting API, preserves independent lot selection and recognition,
