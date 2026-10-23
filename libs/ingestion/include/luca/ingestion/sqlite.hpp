@@ -75,12 +75,18 @@ public:
   // Content-addressed result evidence; repeated identical evidence is idempotent.
   Result<Json> retain_policy_result(Json evidence) const;
   Result<Json> policy_result(std::string id) const;
+  // Durable receipt precedes native asynchronous validation. Rejected requests
+  // and their diagnostics remain queryable; only committed events affect cash.
+  Result<Json> receive_settlement(std::string key, Json request, std::string actor) const;
+  Result<Json> settlement_status(std::string key) const;
+  Result<Json> settlement_events(std::uint64_t after = 0, std::size_t limit = 100) const;
   Result<Json> periods() const;
   // Close all dates through an inclusive UTC boundary, fencing the reviewed
   // accepted sequence. Stable request identity makes retry safe.
   Result<Json> close_period(std::string request_id, std::string through,
                             std::uint64_t expected_sequence, std::string actor, bool allow_new = true,
-                            std::optional<std::uint64_t> expected_policy_sequence = {}) const;
+                            std::optional<std::uint64_t> expected_policy_sequence = {},
+                            std::optional<std::uint64_t> expected_settlement_sequence = {}) const;
   Result<Json> ledger_records(std::uint64_t after = 0, std::size_t limit = 100) const;
   Result<Json> work_attempts(std::string import_id, std::uint64_t after = 0,
                              std::size_t limit = 100) const;
@@ -89,6 +95,7 @@ public:
 private:
   explicit SqliteStore(std::shared_ptr<Impl> impl) : impl_(std::move(impl)) {}
   std::shared_ptr<Impl> impl_;
+  Result<std::optional<WorkResult>> process_settlement() const;
   friend class Worker;
 };
 

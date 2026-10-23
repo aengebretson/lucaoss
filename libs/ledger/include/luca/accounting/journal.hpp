@@ -25,7 +25,7 @@ using AccountingPolicyId = Identifier<AccountingPolicyIdTag>;
 
 enum class JournalSide { debit, credit };
 enum class JournalEventType { cash_movement, equity_trade };
-enum class RecognitionPhase { immediate, trade_date, settlement_date };
+enum class RecognitionPhase { immediate, trade_date, settlement_date, actual_settlement };
 
 // These names are stable machine-readable categories. More detailed messages
 // are explanatory only and are not intended for programmatic matching.
@@ -149,7 +149,7 @@ template <class IdentifierType>
 
 [[nodiscard]] constexpr bool valid_phase(RecognitionPhase phase) noexcept {
   return phase == RecognitionPhase::immediate || phase == RecognitionPhase::trade_date ||
-         phase == RecognitionPhase::settlement_date;
+         phase == RecognitionPhase::settlement_date || phase == RecognitionPhase::actual_settlement;
 }
 
 } // namespace journal_detail
@@ -329,6 +329,11 @@ public:
           JournalError{JournalDiagnosticCategory::policy_context_mismatch,
                        "recognized date must equal the date selected by the recognition phase"});
     }
+    if (recognition_phase == RecognitionPhase::actual_settlement &&
+        (recognized_on.value() != std::chrono::year_month_day{std::chrono::floor<std::chrono::days>(effective_at)} ||
+         recognized_on < *settlement_context.trade_date()))
+      return std::unexpected(JournalError{JournalDiagnosticCategory::policy_context_mismatch,
+          "actual settlement recognition must use its actual effective date, not the scheduled date"});
     if (lines.size() < 2) {
       return std::unexpected(JournalError{JournalDiagnosticCategory::schema_shape,
                                           "journal entry must contain at least two lines"});
