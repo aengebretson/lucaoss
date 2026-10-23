@@ -247,6 +247,18 @@ void dated_void() {
        EventId{"invalid-buy"},AccountId{"custody-a"},time_at(110),provenance,time_at(9))));
 }
 int main() {
+  {
+    LifecycleLedger ledger;add(ledger,trade("policy-buy","2","10",1,TradeCharges{},"custody-a"));
+    add(ledger,trade("policy-sell","-1","12",2,TradeCharges{},"custody-b"));
+    PolicyRevision entity{"e","firm","firm","admin",PolicyScope::legal_entity,time_at(0),1,LotSelection::lifo,RecognitionBasis::unspecified};
+    std::vector<ResolvedPolicy> policies;
+    for(const auto* account:{"custody-a","custody-b"})
+      policies.push_back(require(resolve_policy({"book","firm","bank-a",account},std::span{&entity,1},time_at(10),1)));
+    check(policies[0].digest!=policies[1].digest);
+    auto result=require(project_policy_lots(ledger.resolve(Timestamp::max(),Timestamp::max()),policies));
+    check(result.reliefs.size()==1 && result.open_lots.size()==1 && result.resolved_policies.size()==2);
+    check(result.reliefs[0].gross_pnl==money("2"));
+  }
   dated_void();
   fixtures();
   edge_cases();

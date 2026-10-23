@@ -67,11 +67,20 @@ public:
                        std::optional<std::uint64_t> length = {}) const;
   Result<Json> capabilities() const;
   Result<Json> book_state() const;
+  // Immutable, book-scoped policy revisions. expected_sequence fences stale edits.
+  Result<Json> put_policy(Json revision, std::uint64_t expected_sequence, std::string actor) const;
+  Result<Json> policy_history() const;
+  Result<Json> resolve_policy(Json target, std::string effective_at,
+                              std::optional<std::uint64_t> through_sequence = {}) const;
+  // Content-addressed result evidence; repeated identical evidence is idempotent.
+  Result<Json> retain_policy_result(Json evidence) const;
+  Result<Json> policy_result(std::string id) const;
   Result<Json> periods() const;
   // Close all dates through an inclusive UTC boundary, fencing the reviewed
   // accepted sequence. Stable request identity makes retry safe.
   Result<Json> close_period(std::string request_id, std::string through,
-                            std::uint64_t expected_sequence, std::string actor, bool allow_new = true) const;
+                            std::uint64_t expected_sequence, std::string actor, bool allow_new = true,
+                            std::optional<std::uint64_t> expected_policy_sequence = {}) const;
   Result<Json> ledger_records(std::uint64_t after = 0, std::size_t limit = 100) const;
   Result<Json> work_attempts(std::string import_id, std::uint64_t after = 0,
                              std::size_t limit = 100) const;

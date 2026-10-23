@@ -498,7 +498,7 @@ Result<Json> SqliteStore::capabilities() const {
 Result<Json> SqliteStore::book_state() const {
   return guarded([&] {
     auto db = impl_->db();
-    return db.one("SELECT revision,last_sequence,recorded_ns FROM ledger_state WHERE id=1");
+    return db.one("SELECT revision,last_sequence,recorded_ns,(SELECT coalesce(max(sequence),0) FROM policy_revisions) AS policy_sequence FROM ledger_state WHERE id=1");
   });
 }
 Result<Json> SqliteStore::periods() const {
@@ -509,11 +509,13 @@ Result<Json> SqliteStore::periods() const {
     for (auto& row : rows) result["closes"].push_back(parse(row["body"]));
     if (!rows.empty()) result["closed_through"] = result["closes"][0]["through"];
     result["accepted_through"] = db.one("SELECT last_sequence FROM ledger_state WHERE id=1")["last_sequence"];
+    result["policy_through"] = db.one("SELECT coalesce(max(sequence),0) AS n FROM policy_revisions")["n"];
     return result;
   });
 }
 Result<Json> SqliteStore::close_period(std::string id, std::string through,
-                                      std::uint64_t expected, std::string actor, bool allow_new) const {
+                                      std::uint64_t expected, std::string actor, bool allow_new,
+                                      std::optional<std::uint64_t> expected_policy_sequence) const {
   return guarded([&] {
     token(id); token(actor); integer(expected,0,INT64_MAX);
     auto stamp = adapters::parse_transaction_timestamp(through);
@@ -523,6 +525,7 @@ Result<Json> SqliteStore::close_period(std::string id, std::string through,
     FileLock lock(impl_->directory / "locks/admission");
     auto db = impl_->db(true);
     Json request = {{"request_id",id},{"through",through},{"expected_sequence",expected},{"actor",actor}};
+    if(expected_policy_sequence)request["expected_policy_sequence"]=*expected_policy_sequence;
     auto previous = db.one("SELECT body FROM period_closes WHERE id=?",{id});
     if (!previous.is_null()) {
       auto receipt = parse(previous["body"]);
@@ -534,6 +537,9 @@ Result<Json> SqliteStore::close_period(std::string id, std::string through,
     ensure(latest.is_null() || ns > latest["through_ns"].get<std::int64_t>(), "PERIOD_ALREADY_CLOSED");
     auto state = db.one("SELECT * FROM ledger_state WHERE id=1");
     ensure(state["last_sequence"] == expected,"PERIOD_REVIEW_STALE");
+    auto policy_sequence=db.one("SELECT coalesce(max(sequence),0) AS n FROM policy_revisions")["n"].get<std::uint64_t>();
+    ensure((expected_policy_sequence && *expected_policy_sequence==policy_sequence) ||
+           (!expected_policy_sequence && policy_sequence==0),"POLICY_REVIEW_STALE");
     ensure(db.one("SELECT id FROM work WHERE state IN ('queued','running','retry_wait','attention_required') LIMIT 1").is_null(),"PERIOD_WORK_PENDING");
     // Any unadmitted rows are explicitly counted in the close evidence. They can
     // never subsequently enter a closed period because admission rechecks below.
@@ -541,6 +547,7 @@ Result<Json> SqliteStore::close_period(std::string id, std::string through,
     Json receipt = {{"request",request},{"through",through},{"accepted_through",expected},
                     {"recorded_ns",state["recorded_ns"]},{"closed_at",timestamp(impl_->now())},
                     {"excluded_records",exclusions},{"actor",actor},{"book_id",impl_->book}};
+    receipt["policy_through"]=policy_sequence;
     db.exec("INSERT INTO period_closes VALUES (?,?,?)",{id,ns,receipt.dump()});
     db.commit(); return receipt;
   });

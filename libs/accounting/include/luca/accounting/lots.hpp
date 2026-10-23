@@ -1,5 +1,6 @@
 #pragma once
 #include "luca/lifecycle.hpp"
+#include "luca/accounting/policy.hpp"
 #include <map>
 #include <set>
 #include <tuple>
@@ -65,6 +66,7 @@ struct LotReport {
   std::vector<LotRelief> reliefs;
   std::vector<LotTrade> trades;
   bool charges_complete = true;
+  std::vector<ResolvedPolicy> resolved_policies;
   bool operator==(const LotReport &) const = default;
 };
 namespace lot_detail {
@@ -202,6 +204,25 @@ project_lifo_lots(std::span<const ResolvedLifecycleEvent> active,
 inline std::expected<LotReport, LotError> project_lifo_lots(const LifecycleResolution &resolution,
                                                             std::span<const LotAccount> accounts) {
   return project_lifo_lots(resolution.active_events(), accounts);
+}
+
+// Shared application boundary: policies are immutable resolved values, not store
+// handles. Retain full evidence even when a selected account has no trades.
+inline std::expected<LotReport, LotError> project_policy_lots(
+    const LifecycleResolution& resolution, std::span<const ResolvedPolicy> policies) {
+  std::vector<LotAccount> accounts;
+  for(const auto& policy:policies) {
+    auto checked=resolve_policy(policy.target,policy.revisions,policy.effective_at,policy.through_sequence);
+    if(!checked || *checked!=policy)return std::unexpected(LotError{"INVALID_RESOLVED_POLICY",""});
+    const auto& t=policy.target;
+    // Compatibility concerns the lot algorithm, not recognition settings or
+    // account-specific evidence. Multiple ledger accounts can share one pool.
+    accounts.push_back({t.account,t.book,t.legal_entity,t.custodian_account,"economic-lifo/1"});
+  }
+  auto report=project_lifo_lots(resolution,accounts);
+  if(!report)return report;
+  report->resolved_policies.assign(policies.begin(),policies.end());
+  return report;
 }
 
 // Entity view preserves the underlying custodian lots. Long and short quantities

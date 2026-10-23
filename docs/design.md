@@ -1,5 +1,11 @@
 # LUCA Design
 
+Versioned policy configuration now uses a pure C++ resolver and optional SQLite
+revision/evidence storage. Entity defaults and custody/account overrides resolve
+lot selection independently of recognition preferences. See
+[policy configuration](policy-configuration.md) for inheritance, replay and close
+fencing; LIFO is the only implemented lot method.
+
 LUCA is a deterministic investment ledger and portfolio-state engine. It ingests heterogeneous source records, normalizes economically meaningful activity into a compact canonical event model, and derives reproducible portfolio state.
 
 The design goal is not to build a distributed system first. The goal is to make the financial core **partitionable, deterministic, replayable, and side-effect-light** so the same computation can run efficiently in one process, a batch job, or many distributed workers.

@@ -1,7 +1,7 @@
 find_package(SQLite3 3.38 REQUIRED)
 find_package(nlohmann_json 3.12.0 EXACT CONFIG REQUIRED)
 find_package(Threads REQUIRED)
-add_library(luca_ingestion_sqlite STATIC src/store.cpp src/processing.cpp src/worker.cpp)
+add_library(luca_ingestion_sqlite STATIC src/store.cpp src/processing.cpp src/worker.cpp src/policy.cpp)
 add_library(luca::ingestion_sqlite ALIAS luca_ingestion_sqlite)
 set_target_properties(luca_ingestion_sqlite PROPERTIES EXPORT_NAME ingestion_sqlite)
 target_compile_features(luca_ingestion_sqlite PUBLIC cxx_std_23)
@@ -12,7 +12,7 @@ endif()
 target_include_directories(luca_ingestion_sqlite PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-target_link_libraries(luca_ingestion_sqlite PUBLIC luca::adapters nlohmann_json::nlohmann_json
+target_link_libraries(luca_ingestion_sqlite PUBLIC luca::adapters luca::accounting nlohmann_json::nlohmann_json
   PRIVATE SQLite::SQLite3 Threads::Threads)
 install(TARGETS luca_ingestion_sqlite EXPORT LucaIngestionSqliteTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp")

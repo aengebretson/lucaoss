@@ -1,5 +1,11 @@
 # LUCA Roadmap
 
+Policy configuration boundary: implemented versioned entity defaults,
+custodian/account overrides, LIFO-only execution, independent recognition
+preferences and retained resolved evidence. See [contract](policy-configuration.md).
+Full cash/accrual journals, alternate lot methods and migration of closed legacy
+books without policy history remain separate work.
+
 LUCA should grow outward from a small deterministic ledger core. Capabilities belong in one of three rings:
 
 1. **Core** — defines financial truth and reproducible portfolio state.
