@@ -1,0 +1,502 @@
+{
+  "type": "object",
+  "required": [
+    "contract",
+    "synthetic",
+    "cases"
+  ],
+  "properties": {
+    "contract": {
+      "const": "luca.corporate-actions.other-actions/1"
+    },
+    "synthetic": {
+      "const": true
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "engine_support",
+          "expectation_status",
+          "decision_ids",
+          "assumptions",
+          "kind",
+          "identity",
+          "inputs",
+          "expected",
+          "trace",
+          "sources"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "engine_support": {
+            "const": "unsupported"
+          },
+          "expectation_status": {
+            "type": "string",
+            "enum": [
+              "specified_fixture",
+              "conditional"
+            ]
+          },
+          "decision_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "forward_split",
+              "reverse_split",
+              "stock_dividend",
+              "identity_change",
+              "spinoff",
+              "stock_merger",
+              "mixed_merger",
+              "cash_merger",
+              "full_call",
+              "final_liquidation",
+              "partial_liquidation",
+              "partial_redemption"
+            ]
+          },
+          "identity": {
+            "type": "object",
+            "required": [
+              "action_id",
+              "security_id",
+              "successor_id",
+              "account_id"
+            ],
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "security_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "successor_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "account_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "inputs": {
+            "type": "object",
+            "required": [
+              "quantity",
+              "ratio_numerator",
+              "ratio_denominator",
+              "carrying_amount",
+              "cash_consideration",
+              "fraction_price",
+              "allocation_weights",
+              "election",
+              "finality",
+              "additional_components",
+              "currency",
+              "effective_at",
+              "recorded_at",
+              "actual_delivery_confirmed",
+              "input_lots"
+            ],
+            "properties": {
+              "quantity": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+              },
+              "ratio_numerator": {
+                "type": "string",
+                "pattern": "^[0-9]+$"
+              },
+              "ratio_denominator": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "carrying_amount": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+              },
+              "cash_consideration": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+              },
+              "fraction_price": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "allocation_weights": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 0
+              },
+              "election": {
+                "type": "string",
+                "minLength": 1
+              },
+              "finality": {
+                "type": "boolean"
+              },
+              "additional_components": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "value"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "minItems": 0
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "effective_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "recorded_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "actual_delivery_confirmed": {
+                "const": false
+              },
+              "input_lots": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "quantity",
+                    "principal",
+                    "commissions",
+                    "fees",
+                    "total"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "quantity": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+                    },
+                    "principal": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "commissions": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "fees": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "total": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "expected": {
+            "type": "object",
+            "required": [
+              "code",
+              "whole_unit_entitlement",
+              "fraction_numerator",
+              "fraction_denominator",
+              "successor_carrying",
+              "fraction_carrying",
+              "cash_in_lieu",
+              "consideration",
+              "actual_cash",
+              "retired_quantity",
+              "remaining_quantity",
+              "remaining_carrying",
+              "gain",
+              "lot_allocations"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "fraction_numerator": {
+                "type": "string",
+                "pattern": "^[0-9]+$"
+              },
+              "fraction_denominator": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "successor_carrying": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "fraction_carrying": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+              },
+              "cash_in_lieu": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "consideration": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+              },
+              "actual_cash": {
+                "const": "0.000000"
+              },
+              "retired_quantity": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+              },
+              "remaining_quantity": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+              },
+              "remaining_carrying": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "gain": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "whole_unit_entitlement": {
+                "type": "string",
+                "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+              },
+              "lot_allocations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "input_lot_id",
+                    "component_role",
+                    "principal",
+                    "commissions",
+                    "fees",
+                    "total"
+                  ],
+                  "properties": {
+                    "input_lot_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "component_role": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "principal": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "commissions": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "fees": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "total": {
+                      "type": "string",
+                      "pattern": "^(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "trace": {
+            "type": "object",
+            "required": [
+              "source_ids",
+              "input_lot_ids",
+              "policy_id",
+              "mapping_version",
+              "allocation_evidence_id"
+            ],
+            "properties": {
+              "source_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "input_lot_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "policy_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mapping_version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "allocation_evidence_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "system",
+                "reference",
+                "payload",
+                "sha256",
+                "received_at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "system": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reference": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "payload": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "received_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:luca:corporate-actions:other-actions:1"
+}

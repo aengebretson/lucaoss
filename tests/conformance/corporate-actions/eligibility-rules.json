@@ -1,0 +1,1542 @@
+{
+  "contract": "luca.corporate-actions.eligibility-rules/1",
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "ER-01",
+      "description": "Ordinary timely dividend derives ex-date and accrual date from record business date",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-01",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-01:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-01:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-15",
+        "recognition_on": "2026-10-15",
+        "eligible_quantity": "125",
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": "40.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-01:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-01\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "5d30b583dec1f4fb34ed5979ccb63ecf0b4dc7723c9c712648df1a08bada50fb"
+        },
+        {
+          "id": "ER-01:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-01:observation\",\"quantity\":\"125\",\"source_id\":\"ER-01:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[]}",
+          "sha256": "01e969a17b163f685e6075172a84e844af176db4c9869610b17c146d747e53cb"
+        },
+        {
+          "id": "ER-01:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "ER-01:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-01:observation\",\"quantity\":\"125\",\"source_id\":\"ER-01:observation-source\"}",
+          "sha256": "5269fee0c5f0248456f643d23eda75b6df8caf7fef17b5235a6db435f6521175"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-01:announcement",
+          "ER-01:ledger",
+          "ER-01:rule",
+          "ER-01:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-02",
+      "description": "Weekend record date uses preceding business day",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-02",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-18",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-02:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-02:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-16",
+        "recognition_on": "2026-10-16",
+        "eligible_quantity": "125",
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": "40.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-02:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-02\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-18\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "2d40a98ce66307d4308b7d95c54e3c771ac8c195eb310cdb094783a67fffda13"
+        },
+        {
+          "id": "ER-02:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-02:observation\",\"quantity\":\"125\",\"source_id\":\"ER-02:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[]}",
+          "sha256": "65e89d6137dccd2a3b4e2effd611a79499f9fb03f8b1fe06c7c4c131b9ad76a4"
+        },
+        {
+          "id": "ER-02:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "ER-02:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-02:observation\",\"quantity\":\"125\",\"source_id\":\"ER-02:observation-source\"}",
+          "sha256": "08b649cfb7904f0e4851dbbdc575e837681e35c89eae984482f41901bb0ab3f5"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-02:announcement",
+          "ER-02:ledger",
+          "ER-02:rule",
+          "ER-02:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-03",
+      "description": "25 percent boundary uses first business date after payable",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-03",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "2",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-03:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-03:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-21",
+        "recognition_on": "2026-10-21",
+        "eligible_quantity": "125",
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": "250.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-03:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-03\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"2\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "292f645fdbb52eb01cb8213004fce3e370b4276dc155f0c28c39472d4651bc11"
+        },
+        {
+          "id": "ER-03:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-03:observation\",\"quantity\":\"125\",\"source_id\":\"ER-03:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[]}",
+          "sha256": "dee1a9c4ddde3711372832473b4a1885dd238d18ba65f486e0081babe7501692"
+        },
+        {
+          "id": "ER-03:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "ER-03:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-03:observation\",\"quantity\":\"125\",\"source_id\":\"ER-03:observation-source\"}",
+          "sha256": "6fb1639803cc1b93d589ee36f7931fa3ee4e76b4e290f719ed44ada0e54024d7"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-03:announcement",
+          "ER-03:ledger",
+          "ER-03:rule",
+          "ER-03:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-04",
+      "description": "Late information without designation blocks date derivation",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-04",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": false,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-04:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-04:observation-source"
+        }
+      },
+      "expected": {
+        "code": "EX_DATE_DESIGNATION_REQUIRED",
+        "ex_on": null,
+        "recognition_on": null,
+        "eligible_quantity": null,
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": null,
+        "observed_minus_computed": null
+      },
+      "sources": [
+        {
+          "id": "ER-04:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-04\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":false}",
+          "sha256": "c70561862415beb162c71a369aa3f1cd11cbe4929823e7f0f687bcc14b15fd2c"
+        },
+        {
+          "id": "ER-04:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-04:observation\",\"quantity\":\"125\",\"source_id\":\"ER-04:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[]}",
+          "sha256": "f8a7672508f9e6c8a300dd30cb6a61606eddb6affec778c9e2dfb2f686f62da9"
+        },
+        {
+          "id": "ER-04:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "ER-04:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-04:observation\",\"quantity\":\"125\",\"source_id\":\"ER-04:observation-source\"}",
+          "sha256": "a1d3e99c0a75953ffb121bdcb1132130e6a1db660211560bbb2e208b50217034"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-04:announcement",
+          "ER-04:ledger",
+          "ER-04:rule",
+          "ER-04:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-05",
+      "description": "Late information with sourced designation",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-05",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": false,
+        "designated_ex_on": "2026-10-19",
+        "designation_source_id": "ER-05:designation"
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-05:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-05:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-19",
+        "recognition_on": "2026-10-19",
+        "eligible_quantity": "125",
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": "40.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-05:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-05\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":\"2026-10-19\",\"designation_source_id\":\"ER-05:designation\",\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":false}",
+          "sha256": "ad1eb161cff0734cddd242ec2439efd5de5fd67cebd0731453c55968a9f0e17c"
+        },
+        {
+          "id": "ER-05:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-05:observation\",\"quantity\":\"125\",\"source_id\":\"ER-05:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[]}",
+          "sha256": "ed4bc0ac8b25a93140faadbeac81374a0c2a3999ecdf0c9008b2c25d5303c54d"
+        },
+        {
+          "id": "ER-05:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "ER-05:designation",
+          "payload": "{\"authority\":\"synthetic:market-designation\",\"ex_on\":\"2026-10-19\"}",
+          "sha256": "cd67a8db224e268dadf7e4aef61094583f0c701354faca802feb9c048e36d5e5"
+        },
+        {
+          "id": "ER-05:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-05:observation\",\"quantity\":\"125\",\"source_id\":\"ER-05:observation-source\"}",
+          "sha256": "a5ed35be9570318b776d80bb25739e8b4e2d3998cbaa659ef74f089eaf2c0dc6"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-05:announcement",
+          "ER-05:ledger",
+          "ER-05:rule",
+          "ER-05:designation",
+          "ER-05:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-06",
+      "description": "Customer: failed pre-ex buy and sale produce net claim, not actual cash",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-06",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "100",
+        "opening_at": "2026-10-01",
+        "trades": [
+          {
+            "id": "synthetic:buy",
+            "quantity": "30",
+            "trade_on": "2026-10-14",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": "2026-10-16",
+            "route": "regular",
+            "source_id": "synthetic:source-buy"
+          },
+          {
+            "id": "synthetic:sell",
+            "quantity": "-20",
+            "trade_on": "2026-10-14",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": "2026-10-16",
+            "route": "regular",
+            "source_id": "synthetic:source-sell"
+          }
+        ],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-06:observation",
+          "quantity": "100",
+          "currency": "USD",
+          "source_id": "ER-06:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-15",
+        "recognition_on": "2026-10-15",
+        "eligible_quantity": "110",
+        "record_settled_quantity": "100",
+        "net_claim_quantity": "10",
+        "gross": "35.200000",
+        "observed_minus_computed": "-3.200000"
+      },
+      "sources": [
+        {
+          "id": "ER-06:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-06\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "1cbd433cec5ac5c16a7617f2df3abf337d24c8246d6994652e8e94d8b9f9d4ae"
+        },
+        {
+          "id": "ER-06:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-06:observation\",\"quantity\":\"100\",\"source_id\":\"ER-06:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"100\",\"record_boundary\":\"end_of_record_date\",\"trades\":[{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-buy\",\"trade_on\":\"2026-10-14\"},{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:sell\",\"quantity\":\"-20\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-sell\",\"trade_on\":\"2026-10-14\"}]}",
+          "sha256": "22808bba8dc8df70ddf3f0bea3cee7b30889be75b9a6cc3e79aeea3a249012fe"
+        },
+        {
+          "id": "ER-06:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "synthetic:source-buy",
+          "payload": "{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-buy\",\"trade_on\":\"2026-10-14\"}",
+          "sha256": "f2d0e456559715cb8bfcd1c0f1eb9f9f842c80129fcae0881e76617f37b8af0d"
+        },
+        {
+          "id": "synthetic:source-sell",
+          "payload": "{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:sell\",\"quantity\":\"-20\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-sell\",\"trade_on\":\"2026-10-14\"}",
+          "sha256": "1cb4381cf8c9db06ac45378a6ccc0d0e8e361d46dff8ba28fef78dbcf7f97a6e"
+        },
+        {
+          "id": "ER-06:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-06:observation\",\"quantity\":\"100\",\"source_id\":\"ER-06:observation-source\"}",
+          "sha256": "b1a34058ddcd02cfabcd5bfe118077428c1903fc1d31dc3f545c52a464145cb7"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-06:announcement",
+          "ER-06:ledger",
+          "ER-06:rule",
+          "synthetic:source-buy",
+          "synthetic:source-sell",
+          "ER-06:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-07",
+      "description": "Participant base entitlement differs from customer claim total",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "participant",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-07",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "100",
+        "opening_at": "2026-10-01",
+        "trades": [
+          {
+            "id": "synthetic:buy",
+            "quantity": "30",
+            "trade_on": "2026-10-14",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": "2026-10-16",
+            "route": "regular",
+            "source_id": "synthetic:source-buy"
+          },
+          {
+            "id": "synthetic:sell",
+            "quantity": "-20",
+            "trade_on": "2026-10-14",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": "2026-10-16",
+            "route": "regular",
+            "source_id": "synthetic:source-sell"
+          }
+        ],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-07:observation",
+          "quantity": "100",
+          "currency": "USD",
+          "source_id": "ER-07:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-15",
+        "recognition_on": "2026-10-15",
+        "eligible_quantity": "100",
+        "record_settled_quantity": "100",
+        "net_claim_quantity": "10",
+        "gross": "32.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-07:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-07\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "52d6cb4a41ed3d0cdf8b915c5e9bc0129571647273fbd10c3fb3b95a9775cbe9"
+        },
+        {
+          "id": "ER-07:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-07:observation\",\"quantity\":\"100\",\"source_id\":\"ER-07:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"100\",\"record_boundary\":\"end_of_record_date\",\"trades\":[{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-buy\",\"trade_on\":\"2026-10-14\"},{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:sell\",\"quantity\":\"-20\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-sell\",\"trade_on\":\"2026-10-14\"}]}",
+          "sha256": "88f1eeb5adcce8d88a0eb1d567af6f2b5cc8cd9ff14aeaada21c15561b939583"
+        },
+        {
+          "id": "ER-07:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"participant\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b89ef8e2ef44621037073ea8409ddd4bbc6845c86d48dcb6fe75b5dec11074fe"
+        },
+        {
+          "id": "synthetic:source-buy",
+          "payload": "{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-buy\",\"trade_on\":\"2026-10-14\"}",
+          "sha256": "f2d0e456559715cb8bfcd1c0f1eb9f9f842c80129fcae0881e76617f37b8af0d"
+        },
+        {
+          "id": "synthetic:source-sell",
+          "payload": "{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:sell\",\"quantity\":\"-20\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-sell\",\"trade_on\":\"2026-10-14\"}",
+          "sha256": "1cb4381cf8c9db06ac45378a6ccc0d0e8e361d46dff8ba28fef78dbcf7f97a6e"
+        },
+        {
+          "id": "ER-07:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-07:observation\",\"quantity\":\"100\",\"source_id\":\"ER-07:observation-source\"}",
+          "sha256": "4d23e3afbf5841148aa6c05386b18470214e9716d671591197612f5e2c6ba879"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-07:announcement",
+          "ER-07:ledger",
+          "ER-07:rule",
+          "synthetic:source-buy",
+          "synthetic:source-sell",
+          "ER-07:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-08",
+      "description": "Trade on ex-date does not acquire current customer right",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-08",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [
+          {
+            "id": "synthetic:ex-date-buy",
+            "quantity": "30",
+            "trade_on": "2026-10-15",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": "2026-10-16",
+            "route": "regular",
+            "source_id": "synthetic:source-ex-date-buy"
+          }
+        ],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-08:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-08:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-15",
+        "recognition_on": "2026-10-15",
+        "eligible_quantity": "125",
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": "40.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-08:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-08\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "177b04aab0db2032057259ffc601e9e432ff6984dbf92efe4fb86d54e707791d"
+        },
+        {
+          "id": "ER-08:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-08:observation\",\"quantity\":\"125\",\"source_id\":\"ER-08:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:ex-date-buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-ex-date-buy\",\"trade_on\":\"2026-10-15\"}]}",
+          "sha256": "219a0825d9a8f8bf02d02ed9c73eb080f0118ea3341f282e8037094f70d15b3e"
+        },
+        {
+          "id": "ER-08:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "synthetic:source-ex-date-buy",
+          "payload": "{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:ex-date-buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-ex-date-buy\",\"trade_on\":\"2026-10-15\"}",
+          "sha256": "a5e518eb9814d0ab4fe902b002ddfdecced59bc474647ddde765a3dfad62195f"
+        },
+        {
+          "id": "ER-08:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-08:observation\",\"quantity\":\"125\",\"source_id\":\"ER-08:observation-source\"}",
+          "sha256": "70842bcc2a14b92b4411991c64caf943f3bb992929bfe5441cf537e1a4981685"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-08:announcement",
+          "ER-08:ledger",
+          "ER-08:rule",
+          "synthetic:source-ex-date-buy",
+          "ER-08:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-09",
+      "description": "Large distribution participant interim delivery is included once",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "participant",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-09",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "2",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "100",
+        "opening_at": "2026-10-01",
+        "trades": [
+          {
+            "id": "synthetic:interim-buy",
+            "quantity": "10",
+            "trade_on": "2026-10-19",
+            "scheduled_delivery_on": "2026-10-20",
+            "actual_delivery_on": "2026-10-20",
+            "route": "regular",
+            "source_id": "synthetic:source-interim-buy"
+          }
+        ],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-09:observation",
+          "quantity": "110",
+          "currency": "USD",
+          "source_id": "ER-09:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-21",
+        "recognition_on": "2026-10-21",
+        "eligible_quantity": "110",
+        "record_settled_quantity": "100",
+        "net_claim_quantity": "0",
+        "gross": "220.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-09:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-09\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"2\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "b30a13a6ba3121ab2001cfa58e9895b890c2f1c30f562fdd0a6d6bc322e55013"
+        },
+        {
+          "id": "ER-09:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-09:observation\",\"quantity\":\"110\",\"source_id\":\"ER-09:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"100\",\"record_boundary\":\"end_of_record_date\",\"trades\":[{\"actual_delivery_on\":\"2026-10-20\",\"id\":\"synthetic:interim-buy\",\"quantity\":\"10\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-20\",\"source_id\":\"synthetic:source-interim-buy\",\"trade_on\":\"2026-10-19\"}]}",
+          "sha256": "74f6c8a5b03321260391f9fbfffa47d0c1f9f96d8a42dac465bc0caa29a79a61"
+        },
+        {
+          "id": "ER-09:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"participant\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b89ef8e2ef44621037073ea8409ddd4bbc6845c86d48dcb6fe75b5dec11074fe"
+        },
+        {
+          "id": "synthetic:source-interim-buy",
+          "payload": "{\"actual_delivery_on\":\"2026-10-20\",\"id\":\"synthetic:interim-buy\",\"quantity\":\"10\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-20\",\"source_id\":\"synthetic:source-interim-buy\",\"trade_on\":\"2026-10-19\"}",
+          "sha256": "6c39fdb2f3c4b99f07239ab2920fe676d48c0134e3922da72cb017d41522c468"
+        },
+        {
+          "id": "ER-09:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-09:observation\",\"quantity\":\"110\",\"source_id\":\"ER-09:observation-source\"}",
+          "sha256": "7c0f1baeff0e4be8a28db1a066d6189464e9faedef2490d63d0a41342f4bf632"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-09:announcement",
+          "ER-09:ledger",
+          "ER-09:rule",
+          "synthetic:source-interim-buy",
+          "ER-09:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-10",
+      "description": "Missing actual delivery does not increment participant settled entitlement",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "participant",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-10",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "100",
+        "opening_at": "2026-10-01",
+        "trades": [
+          {
+            "id": "synthetic:failed-buy",
+            "quantity": "30",
+            "trade_on": "2026-10-14",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": null,
+            "route": "regular",
+            "source_id": "synthetic:source-failed-buy"
+          }
+        ],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-10:observation",
+          "quantity": "100",
+          "currency": "USD",
+          "source_id": "ER-10:observation-source"
+        }
+      },
+      "expected": {
+        "code": "OK",
+        "ex_on": "2026-10-15",
+        "recognition_on": "2026-10-15",
+        "eligible_quantity": "100",
+        "record_settled_quantity": "100",
+        "net_claim_quantity": "30",
+        "gross": "32.000000",
+        "observed_minus_computed": "0.000000"
+      },
+      "sources": [
+        {
+          "id": "ER-10:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-10\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "d5d6d1048327a1f2a10b4933c0a3de5ef04afb0eae3f72568d40ae2f3eaa3eb3"
+        },
+        {
+          "id": "ER-10:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-10:observation\",\"quantity\":\"100\",\"source_id\":\"ER-10:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"100\",\"record_boundary\":\"end_of_record_date\",\"trades\":[{\"actual_delivery_on\":null,\"id\":\"synthetic:failed-buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-failed-buy\",\"trade_on\":\"2026-10-14\"}]}",
+          "sha256": "97094f34a3a4bdf3fe862243cdfc550a2b10d34ac0a37bd3efeceac030ad1354"
+        },
+        {
+          "id": "ER-10:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"participant\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b89ef8e2ef44621037073ea8409ddd4bbc6845c86d48dcb6fe75b5dec11074fe"
+        },
+        {
+          "id": "synthetic:source-failed-buy",
+          "payload": "{\"actual_delivery_on\":null,\"id\":\"synthetic:failed-buy\",\"quantity\":\"30\",\"route\":\"regular\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-failed-buy\",\"trade_on\":\"2026-10-14\"}",
+          "sha256": "f2467b004dac3cae4eba61bd08ce29dc468bd8d433eca66094f9ced9f95f6512"
+        },
+        {
+          "id": "ER-10:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-10:observation\",\"quantity\":\"100\",\"source_id\":\"ER-10:observation-source\"}",
+          "sha256": "aa285a3b83284987dfd3d7cea0ed5f1520afaf1352214a2f00582d85502c5f0d"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-10:announcement",
+          "ER-10:ledger",
+          "ER-10:rule",
+          "synthetic:source-failed-buy",
+          "ER-10:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-11",
+      "description": "Excluded stock-loan route cannot use ordinary due-bill profile",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-11",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-10-15",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "100",
+        "opening_at": "2026-10-01",
+        "trades": [
+          {
+            "id": "synthetic:loan",
+            "quantity": "30",
+            "trade_on": "2026-10-14",
+            "scheduled_delivery_on": "2026-10-15",
+            "actual_delivery_on": "2026-10-16",
+            "route": "stock_loan",
+            "source_id": "synthetic:source-loan"
+          }
+        ],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-11:observation",
+          "quantity": "100",
+          "currency": "USD",
+          "source_id": "ER-11:observation-source"
+        }
+      },
+      "expected": {
+        "code": "ROUTE_POLICY_REQUIRED",
+        "ex_on": "2026-10-15",
+        "recognition_on": "2026-10-15",
+        "eligible_quantity": null,
+        "record_settled_quantity": "100",
+        "net_claim_quantity": null,
+        "gross": null,
+        "observed_minus_computed": null
+      },
+      "sources": [
+        {
+          "id": "ER-11:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-11\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-10-15\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "c15cc8e6e4ab8615fc85747ebe1c0ee3af03c51c0508d1cf3e9733aea2b1e375"
+        },
+        {
+          "id": "ER-11:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-11:observation\",\"quantity\":\"100\",\"source_id\":\"ER-11:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"100\",\"record_boundary\":\"end_of_record_date\",\"trades\":[{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:loan\",\"quantity\":\"30\",\"route\":\"stock_loan\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-loan\",\"trade_on\":\"2026-10-14\"}]}",
+          "sha256": "b81fd4b1c5c84ae6c60d7ee80766e619898f5f502ecf31d97604197c8b280a61"
+        },
+        {
+          "id": "ER-11:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "synthetic:source-loan",
+          "payload": "{\"actual_delivery_on\":\"2026-10-16\",\"id\":\"synthetic:loan\",\"quantity\":\"30\",\"route\":\"stock_loan\",\"scheduled_delivery_on\":\"2026-10-15\",\"source_id\":\"synthetic:source-loan\",\"trade_on\":\"2026-10-14\"}",
+          "sha256": "67bba5244767cfb81248fb7abd1a077d34c5c39dc24188f8d599f32341eefeb0"
+        },
+        {
+          "id": "ER-11:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-11:observation\",\"quantity\":\"100\",\"source_id\":\"ER-11:observation-source\"}",
+          "sha256": "537b9f1a666737f3090acfe75651707e4aa084a1962e5f9222e697fd3f837856"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-11:announcement",
+          "ER-11:ledger",
+          "ER-11:rule",
+          "synthetic:source-loan",
+          "ER-11:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    },
+    {
+      "id": "ER-12",
+      "description": "Calendar coverage gap blocks date computation",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-MARKETS"
+      ],
+      "rule": {
+        "id": "fixture:US-cash-equity-market/1",
+        "version": "1",
+        "role": "customer",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "calendar_start": "2026-10-01",
+        "calendar_end": "2026-10-30",
+        "business_days": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09",
+          "2026-10-12",
+          "2026-10-13",
+          "2026-10-14",
+          "2026-10-15",
+          "2026-10-16",
+          "2026-10-19",
+          "2026-10-20",
+          "2026-10-21",
+          "2026-10-22",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "timezone": "America/New_York",
+        "recognition_boundary": "start_of_ex_date",
+        "approval": "synthetic:fixture-only",
+        "effective_from": "2026-10-01",
+        "foreign_security": false
+      },
+      "announcement": {
+        "action_id": "synthetic:ER-12",
+        "security_id": "synthetic:security:ALPHA",
+        "announced_on": "2026-10-01",
+        "record_on": "2026-11-02",
+        "pay_on": "2026-10-20",
+        "rate": "0.32",
+        "reference_price": "8",
+        "currency": "USD",
+        "timely": true,
+        "designated_ex_on": null,
+        "designation_source_id": null
+      },
+      "inputs": {
+        "opening_quantity": "125",
+        "opening_at": "2026-10-01",
+        "trades": [],
+        "record_boundary": "end_of_record_date",
+        "ledger_through": 3,
+        "delivery_through": 2,
+        "observation": {
+          "id": "ER-12:observation",
+          "quantity": "125",
+          "currency": "USD",
+          "source_id": "ER-12:observation-source"
+        }
+      },
+      "expected": {
+        "code": "CALENDAR_COVERAGE_REQUIRED",
+        "ex_on": null,
+        "recognition_on": null,
+        "eligible_quantity": null,
+        "record_settled_quantity": "125",
+        "net_claim_quantity": "0",
+        "gross": null,
+        "observed_minus_computed": null
+      },
+      "sources": [
+        {
+          "id": "ER-12:announcement",
+          "payload": "{\"action_id\":\"synthetic:ER-12\",\"announced_on\":\"2026-10-01\",\"currency\":\"USD\",\"designated_ex_on\":null,\"designation_source_id\":null,\"pay_on\":\"2026-10-20\",\"rate\":\"0.32\",\"record_on\":\"2026-11-02\",\"reference_price\":\"8\",\"security_id\":\"synthetic:security:ALPHA\",\"timely\":true}",
+          "sha256": "ef1eb40a3b4869b5ded574f8f17723a7e1fab3c63d02c2dd3f718dd8b0cb6782"
+        },
+        {
+          "id": "ER-12:ledger",
+          "payload": "{\"delivery_through\":2,\"ledger_through\":3,\"observation\":{\"currency\":\"USD\",\"id\":\"ER-12:observation\",\"quantity\":\"125\",\"source_id\":\"ER-12:observation-source\"},\"opening_at\":\"2026-10-01\",\"opening_quantity\":\"125\",\"record_boundary\":\"end_of_record_date\",\"trades\":[]}",
+          "sha256": "21751d5df0498d7f383162f402f7e87797694bc0e1b83e3161ea1341f947250b"
+        },
+        {
+          "id": "ER-12:rule",
+          "payload": "{\"approval\":\"synthetic:fixture-only\",\"business_days\":[\"2026-10-01\",\"2026-10-02\",\"2026-10-05\",\"2026-10-06\",\"2026-10-07\",\"2026-10-08\",\"2026-10-09\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-19\",\"2026-10-20\",\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"calendar_end\":\"2026-10-30\",\"calendar_id\":\"fixture:US-weekdays-oct2026/1\",\"calendar_start\":\"2026-10-01\",\"effective_from\":\"2026-10-01\",\"foreign_security\":false,\"id\":\"fixture:US-cash-equity-market/1\",\"recognition_boundary\":\"start_of_ex_date\",\"role\":\"customer\",\"timezone\":\"America/New_York\",\"version\":\"1\"}",
+          "sha256": "b94e157dfbaaba1d7c0190ca5a042356bbdddf97495b8d80c24478c4f6fc41b4"
+        },
+        {
+          "id": "ER-12:observation-source",
+          "payload": "{\"currency\":\"USD\",\"id\":\"ER-12:observation\",\"quantity\":\"125\",\"source_id\":\"ER-12:observation-source\"}",
+          "sha256": "bbb2660e10ee58d500d4bef8afc06aa52ac6bd2dd9df59d11cbc6ea83bf03db2"
+        }
+      ],
+      "trace": {
+        "source_ids": [
+          "ER-12:announcement",
+          "ER-12:ledger",
+          "ER-12:rule",
+          "ER-12:observation-source"
+        ],
+        "market_rule_id": "fixture:US-cash-equity-market/1",
+        "calendar_id": "fixture:US-weekdays-oct2026/1",
+        "account_id": "synthetic:account-a",
+        "mapping_version": "fixture:map/1"
+      }
+    }
+  ]
+}
