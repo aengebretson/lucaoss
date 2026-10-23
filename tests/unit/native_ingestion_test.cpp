@@ -719,7 +719,31 @@ void period_controls() {
   check(history.resolve(luca::Timestamp::max(),*luca::adapters::parse_transaction_timestamp("2026-10-20T23:59:59Z")).active_events().size()==1);
   check(history.resolve(luca::Timestamp::max(),*luca::adapters::parse_transaction_timestamp("2026-10-21T00:00:00Z")).active_events().empty());
 }
+void immutable_replacement() {
+  Temp root;auto store=opened(root);receive(store,Json::array({cash()}),"origin");drain(store);
+  Json removal={{"record_id","void-r1"},{"economic_event_id","e1"},{"account_id","portfolio-a"},
+    {"action","cancel"},{"causal_record_id","r1"},{"void_at","2026-10-21T12:00:00Z"},{"atomic_group","edit"}};
+  auto replacement=cash("r2","e1","150");replacement["action"]="correct";replacement["causal_record_id"]="void-r1";replacement["atomic_group"]="edit";
+  auto invalid=replacement;invalid["event"]["amount"]="bad";
+  auto failed=receive(store,Json::array({removal,invalid}),"invalid-edit");drain(store);
+  check(take(store.book_state())["last_sequence"]==1);
+  check(!items(store,"diagnostics",failed).empty());
+  const auto bytes=encode(Json::array({removal,replacement}));auto saved=receive(store,bytes,"edit");drain(store);
+  check(take(store.status(saved))["all_records_committed"]==true);
+  check(take(store.book_state())["last_sequence"]==3);
+  // Lost-response retry is the same durable import, including after reopening.
+  auto reopened=take(SqliteStore::open(root.path,config()));check(receive(reopened,bytes,"edit")==saved);drain(reopened);
+  check(take(reopened.book_state())["last_sequence"]==3);
+  Json deletion={{"record_id","delete-r2"},{"economic_event_id","e1"},{"account_id","portfolio-a"},
+    {"action","cancel"},{"causal_record_id","r2"},{"void_at","2026-10-22T15:00:00Z"}};
+  receive(reopened,Json::array({deletion}),"delete");drain(reopened);
+  auto resurrect=cash("r3","e1","200");resurrect["action"]="correct";resurrect["causal_record_id"]="delete-r2";
+  auto forbidden=receive(reopened,Json::array({resurrect}),"resurrect");drain(reopened);
+  check(!take(reopened.status(forbidden))["all_records_committed"].get<bool>());
+  check(take(reopened.book_state())["last_sequence"]==4);
+}
 int main() {
+  immutable_replacement();
   period_controls();
   charged_transactions();
   source_envelopes();

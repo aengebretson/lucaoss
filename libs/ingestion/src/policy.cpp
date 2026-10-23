@@ -23,7 +23,17 @@ Result<Json> SqliteStore::put_policy(Json definition,std::uint64_t expected,std:
     auto revision=take(policy_revision(body));
     auto close=db.one("SELECT through_ns FROM period_closes ORDER BY through_ns DESC LIMIT 1");
     ensure(close.is_null() || revision.effective_from.time_since_epoch().count()>close["through_ns"].get<std::int64_t>(),"POLICY_PERIOD_CLOSED");
-    db.exec("INSERT INTO policy_revisions VALUES (?,?,?,?,?)",{sequence+1,revision.id,revision.effective_from.time_since_epoch().count(),body.dump(),request.dump()});
+    auto recorded = std::max(impl_->now(), db.one("SELECT recorded_ns FROM ledger_state WHERE id=1")["recorded_ns"].get<std::int64_t>());
+    const auto previous = db.one("SELECT max(recorded_ns) AS n FROM policy_revisions");
+    if (!previous["n"].is_null()) recorded = std::max(recorded, previous["n"].get<std::int64_t>());
+    const auto last_cash = db.one("SELECT body FROM settlement_events ORDER BY sequence DESC LIMIT 1");
+    if (!last_cash.is_null()) {
+      auto at = adapters::parse_transaction_timestamp(parse(last_cash["body"]).at("recorded_at").get<std::string>());
+      ensure(bool(at), "SETTLEMENT_HISTORY_INVALID");
+      recorded = std::max(recorded, at->time_since_epoch().count());
+    }
+    db.exec("INSERT INTO policy_revisions(sequence,id,effective_ns,body,request,recorded_ns) VALUES (?,?,?,?,?,?)",
+      {sequence+1,revision.id,revision.effective_from.time_since_epoch().count(),body.dump(),request.dump(),recorded});
     db.commit();return body;
   });
 }
@@ -32,7 +42,10 @@ Result<Json> SqliteStore::policy_history() const {
     auto db=impl_->db();Json rows=Json::array();
     for(const auto& row:db.rows("SELECT body FROM policy_revisions ORDER BY sequence LIMIT 10001"))rows.push_back(parse(row["body"]));
     ensure(rows.size()<=10000,"POLICY_HISTORY_LIMIT");
-    return Json{{"revisions",rows},{"through_sequence",rows.empty()?Json(0):rows.back()["sequence"]}};
+    Json knowledge=Json::array();
+    for (const auto& row:db.rows("SELECT sequence,recorded_ns FROM policy_revisions ORDER BY sequence LIMIT 10001"))
+      knowledge.push_back({{"sequence",row["sequence"]},{"recorded_at",row["recorded_ns"].is_null()?Json():Json(timestamp(row["recorded_ns"].get<std::int64_t>()))}});
+    return Json{{"revisions",rows},{"knowledge",knowledge},{"through_sequence",rows.empty()?Json(0):rows.back()["sequence"]}};
   });
 }
 Result<Json> SqliteStore::resolve_policy(Json target,std::string at,std::optional<std::uint64_t> through) const {

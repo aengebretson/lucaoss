@@ -9,6 +9,9 @@ namespace luca {
     std::optional<Timestamp> closed_through) {
   if (!closed_through) return false;
   if (candidate.cancellation_at()) return *candidate.cancellation_at() <= *closed_through;
+  if (candidate.action() == LifecycleAction::correct && target &&
+      target->action() == LifecycleAction::cancel && target->cancellation_at())
+    return *target->cancellation_at() <= *closed_through;
   if (candidate.effective_at() && *candidate.effective_at() <= *closed_through) return true;
   if (candidate.action() == LifecycleAction::correct || candidate.action() == LifecycleAction::cancel)
     return target && target->effective_at() && *target->effective_at() <= *closed_through;

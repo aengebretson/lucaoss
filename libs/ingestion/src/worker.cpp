@@ -130,7 +130,7 @@ struct Worker::Impl {
         auto decoded = serialization::decode_lifecycle_record(bytes);
         ensure(decoded && decoded->acceptance_sequence == static_cast<std::uint64_t>(sequence + 1),
                "LEDGER_CORRUPT");
-        auto accepted = ledger.accept(decoded->draft);
+        auto accepted = ledger.restore_record(decoded->draft, decoded->acceptance_sequence);
         ensure(accepted.has_value(), "LEDGER_CORRUPT");
         ensure(serialization::canonical_bytes(accepted->get()) ==
                    serialization::CanonicalBytes(bytes.begin(), bytes.end()),

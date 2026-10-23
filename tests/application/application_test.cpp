@@ -98,6 +98,22 @@ int main() {
         take(readonly.call(Operation::import_status, scope)));
   check(take(resumed.call(Operation::policy_result,
                           {{"book_id", "b"}, {"evidence_id", evidence.at("id")}})) == evidence);
+  auto edit_request=request;edit_request["idempotency_key"]="atomic-edit";
+  edit_request["payload_utf8"]=Json{{"record_id","void"},{"economic_event_id","e1"},{"account_id","a"},{"action","cancel"},{"causal_record_id","r1"},{"void_at","2026-01-02T00:00:00Z"}}.dump()+"\n"+
+    Json{{"record_id","r2"},{"economic_event_id","e1"},{"account_id","a"},{"action","correct"},{"causal_record_id","void"},
+      {"event",{{"type","cash_movement"},{"effective_at","2026-01-01T00:00:00Z"},{"currency","USD"},{"amount","150"}}}}.dump()+"\n";
+  take(app.call(Operation::submit_import,edit_request));take(app.drain("b"));
+  auto restored_store=take(luca::ingestion::SqliteStore::open(temp,config));
+  SqliteApplication restored_app({{restored_store,{{"a","firm","custody"}},"m",true,false,false,{}}});
+  const auto capabilities=take(restored_app.call(Operation::capabilities,{{"book_id","b"}}));
+  Json lots_request={{"book_id","b"},{"accepted_through","3"},{"policy_through","1"},
+    {"effective_at","2026-02-01T00:00:00Z"},{"recorded_through","2099-01-01T00:00:00Z"},
+    {"collection","trades"},{"mapping_digest",capabilities.at("mapping_digest")}};
+  auto lots=take(restored_app.call(Operation::lots,lots_request));
+  check(lots.at("items").empty());
+  lots_request["accepted_through"]="2";
+  auto split=restored_app.call(Operation::lots,lots_request);
+  check(!split && split.error().code=="INPUT_REVISION_SPLITS_COMMIT"); // financial replay reached the paired replacement
   SqliteApplication financial({{store, {{"a", "firm", "custody"}}, "m", true, true, true, {"s"}}});
   auto buy = request;
   buy["idempotency_key"] = "buy";
@@ -119,12 +135,12 @@ int main() {
   take(financial.call(Operation::submit_import, buy));
   take(financial.drain("b"));
   auto accepted = take(store.ledger_records());
-  check(accepted.size() == 2);
+  check(accepted.size() == 4);
   Json settlement = {{"book_id", "b"},
                      {"idempotency_key", "payment"},
                      {"request",
                       {{"account", "a"},
-                       {"trade_record", accepted[1]["record_id"]},
+                       {"trade_record", accepted[3]["record_id"]},
                        {"cash", "-40"},
                        {"currency", "USD"},
                        {"effective_at", "2026-01-07T00:00:00Z"},
@@ -137,7 +153,7 @@ int main() {
   auto payment = take(financial.call(Operation::settlement_status,
                                      {{"book_id", "b"}, {"idempotency_key", "payment"}}));
   check(payment["state"] == "committed");
-  take(store.close_period("close", "2026-01-31T23:59:59Z", 2, "tester", true, 1, 1));
+  take(store.close_period("close", "2026-01-31T23:59:59Z", 4, "tester", true, 1, 1));
   auto refund = settlement;
   refund["idempotency_key"] = "closed-refund";
   refund["request"]["cash"] = "40";

@@ -413,6 +413,10 @@ if(LUCA_BUILD_TESTS)
       -DLUCA_CTEST_COMMAND=${CMAKE_CTEST_COMMAND}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/parent_consumer/run_test.cmake)
 
+  add_executable(luca_transaction_versions_test tests/unit/transaction_versions_test.cpp)
+  target_link_libraries(luca_transaction_versions_test PRIVATE luca::accounting)
+  add_test(NAME luca_transaction_versions_test COMMAND luca_transaction_versions_test)
+
   # All financial test executables must retain their checks in optimized builds.
   # Apply this after registration so older assertion-based suites are included.
   get_property(luca_assertion_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)

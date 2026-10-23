@@ -90,11 +90,14 @@ validate_settlement_history(const LifecycleLedger &ledger,
         return fail("SETTLEMENT_ALREADY_REVERSED");
     } else {
       const LifecycleRecord *head = nullptr;
+      std::set<std::string> gated;
       for (const auto *r : chains[e.economic_event]) {
         if (r->acceptance_sequence().value() > known)
           break;
-        if (r->cancellation_at() && *r->cancellation_at() > e.effective_at)
-          continue;
+        if ((r->cancellation_at() && *r->cancellation_at() > e.effective_at) ||
+            (r->causal_record_id() && gated.contains(r->causal_record_id()->value()))) {
+          gated.insert(r->record_id().value()); continue;
+        }
         head = r;
       }
       if (!head || !head->event() || header(*head->event()).effective_at() > e.effective_at)
