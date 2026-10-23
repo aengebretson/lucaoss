@@ -220,6 +220,18 @@ class Reporting(unittest.TestCase):
             eur=self.report(p,{**args,'currency':'EUR'},'trial_balance')
             self.assertTrue(all(v['net']['currency']=='EUR' for v in eur['items']))
             self.assertEqual(eur['manifest']['currency_controls'],complete['manifest']['currency_controls'])
+    def test_native_replacement_metadata_is_lossless_in_query_schema(self):
+        with Peer(MCP,self.profile) as p:
+            self.prepare_book(p)
+            args=self.inputs(p);args.pop('policy_through');args.pop('settlement_through')
+            old=self.both(p,'query_transactions','transactions query',args)['data']['items'][0]
+            meta=self.submit()['metadata'];meta['replaces']={'import_id':old['admission']['import_id'],'record_ids':[]}
+            metadata_file=self.directory/'native-metadata.json';metadata_file.write_text(json.dumps(meta))
+            payload_file=self.directory/'native-input.jsonl';payload_file.write_text(json.dumps(trade('native-meta','native-meta-event','1'))+'\n')
+            self.admin('receive','--key','native-metadata','--metadata',str(metadata_file),'--payload',str(payload_file))
+            self.admin('worker','--mode','drain')
+            rows=self.both(p,'query_transactions','transactions query',{**args,'accepted_through':'3'})['data']['items']
+            self.assertEqual(rows[-1]['source_metadata']['replaces'],meta['replaces'])
     def test_concurrent_retry_identity_and_readonly_tools(self):
         with Peer(MCP,self.profile) as p:
             self.prepare_book(p)

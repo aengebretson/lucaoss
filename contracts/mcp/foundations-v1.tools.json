@@ -7790,6 +7790,29 @@
                               "type": "string",
                               "minLength": 1,
                               "maxLength": 256
+                            },
+                            "replaces": {
+                              "type": "object",
+                              "properties": {
+                                "import_id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "record_ids": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  }
+                                }
+                              },
+                              "required": [
+                                "import_id",
+                                "record_ids"
+                              ],
+                              "additionalProperties": false
                             }
                           },
                           "required": [

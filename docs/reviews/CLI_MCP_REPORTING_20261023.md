@@ -130,3 +130,14 @@ coordinator evidence. Any integration against changed main requires fresh checks
 
 No merge, deployment, live financial mutation or complete-feature acceptance is
 claimed by this PR evidence.
+
+### Native metadata schema follow-up
+
+A dependent version-adapter review identified that a native import may contain
+supported `metadata.replaces` even though the thin submission schema does not
+expose that optional native feature. Accepted-history output now describes that
+field concretely and preserves it. A ninth reporting integration case creates a
+native import with this metadata and verifies lossless, schema-valid query output
+through direct C++, CLI and stdio MCP. All three application CTest entries passed
+again (11.88 seconds); financial code and the previously verified full-suite scope
+are unchanged by this schema/test-only follow-up.
