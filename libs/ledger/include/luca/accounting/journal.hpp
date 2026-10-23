@@ -24,7 +24,7 @@ using JournalLineId = Identifier<JournalLineIdTag>;
 using AccountingPolicyId = Identifier<AccountingPolicyIdTag>;
 
 enum class JournalSide { debit, credit };
-enum class JournalEventType { cash_movement, equity_trade };
+enum class JournalEventType { cash_movement, equity_trade, derivative_projection };
 enum class RecognitionPhase { immediate, trade_date, settlement_date, actual_settlement, period_adjustment };
 
 // These names are stable machine-readable categories. More detailed messages
@@ -144,7 +144,8 @@ template <class IdentifierType>
 
 [[nodiscard]] constexpr bool valid_event_type(JournalEventType event_type) noexcept {
   return event_type == JournalEventType::cash_movement ||
-         event_type == JournalEventType::equity_trade;
+         event_type == JournalEventType::equity_trade ||
+         event_type == JournalEventType::derivative_projection;
 }
 
 [[nodiscard]] constexpr bool valid_phase(RecognitionPhase phase) noexcept {
@@ -322,6 +323,11 @@ public:
                        "cash entries require immediate recognition without settlement dates; "
                        "equity entries require trade and settlement dates"});
     }
+    if (event_type == JournalEventType::derivative_projection &&
+        (recognition_phase != RecognitionPhase::period_adjustment ||
+         settlement_context.trade_date() || settlement_context.settlement_date()))
+      return std::unexpected(JournalError{JournalDiagnosticCategory::policy_context_mismatch,
+          "derivative projections require an explicit adjustment boundary without trade dates"});
     if ((recognition_phase == RecognitionPhase::trade_date &&
          recognized_on != *settlement_context.trade_date()) ||
         (recognition_phase == RecognitionPhase::settlement_date &&

@@ -556,3 +556,13 @@ through existing import diagnostics, immutable version/activation metadata and
 hash-verified original source evidence in shared C++, CLI and stdio MCP.
 Period P&L, balanced period movements and financial statements remain conditional
 on the separate reviewed period-accounting contract.
+
+### Bounded derivative contract economics
+
+[Explicit derivative reporting](derivative-accounting.md) supplies versioned
+contract economics and SPX/SPXW European premium accounting, exact observations, LIFO relief, actual cash/collateral separation,
+balanced journal/period projections and retained history anchors. This is an
+opt-in C++ report contract, not native derivative admission or Enterprise/CLI/MCP
+enablement. Next gates: reviewed canonical/storage/adapter contract and retention,
+ES settlement-to-market implementation, cash-basis derivative recognition, intraperiod policies and broader product profiles.
+No live definitions, policies or deployed capability is implied.

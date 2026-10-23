@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(luca_derivative_consumer LANGUAGES CXX)
+find_package(Luca 0.1 CONFIG REQUIRED)
+add_executable(luca_derivative_consumer main.cpp)
+target_link_libraries(luca_derivative_consumer PRIVATE luca::accounting)
+enable_testing()
+add_test(NAME installed_derivative_walkthrough COMMAND luca_derivative_consumer)
