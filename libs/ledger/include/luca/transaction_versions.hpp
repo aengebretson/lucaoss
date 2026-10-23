@@ -29,13 +29,18 @@ inline std::vector<TransactionVersion> transaction_versions(
       original.void_recorded_at = r.recorded_at();
       out.back().void_effective_at = r.cancellation_at();
       out.back().void_recorded_at = r.recorded_at();
+      out.back().activation_effective_at = original.activation_effective_at;
     } else if (r.action() == LifecycleAction::correct && r.causal_record_id()) {
       auto& predecessor = out.at(index.at(r.causal_record_id()->value()));
       predecessor.replacement_version_id = r.record_id().value();
+      out.back().activation_effective_at = predecessor.activation_effective_at;
       if (predecessor.action == LifecycleAction::cancel && predecessor.predecessor_id) {
         auto& original = out.at(index.at(*predecessor.predecessor_id));
         original.replacement_version_id = r.record_id().value();
-        out.back().activation_effective_at = predecessor.void_effective_at;
+        if(predecessor.void_effective_at)
+          out.back().activation_effective_at = out.back().activation_effective_at
+              ? std::max(*out.back().activation_effective_at,*predecessor.void_effective_at)
+              : predecessor.void_effective_at;
       }
     }
   }
