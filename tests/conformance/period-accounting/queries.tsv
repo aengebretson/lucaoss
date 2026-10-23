@@ -1,0 +1,6 @@
+# basis from_day until_day knowledge_day economic_activity recognized_activity closing_cash long_carrying short_carrying
+accrual 0 20 30 61.4 61.4 1052.2 9.2 0
+cash 0 7 30 61.4 32.175 1144 9.2 0
+cash 7 9 30 0 29.225 1052.2 9.2 0
+cash 3 4 30 26.4 0 888 71.4 0
+cash 5 6 30 5.2 19.575 1006 0 13.8

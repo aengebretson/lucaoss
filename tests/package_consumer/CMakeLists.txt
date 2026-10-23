@@ -142,3 +142,9 @@ target_link_libraries(luca_package_adapters_consumer PRIVATE luca::adapters)
 add_test(NAME luca_package_adapters_consumer_run COMMAND luca_package_adapters_consumer)
 set_tests_properties(luca_package_adapters_consumer_run PROPERTIES
   PASS_REGULAR_EXPRESSION "trade_observations=1 unexpected_observations=1")
+
+add_executable(luca_package_period_accounting ../../examples/period-accounting/main.cpp)
+target_link_libraries(luca_package_period_accounting PRIVATE luca::accounting)
+add_test(NAME luca_package_period_accounting_run COMMAND luca_package_period_accounting)
+set_tests_properties(luca_package_period_accounting_run PROPERTIES
+  PASS_REGULAR_EXPRESSION "period_pnl_scaled=18200000 correction_economic_scaled=-4000000 currency=USD")
