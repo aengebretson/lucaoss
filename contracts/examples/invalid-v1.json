@@ -1,0 +1,440 @@
+[
+  {
+    "operation": "submit_import",
+    "part": "request",
+    "reason": "Caller cannot assert a tenant",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "batch-1",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "independent_groups"
+      },
+      "payload": {
+        "kind": "staged",
+        "payload_id": "payload-1"
+      },
+      "tenant_id": "other-tenant"
+    }
+  },
+  {
+    "operation": "submit_import",
+    "part": "request",
+    "reason": "Idempotency key must be nonempty",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "independent_groups"
+      },
+      "payload": {
+        "kind": "staged",
+        "payload_id": "payload-1"
+      }
+    }
+  },
+  {
+    "operation": "submit_import",
+    "part": "request",
+    "reason": "Payload variants are exclusive",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "batch-1",
+      "metadata": {
+        "source_id": "custodian-a",
+        "format": "luca.transactions.jsonl/1",
+        "validation_context_id": "cash-equity-v1-ref42",
+        "atomicity": "independent_groups"
+      },
+      "payload": {
+        "kind": "staged",
+        "payload_id": "payload-1",
+        "utf8": "{}"
+      }
+    }
+  },
+  {
+    "operation": "read_records",
+    "part": "request",
+    "reason": "Page limit cannot be zero",
+    "value": {
+      "book_id": "fund-a",
+      "import_id": "import-1",
+      "validation": "invalid",
+      "page": {
+        "limit": 0
+      }
+    }
+  },
+  {
+    "operation": "read_records",
+    "part": "request",
+    "reason": "Unknown validation states fail",
+    "value": {
+      "book_id": "fund-a",
+      "import_id": "import-1",
+      "validation": "approved",
+      "page": {
+        "limit": 100
+      }
+    }
+  },
+  {
+    "operation": "stage_file",
+    "part": "request",
+    "reason": "Parent traversal is rejected",
+    "value": {
+      "book_id": "fund-a",
+      "root_id": "imports",
+      "relative_path": "../private.json"
+    }
+  },
+  {
+    "operation": "stage_file",
+    "part": "request",
+    "reason": "Absolute path is rejected",
+    "value": {
+      "book_id": "fund-a",
+      "root_id": "imports",
+      "relative_path": "/etc/passwd"
+    }
+  },
+  {
+    "operation": "stage_file",
+    "part": "request",
+    "reason": "Nested parent traversal is rejected",
+    "value": {
+      "book_id": "fund-a",
+      "root_id": "imports",
+      "relative_path": "a/../../private.json"
+    }
+  },
+  {
+    "operation": "stage_file",
+    "part": "request",
+    "reason": "Backslash path is rejected",
+    "value": {
+      "book_id": "fund-a",
+      "root_id": "imports",
+      "relative_path": "a\\secret.json"
+    }
+  },
+  {
+    "operation": "request_report",
+    "part": "request",
+    "reason": "A required-import barrier cannot select an exact revision",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-10-21"
+      },
+      "selection": {
+        "mode": "exact",
+        "revision": "r1"
+      },
+      "readiness": {
+        "mode": "require_imports",
+        "import_ids": [
+          "i1"
+        ],
+        "deadline": "2026-10-21T13:00:00Z"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ]
+      }
+    }
+  },
+  {
+    "operation": "request_report",
+    "part": "request",
+    "reason": "Invalid calendar date is rejected",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-02-30"
+      },
+      "selection": {
+        "mode": "current_at_request"
+      },
+      "readiness": {
+        "mode": "available"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ]
+      }
+    }
+  },
+  {
+    "operation": "request_report",
+    "part": "request",
+    "reason": "More than nanosecond timestamp precision is rejected",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00.1234567891Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-10-21"
+      },
+      "selection": {
+        "mode": "current_at_request"
+      },
+      "readiness": {
+        "mode": "available"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ]
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "part": "response",
+    "reason": "Available requires a complete manifest",
+    "value": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "available",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": null,
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "part": "response",
+    "reason": "Queued cannot expose final results",
+    "value": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "queued",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": {
+          "result_id": "result-1",
+          "book_id": "fund-a",
+          "kind": "settled_cash",
+          "calculation": {
+            "context_id": "cash-ref42",
+            "engine_version": "luca/0.1",
+            "projection_version": "cash/1",
+            "normalization_version": "source-book-identity/1",
+            "reference_snapshot_id": "ref42",
+            "accounting_policy": null
+          },
+          "cutoffs": {
+            "economic_as_of": "2026-10-21T12:00:00Z",
+            "recorded_through": "2026-10-21T12:00:00Z",
+            "settlement_as_of_date": "2026-10-21"
+          },
+          "coverage": {
+            "snapshot_id": "coverage-1",
+            "captured_at": "2026-10-21T12:00:00Z",
+            "accepted_revision": "revision-42",
+            "enumeration_complete": true,
+            "pending": "0",
+            "invalid": "1",
+            "blocked": "0",
+            "valid_uncommitted": "0",
+            "admitted_after_selection": "0"
+          },
+          "row_count": "1",
+          "currency_controls": [],
+          "expires_at": "2026-10-22T12:00:00Z",
+          "control_scope": "none"
+        },
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "get_report_status",
+    "part": "response",
+    "reason": "Failed requires a retained failure",
+    "value": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "state": "failed",
+        "selection": {
+          "snapshot_id": "coverage-1",
+          "captured_at": "2026-10-21T12:00:00Z",
+          "accepted_revision": "revision-42",
+          "enumeration_complete": true,
+          "pending": "0",
+          "invalid": "1",
+          "blocked": "0",
+          "valid_uncommitted": "0",
+          "admitted_after_selection": "0"
+        },
+        "manifest": null,
+        "failure": null
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "part": "response",
+    "reason": "Financial money must not be a JSON number",
+    "value": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "cash",
+              "row_id": "row-1",
+              "account_id": "portfolio-a",
+              "currency": "USD",
+              "amount": 1000.0
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "read_report_page",
+    "part": "response",
+    "reason": "Excess monetary precision is rejected",
+    "value": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "report_id": "report-1",
+        "result_id": "result-1",
+        "rows": {
+          "snapshot_id": "page-1",
+          "expires_at": "2026-10-22T12:00:00Z",
+          "items": [
+            {
+              "kind": "cash",
+              "row_id": "row-1",
+              "account_id": "portfolio-a",
+              "currency": "USD",
+              "amount": "1.1234567"
+            }
+          ],
+          "next_cursor": null
+        }
+      }
+    }
+  },
+  {
+    "operation": "read_records",
+    "part": "response",
+    "reason": "Committed record requires canonical identity and accepted revision",
+    "value": {
+      "api_version": "luca.application/1",
+      "ok": true,
+      "result": {
+        "snapshot_id": "page-1",
+        "expires_at": "2026-10-22T12:00:00Z",
+        "items": [
+          {
+            "record_id": "staged-2",
+            "ordinal": "2",
+            "validation": "invalid",
+            "commitment": "committed",
+            "validation_context_id": "cash-equity-v1-ref42",
+            "run_id": "run-1",
+            "group_id": "group-2",
+            "canonical_record_id": null,
+            "accepted_revision": null,
+            "diagnostic_count": "1",
+            "source": {
+              "offset": "0",
+              "length": "42",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          }
+        ],
+        "next_cursor": null
+      }
+    }
+  },
+  {
+    "operation": "request_report",
+    "part": "request",
+    "reason": "Settled cash does not silently accept an instrument filter",
+    "value": {
+      "book_id": "fund-a",
+      "idempotency_key": "report-1",
+      "kind": "settled_cash",
+      "calculation_context_id": "cash-ref42",
+      "cutoffs": {
+        "economic_as_of": "2026-10-21T12:00:00Z",
+        "recorded_through": "2026-10-21T12:00:00Z",
+        "settlement_as_of_date": "2026-10-21"
+      },
+      "selection": {
+        "mode": "current_at_request"
+      },
+      "readiness": {
+        "mode": "available"
+      },
+      "filters": {
+        "account_ids": [
+          "portfolio-a"
+        ],
+        "instrument_ids": [
+          "ABC"
+        ]
+      }
+    }
+  }
+]

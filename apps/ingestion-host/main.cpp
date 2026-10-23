@@ -48,6 +48,16 @@ int main(int argc, char **argv) {
     auto request = [&] { return read(options.at("--request")); };
     if (command == "capabilities")
       result = take(store.capabilities());
+    else if(command == "policy-history")result=take(store.policy_history());
+    else if(command == "policy-result")result=take(store.policy_result(id));
+    else if(command == "policy-put") {
+      auto r=request();result=take(store.put_policy(r.at("revision"),r.at("expected_sequence"),r.at("actor")));
+    }
+    else if(command == "policy-resolve") {
+      auto r=request();std::optional<std::uint64_t> through;
+      if(r.contains("through_sequence"))through=r.at("through_sequence");
+      result=take(store.resolve_policy(r.at("target"),r.at("effective_at"),through));
+    }
     else if (command == "receive") {
       auto metadata = read(options.at("--metadata"));
       std::ifstream input(options.at("--payload"), std::ios::binary);

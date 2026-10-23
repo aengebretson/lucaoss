@@ -1,5 +1,7 @@
 #include "luca/ingestion/sqlite.hpp"
+#include "luca/adapters/transaction.hpp"
 #include "luca/serialization/canonical.hpp"
+#include "luca/serialization/canonical_decode.hpp"
 #include <atomic>
 #include <csignal>
 #include <cstdio>
@@ -602,8 +604,125 @@ void malformed_limits_and_corruption() {
   check(take(store.status(broken))["work_health"] == "attention_required");
   check(!take(store.work_attempts(broken))["items"].empty());
 }
+void source_envelopes() {
+  check(luca::adapters::parse_transaction_date("2026-10-22").has_value());
+  check(!luca::adapters::parse_transaction_date("2026-02-30"));
+  check(luca::adapters::parse_transaction_timestamp("2026-10-22T15:00:00.123456789Z").has_value());
+  check(!luca::adapters::parse_transaction_timestamp("2026-10-22T25:00:00Z"));
+  Temp root;
+  auto cfg = config();
+  auto context = cfg["contexts"]["cash-equity-v1-ref42"];
+  context["adapter"] = "luca.transactions.envelope.jsonl/1";
+  cfg["contexts"]["envelope-ref42"] = context;
+  auto store = take(SqliteStore::open(root.path, cfg));
+  take(store.register_reference("ref42", {{"accounts", Json::array({"portfolio-a"})},
+                                         {"instruments", Json::array({"ABC"})}}));
+  auto metadata = meta();
+  metadata["format"] = "luca.transactions.envelope.jsonl/1";
+  metadata["validation_context_id"] = "envelope-ref42";
+  Json origin = {{"transaction", cash("original", "econ")},
+                 {"source", {{"wire", "8=FIX.4.2\00135=8\00117=E1\001"},
+                             {"account_id", "cannot-override-the-transaction"}}}};
+  auto correction = origin;
+  correction["transaction"] = cash("correction", "econ", "125");
+  correction["transaction"]["action"] = "correct";
+  correction["transaction"]["causal_record_id"] = "original";
+  auto invalid = origin;
+  invalid["transaction"] = cash("bad", "bad-econ", "nan");
+  const auto bytes = encode(Json::array({origin, correction, invalid}));
+  const auto id = receive(store, bytes, "envelopes", metadata);
+  drain(store);
+  auto status = take(store.status(id));
+  check(status["commitment_record_counts"]["committed"] == 2);
+  check(status["validation_counts"]["invalid"] == 1);
+  std::ostringstream retained;
+  take(store.payload(id, retained));
+  check(retained.str() == bytes);
+  check(receive(store, bytes, "envelopes", metadata) == id);
+  auto malformed = receive(store, Json::array({{{"transaction", cash("other", "other-e")},
+                                               {"source", Json::object()}}}), "empty-source", metadata);
+  drain(store);
+  check(take(store.status(malformed))["enumeration"]["state"] == "failed");
+  check(take(store.book_state())["last_sequence"] == 2);
+}
+void charged_transactions() {
+  Temp root;
+  auto cfg=config();
+  cfg["contexts"]["cash-equity-v1-ref42"]["rules"]="cash-equity/2";
+  auto store=take(SqliteStore::open(root.path,cfg));
+  take(store.register_reference("ref42",{{"accounts",Json::array({"portfolio-a"})},{"instruments",Json::array({"ABC"})}}));
+  auto row=cash("charged","charged");
+  row["event"]={{"type","equity_trade"},{"effective_at","2026-10-20T00:00:00Z"},{"instrument_id","ABC"},
+    {"quantity","-2"},{"price","100"},{"quote_currency","USD"},{"settlement_date","2026-10-21"},
+    {"charges",Json::array({{{"id","commission"},{"category","commission"},{"payee","broker"},{"state","reported"},
+      {"schedule_version",""},{"currency","USD"},{"amount","1.25"}}})}};
+  auto bad=row;bad["record_id"]="bad";bad["economic_event_id"]="bad";bad["event"]["charges"][0]["currency"]="EUR";
+  auto imported=receive(store,Json::array({row,bad}));
+  check(take(store.book_state())["last_sequence"]==0);
+  // Restart before validation; original envelope and pending intent are durable.
+  store=take(SqliteStore::open(root.path,cfg));drain(store);
+  check(take(store.status(imported))["validation_counts"]["invalid"]==1);
+  check(take(store.book_state())["last_sequence"]==1);
+  auto records=take(store.ledger_records());auto hex=records[0]["canonical"].get<std::string>();
+  std::vector<std::byte> bytes;
+  for(std::size_t i=0;i<hex.size();i+=2)bytes.push_back(static_cast<std::byte>(std::stoul(hex.substr(i,2),nullptr,16)));
+  auto decoded=luca::serialization::decode_lifecycle_record(bytes);check(bool(decoded));
+  luca::LifecycleLedger history;check(bool(history.accept(decoded->draft)));
+  const auto& trade=std::get<luca::EquityTrade>(*history.records()[0].event());
+  check(trade.charges() && trade.charges()->front().amount.scaled_value()==1250000);
+  check(luca::trade_cash(trade)->scaled_value()==198750000);
+  auto replay=receive(store,Json::array({row,bad}));check(replay==imported);drain(store);
+  check(take(store.book_state())["last_sequence"]==1);
+  Temp old;auto legacy=opened(old);auto rejected=receive(legacy,Json::array({row}));drain(legacy);
+  check(take(legacy.status(rejected))["validation_counts"]["invalid"]==1);
+}
 } // namespace
+void period_controls() {
+  Temp root;
+  auto store=opened(root);
+  auto first=receive(store,Json::array({cash()}));
+  error(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",0,"operator"),"PERIOD_WORK_PENDING");
+  drain(store);
+  error(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",0,"operator"),"PERIOD_REVIEW_STALE");
+  auto receipt=take(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",1,"operator"));
+  check(take(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",1,"operator"))==receipt);
+  error(store.close_period("close-a","2026-10-21T23:59:59.999999999Z",1,"operator"),"PERIOD_IDEMPOTENCY_CONFLICT");
+  auto late=receive(store,Json::array({cash("late","late")}),"late");
+  check(take(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",1,"operator",false))==receipt);
+  error(store.close_period("close-b","2026-10-21T00:00:00Z",1,"operator",false),"PERIOD_WORK_PENDING");
+  drain(store);
+  check(take(store.book_state())["last_sequence"]==1);
+  auto diagnostics=items(store,"diagnostics",late);bool closed=false;
+  for(auto d:diagnostics) if(d.value("code","")=="PERIOD_CLOSED") closed=true;
+  check(closed);
+  Json cancel={{"record_id","delete"},{"economic_event_id","e1"},{"action","cancel"},
+               {"account_id","portfolio-a"},{"causal_record_id","r1"}};
+  receive(store,Json::array({cancel}),"delete");drain(store);check(take(store.book_state())["last_sequence"]==1);
+  auto malformed=cancel;malformed["record_id"]="bad-void";malformed["void_at"]=42;
+  auto invalid=receive(store,Json::array({malformed}),"bad-void");drain(store);
+  check(take(store.status(invalid))["validation_counts"]["invalid"]==1);
+  auto replacement=cash("closed-correction","e1");replacement["action"]="correct";
+  replacement["causal_record_id"]="r1";replacement["event"]["effective_at"]="2026-10-21T00:00:00Z";
+  auto corrected=receive(store,Json::array({replacement}),"closed-correction");drain(store);
+  check(take(store.status(corrected))["commitment_record_counts"]["conflict"]==1);
+  cancel["record_id"]="void";cancel["void_at"]="2026-10-21T00:00:00Z";
+  receive(store,Json::array({cancel}),"void");drain(store);check(take(store.book_state())["last_sequence"]==2);
+  auto reopened=take(SqliteStore::open(root.path,config()));
+  check(take(reopened.periods())["closes"][0]==receipt);
+  auto records=take(reopened.ledger_records());
+  luca::LifecycleLedger history;
+  for(auto record:records){
+    std::vector<std::byte> bytes;auto hex=record["canonical"].get<std::string>();
+    for(std::size_t j=0;j<hex.size();j+=2)bytes.push_back(static_cast<std::byte>(std::stoul(hex.substr(j,2),nullptr,16)));
+    auto decoded=luca::serialization::decode_lifecycle_record(bytes);check(bool(decoded));check(bool(history.accept(decoded->draft)));
+  }
+  check(history.resolve(luca::Timestamp::max(),*luca::adapters::parse_transaction_timestamp("2026-10-20T23:59:59Z")).active_events().size()==1);
+  check(history.resolve(luca::Timestamp::max(),*luca::adapters::parse_transaction_timestamp("2026-10-21T00:00:00Z")).active_events().empty());
+}
 int main() {
+  period_controls();
+  charged_transactions();
+  source_envelopes();
   receipt_errors_and_replay();
   atomicity_and_causal_order();
   dependencies_history_and_revalidation();
@@ -616,5 +735,5 @@ int main() {
   malformed_limits_and_corruption();
   missing_snapshot_empty_clock_and_capacity();
   operational_failures_and_group_bounds();
-  std::puts("12 native ingestion scenarios passed, including 14 SIGKILL boundaries");
+  std::puts("14 native ingestion scenarios passed, including 14 SIGKILL boundaries");
 }

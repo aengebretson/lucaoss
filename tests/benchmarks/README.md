@@ -133,3 +133,7 @@ each revision's ledger include directory. It seeds 1k/10k/100k records outside
 timing, appends 100 individual records for three repetitions and hashes the full
 result outside timing. Before/after canonical hashes must match; this is an
 in-memory acceptance comparison, not durable-ingestion throughput.
+
+## Custodian lots
+
+`luca_lot_benchmark` (enable `LUCA_BUILD_BENCHMARKS`) measures admission, lifecycle resolution and the LIFO fold for long/short crossing, 1,000 custodian pools, and deep short inventory. Each input has two separate charge components. See [lot accounting](../../docs/lots-and-charges.md) for workload counts and the initial measured baseline. This is a CPU in-memory benchmark, not network/storage throughput.

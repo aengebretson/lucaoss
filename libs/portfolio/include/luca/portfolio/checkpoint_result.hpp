@@ -51,7 +51,7 @@ namespace checkpoint_result_detail {
   case LifecycleAction::cancel:
     return LifecycleRecordDraft::cancel(record.record_id(), record.economic_event_id(),
                                         *record.supersedes_record_id(), record.account(),
-                                        record.recorded_at(), record.provenance());
+                                        record.recorded_at(), record.provenance(), record.cancellation_at());
   case LifecycleAction::reverse:
     return LifecycleRecordDraft::reverse(record.economic_event_id(), *record.reverses_record_id(),
                                          record.recorded_at(), *record.event());

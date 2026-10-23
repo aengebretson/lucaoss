@@ -1,13 +1,18 @@
 # Staged ingestion API — proposed v1 contract
 
-Status: target HTTP contract, 2026-10-21; no HTTP listener is implemented. Read with [architecture and durability rules](staged-ingestion.md).
-This is the normative human-readable wire specification for implementation
-review. An OpenAPI document should be derived when signatures are accepted.
+Status: deferred HTTP adapter proposal, updated 2026-10-21; no HTTP listener is
+implemented. Direct C++ integration, native CLI tools and an optional MCP adapter
+are the current [integration direction](native-ingestion.md#integration-direction).
+The HTTP routes/headers below are retained for a possible future adapter, not
+requirements to build a server next. Domain rules for durable receipt, immutable
+evidence, scope, idempotency and separate validation/admission remain applicable;
+C++ signatures, CLI commands and MCP schemas require their own explicit contracts.
+Read with [architecture and durability rules](staged-ingestion.md).
 
 The first [local reference host](../apps/ingestion-host/README.md) implements the
 receipt/transfer, record/status/error/history reads, revalidation and automatic
-ledger admission through a native C++ API/runtime and CLI. The optional future
-HTTP adapter will use µWebSockets over µSockets. HTTP endpoints remain proposed; the local mappings and bounded differences are documented in
+ledger admission through a native C++ API/runtime and CLI. No HTTP framework is
+selected. HTTP endpoints remain proposed; the local mappings and bounded differences are documented in
 [the host guide](../apps/ingestion-host/README.md).
 
 ## Common rules

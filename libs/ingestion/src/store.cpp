@@ -89,7 +89,7 @@ SqliteStore::Impl::Impl(std::filesystem::path root, Json cfg, Hooks h)
     db.exec("INSERT INTO config VALUES (1,?)", {expected.dump()});
     version = 1;
   }
-  ensure(version == 1 || version == 2, "UNSUPPORTED_SCHEMA");
+  ensure(version >= 1 && version <= 4, "UNSUPPORTED_SCHEMA");
   auto stored = parse(db.one("SELECT value FROM config WHERE id=1")["value"]);
   for (const auto *key : {"tenant", "book", "limits"})
     ensure(stored[key] == expected[key], "CONFIGURATION_CONFLICT");
@@ -99,6 +99,10 @@ SqliteStore::Impl::Impl(std::filesystem::path root, Json cfg, Hooks h)
   if (version == 1)
     for (auto sql : schema_two)
       db.exec(sql);
+  if (version < 3)
+    for (auto sql : schema_three) db.exec(sql);
+  if (version < 4)
+    for (auto sql : schema_four) db.exec(sql);
   db.commit();
 }
 Result<SqliteStore> SqliteStore::open(std::filesystem::path root, Json config, Hooks hooks) {
