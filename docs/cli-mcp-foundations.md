@@ -110,7 +110,7 @@ lease before another process reclaims its work. No detached daemon is launched.
 The **store directory**, not an arbitrary SQLite filename, is the ownership and
 backup unit: SQLite metadata, immutable payloads, locks, transfers and the pinned
 storage profile. Opening a configured store retains existing native behavior:
-create a new store or transactionally migrate old schemas 1–3 to schema 4, reject
+create a new store or transactionally migrate old schemas 1–4 to schema 5, reject
 newer/unrecognized schemas and incompatible contexts/limits. Read-only tool grants
 mean no financial mutations or workers, **not** SQLite `mode=ro`: startup may
 initialize/migrate storage, and the native adapter uses its normal locks/journal
@@ -118,9 +118,9 @@ behavior. Initialize/upgrade under operator control with a coherent backup befor
 connecting a read-only host. No tool exposes migration or reference/policy edits.
 `--help` and `--version` do not open storage. Native `luca-ingest` remains the
 operator interface for context/reference registration and existing administration.
-This branch is based on schema 4; the concurrent trade-accounting branch owns
-schema 5 and settlement APIs. Rebuild against the integrated storage component;
-this older binary correctly refuses a newer store. Do not point it at the live
+The integrated storage component uses schema 5, including the actual-settlement
+APIs. Older schema-4 binaries refuse an upgraded store. Use a coherent pre-upgrade
+backup for rollback and rebuild all consumers against the integrated component. Do not point it at the live
 demo database or copy only its SQLite file.
 
 Multiple compatible native workers, CLI readers/submissions and MCP processes may

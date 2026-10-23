@@ -1,5 +1,10 @@
 # LUCA Design
 
+Equity trade journals and actual settlement are implemented by the bounded
+[trade accounting contract](trade-accounting.md). It supersedes forecast-date
+cash for this reporting API, preserves independent lot selection and recognition,
+and documents the regenerated-snapshot limitation for voids and period activity.
+
 Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
 It exposes existing ingestion/status/errors, policy inspection, canonical
 transactions and economic LIFO lots through the optional SQLite application facade.

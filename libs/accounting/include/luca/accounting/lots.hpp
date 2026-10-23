@@ -209,7 +209,7 @@ inline std::expected<LotReport, LotError> project_lifo_lots(const LifecycleResol
 // Shared application boundary: policies are immutable resolved values, not store
 // handles. Retain full evidence even when a selected account has no trades.
 inline std::expected<LotReport, LotError> project_policy_lots(
-    const LifecycleResolution& resolution, std::span<const ResolvedPolicy> policies) {
+    std::span<const ResolvedLifecycleEvent> active, std::span<const ResolvedPolicy> policies) {
   std::vector<LotAccount> accounts;
   for(const auto& policy:policies) {
     auto checked=resolve_policy(policy.target,policy.revisions,policy.effective_at,policy.through_sequence);
@@ -219,10 +219,15 @@ inline std::expected<LotReport, LotError> project_policy_lots(
     // account-specific evidence. Multiple ledger accounts can share one pool.
     accounts.push_back({t.account,t.book,t.legal_entity,t.custodian_account,"economic-lifo/1"});
   }
-  auto report=project_lifo_lots(resolution,accounts);
+  auto report=project_lifo_lots(active,accounts);
   if(!report)return report;
   report->resolved_policies.assign(policies.begin(),policies.end());
   return report;
+}
+
+inline std::expected<LotReport, LotError> project_policy_lots(
+    const LifecycleResolution& resolution, std::span<const ResolvedPolicy> policies) {
+  return project_policy_lots(resolution.active_events(),policies);
 }
 
 // Entity view preserves the underlying custodian lots. Long and short quantities

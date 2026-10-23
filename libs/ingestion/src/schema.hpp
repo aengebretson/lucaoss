@@ -89,4 +89,9 @@ inline constexpr std::string_view schema_four[] = {
     R"SQL(CREATE TABLE policy_results(id TEXT PRIMARY KEY, body TEXT NOT NULL))SQL",
     R"SQL(PRAGMA user_version=4)SQL",
 };
+inline constexpr std::string_view schema_five[] = {
+    R"SQL(CREATE TABLE settlement_requests(id TEXT PRIMARY KEY, request TEXT NOT NULL, state TEXT NOT NULL, body TEXT NOT NULL))SQL",
+    R"SQL(CREATE TABLE settlement_events(sequence INTEGER PRIMARY KEY, id TEXT UNIQUE NOT NULL REFERENCES settlement_requests(id), body TEXT NOT NULL))SQL",
+    R"SQL(PRAGMA user_version=5)SQL",
+};
 } // namespace luca::ingestion::detail
