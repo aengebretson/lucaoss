@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <source_location>
 #include <unistd.h>
+#include <sqlite3.h>
 using namespace luca;
 using namespace luca::ingestion;
 void check(bool ok,std::source_location at=std::source_location::current()) {
@@ -67,5 +68,13 @@ int main() {
   check(take(reopened.resolve_policy(target,"2026-02-01T00:00:00Z",3))==p);
   check(take(reopened.retain_policy_result(evidence))==retained);
   error(reopened.resolve_policy(target,"2026-02-01T00:00:00Z",999),"POLICY_SEQUENCE_UNAVAILABLE");
+  auto knowledge=take(reopened.policy_history()).at("knowledge");check(!knowledge[0]["recorded_at"].is_null());
+  // A legacy schema5 store has no recorded policy timestamps. Upgrade preserves
+  // unknown knowledge rather than inventing dates from policy effective time.
+  sqlite3* legacy=nullptr;check(sqlite3_open((reopened.path()/"intake.sqlite3").c_str(),&legacy)==SQLITE_OK);
+  auto altered=sqlite3_exec(legacy,"ALTER TABLE policy_revisions DROP COLUMN recorded_ns; PRAGMA user_version=5",nullptr,nullptr,nullptr);
+  if(altered!=SQLITE_OK)std::fprintf(stderr,"migration fixture: %s\n",sqlite3_errmsg(legacy));check(altered==SQLITE_OK);sqlite3_close(legacy);
+  auto migrated=take(SqliteStore::open(tmp,config));check(take(migrated.policy_history())["knowledge"][0]["recorded_at"].is_null());
+  check(take(migrated.resolve_policy(target,"2026-02-01T00:00:00Z",3))==p);
   std::filesystem::remove_all(tmp);std::puts("policy tests passed");
 }

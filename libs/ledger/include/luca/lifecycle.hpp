@@ -10,6 +10,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <span>
 #include <string>
 #include <string_view>
@@ -377,6 +378,27 @@ class LifecycleLedger {
   // before publishing. Validation touches the suffix and indexed causal targets.
   [[nodiscard]] std::expected<PreparedLifecycleAppend, LifecycleError>
   prepare_batch(std::span<const LifecycleRecordDraft> drafts) const {
+    return prepare_impl(drafts, false);
+  }
+
+  // Restore an already-accepted canonical record in exact sequence order.
+  // This is replay, not authorization for a new economic mutation. Hosts must
+  // restore complete durable admission groups before exposing a projection.
+  [[nodiscard]] std::expected<RecordReference, LifecycleError> restore_record(
+      const LifecycleRecordDraft& draft, std::uint64_t accepted_sequence) {
+    if (accepted_sequence != next_sequence_)
+      return std::unexpected(error(LifecycleDiagnosticCategory::deterministic_ordering,
+          draft, "restored sequence is not the next accepted sequence"));
+    auto prepared=prepare_impl(std::span{&draft, 1}, true);
+    if(!prepared)return std::unexpected(prepared.error());
+    auto restored=publish(std::move(*prepared));
+    if(!restored)return std::unexpected(restored.error());
+    return std::cref(restored->front());
+  }
+
+ private:
+  [[nodiscard]] std::expected<PreparedLifecycleAppend, LifecycleError>
+  prepare_impl(std::span<const LifecycleRecordDraft> drafts, bool restoring) const {
     if (drafts.empty()) return PreparedLifecycleAppend{{}, prefix_};
 
     const auto maximum = std::numeric_limits<std::uint64_t>::max();
@@ -486,12 +508,36 @@ class LifecycleLedger {
       }
       if (const auto relationship_error = validate_relationship(record, target))
         return std::unexpected(*relationship_error);
+      if (target.action() == LifecycleAction::cancel && record.action() == LifecycleAction::correct) {
+        if(!restoring && !pending_records.contains(target.record_id().value()))
+          return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+              record, "replacement must atomically include its dated void"));
+        const auto* original = target.causal_record_id() ? find(*target.causal_record_id()) : nullptr;
+        if (!original && target.causal_record_id()) {
+          const auto found = pending_records.find(target.causal_record_id()->value());
+          if (found != pending_records.end()) original = found->second;
+        }
+        if (!original || !original->event() || !record.event() ||
+            original->event()->index() != record.event()->index())
+          return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+              record, "replacement must retain the original event type"));
+        if (const auto* a = std::get_if<EquityTrade>(record.event())) {
+          const auto& b = std::get<EquityTrade>(*original->event());
+          if (a->instrument() != b.instrument() || a->quote_currency() != b.quote_currency())
+            return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                record, "replacement changed the trade natural key"));
+        } else if (std::get<CashMovement>(*record.event()).amount().currency() !=
+                   std::get<CashMovement>(*original->event()).amount().currency())
+          return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+              record, "replacement changed currency"));
+      }
       successors.emplace(target.record_id().value(), records_.size());
     }
 
     return PreparedLifecycleAppend{std::move(pending), prefix_};
   }
 
+ public:
   [[nodiscard]] std::expected<std::span<const LifecycleRecord>, LifecycleError>
   publish(PreparedLifecycleAppend prepared) {
     if (prepared.records_.empty()) return std::span<const LifecycleRecord>{};
@@ -558,9 +604,14 @@ class LifecycleLedger {
 
     std::vector<WorkingChain> working;
     std::unordered_map<std::string, std::size_t> chain_by_economic_id;
+    std::set<std::string> gated;
     for (const auto& record : records_) {
       if (record.recorded_at() > recorded_through) continue;
-      if (record.cancellation_at() && *record.cancellation_at() > economic_as_of) continue;
+      if ((record.cancellation_at() && *record.cancellation_at() > economic_as_of) ||
+          (record.causal_record_id() && gated.contains(record.causal_record_id()->value()))) {
+        gated.insert(record.record_id().value());
+        continue;
+      }
       const auto& id = record.economic_event_id().value();
       auto found = chain_by_economic_id.find(id);
       if (found == chain_by_economic_id.end()) {
@@ -652,7 +703,12 @@ class LifecycleLedger {
 
   [[nodiscard]] static std::optional<LifecycleError> validate_relationship(
       const LifecycleRecord& record, const LifecycleRecord& target) {
-    if (target.action() == LifecycleAction::cancel ||
+    const bool replacement = record.action() == LifecycleAction::correct &&
+        target.action() == LifecycleAction::cancel && target.cancellation_at() &&
+        record.recorded_at() == target.recorded_at() &&
+        record.acceptance_sequence().value() == target.acceptance_sequence().value() + 1 &&
+        record.effective_at() && *record.effective_at() <= *target.cancellation_at();
+    if ((target.action() == LifecycleAction::cancel && !replacement) ||
         target.action() == LifecycleAction::reverse) {
       return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
                    record, "cancellations and reversals are terminal");
@@ -677,6 +733,9 @@ class LifecycleLedger {
                      record, "void cannot precede the target economic date");
       return std::nullopt;
     }
+    // The dated void and replacement share one economic identity. Payload
+    // validation against the original version occurs in prepare_batch below.
+    if (replacement) return std::nullopt;
     if (!record.event() || !target.event() ||
         record.event()->index() != target.event()->index()) {
       return error(LifecycleDiagnosticCategory::incompatible_event_relationship,

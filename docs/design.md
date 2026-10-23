@@ -1,3 +1,8 @@
+Immutable dated replacements now use a single admission group with a linked void
+and replacement; replay and new admission have explicit separate APIs. Native
+schema6 retains new policy knowledge timestamps and preserves unknown legacy
+knowledge. See [immutable transaction versions](immutable-transaction-versions.md).
+
 # LUCA Design
 
 Equity trade journals and actual settlement are implemented by the bounded

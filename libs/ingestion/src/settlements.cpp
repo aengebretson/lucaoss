@@ -76,7 +76,7 @@ Result<std::optional<WorkResult>> SqliteStore::process_settlement() const {
       for (const auto &record : records) {
         const auto &bytes = record["canonical"].get_binary();
         auto decoded = serialization::decode_lifecycle_record(std::as_bytes(std::span{bytes}));
-        ensure(bool(decoded) && bool(ledger.accept(decoded->draft)), "SETTLEMENT_LEDGER_INVALID");
+        ensure(bool(decoded) && bool(ledger.restore_record(decoded->draft, decoded->acceptance_sequence)), "SETTLEMENT_LEDGER_INVALID");
       }
       const auto *trade = accounting::settlement_trade(ledger, request.at("trade_record"));
       ensure(trade != nullptr, "SETTLEMENT_TRADE_REQUIRED");
