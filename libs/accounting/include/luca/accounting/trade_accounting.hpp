@@ -93,10 +93,11 @@ inline Money fraction(Money a, std::int64_t n, std::int64_t d) {
 // present. Independent complete books/pools can be scheduled in parallel; never
 // split a dependent pool by date or merge partial lot state as an additive sum.
 // This returns a regenerated journal projection, not an append-only posting log.
+namespace trade_accounting_detail {
 inline std::expected<AccountingReport, AccountingError>
-project_trade_accounting(const LifecycleLedger &ledger, std::span<const ResolvedPolicy> policies,
+project_selected(const LifecycleLedger &ledger, std::span<const ResolvedPolicy> policies,
                          std::span<const SettlementEvent> settlements, AccountingContext context,
-                         RecognitionRules rules) {
+                         RecognitionRules rules, const LifecycleResolution *selected) {
   using namespace trade_accounting_detail;
   auto fail = [](std::string code, std::string record = "") {
     return std::unexpected(AccountingError{std::move(code), std::move(record)});
@@ -106,7 +107,7 @@ project_trade_accounting(const LifecycleLedger &ledger, std::span<const Resolved
       rules.cash != CashRecognition::both_legs)
     return fail("INVALID_ACCOUNTING_CONTEXT");
   try {
-    auto resolution = ledger.resolve(context.recorded_through, context.economic_as_of);
+    auto resolution = selected ? *selected : ledger.resolve(context.recorded_through, context.economic_as_of);
 
     std::map<std::string, const ResolvedPolicy *> bindings;
     std::string policy_encoding = "luca.equity-journals/1";
@@ -152,15 +153,21 @@ project_trade_accounting(const LifecycleLedger &ledger, std::span<const Resolved
     for (const auto &t : lots->trades)
       trades[t.record_id] = &t;
     std::map<std::string, std::vector<const LifecycleRecord *>> economic_history;
-    std::set<std::string> gated_history;
-    for (const auto& r:ledger.records())
-      if ((r.cancellation_at() && *r.cancellation_at()>context.economic_as_of) ||
-          (r.causal_record_id() && gated_history.contains(r.causal_record_id()->value())))
-        gated_history.insert(r.record_id().value());
-    for (const auto &r : ledger.records())
-      if (!gated_history.contains(r.record_id().value()) && r.recorded_at() <= context.recorded_through &&
-          (!r.cancellation_at() || *r.cancellation_at() <= context.economic_as_of))
-        economic_history[r.economic_event_id().value()].push_back(&r);
+    if (selected) {
+      for (const auto &chain : resolution.chains())
+        for (const auto &r : chain.lineage())
+          economic_history[r.get().economic_event_id().value()].push_back(&r.get());
+    } else {
+      std::set<std::string> gated_history;
+      for (const auto& r:ledger.records())
+        if ((r.cancellation_at() && *r.cancellation_at()>context.economic_as_of) ||
+            (r.causal_record_id() && gated_history.contains(r.causal_record_id()->value())))
+          gated_history.insert(r.record_id().value());
+      for (const auto &r : ledger.records())
+        if (!gated_history.contains(r.record_id().value()) && r.recorded_at() <= context.recorded_through &&
+            (!r.cancellation_at() || *r.cancellation_at() <= context.economic_as_of))
+          economic_history[r.economic_event_id().value()].push_back(&r);
+    }
     std::map<std::string, std::vector<const LotRelief *>> reliefs_by_close;
     for (const auto &r : lots->reliefs)
       reliefs_by_close[r.closing_record].push_back(&r);
@@ -505,5 +512,14 @@ project_trade_accounting(const LifecycleLedger &ledger, std::span<const Resolved
   } catch (const ArithmeticFailure &) {
     return fail("ACCOUNTING_AMOUNT_OVERFLOW");
   }
+}
+} // namespace trade_accounting_detail
+// Compatibility snapshot API: selection and regenerated-journal behavior unchanged.
+inline std::expected<AccountingReport, AccountingError>
+project_trade_accounting(const LifecycleLedger &ledger, std::span<const ResolvedPolicy> policies,
+                         std::span<const SettlementEvent> settlements, AccountingContext context,
+                         RecognitionRules rules) {
+  return trade_accounting_detail::project_selected(ledger, policies, settlements, std::move(context),
+                                           rules, nullptr);
 }
 } // namespace luca::accounting
