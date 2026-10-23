@@ -172,6 +172,11 @@ if(LUCA_BUILD_TESTS)
           $<TARGET_FILE:luca> $<TARGET_FILE:luca-mcp> $<TARGET_FILE:luca-ingest>
           ${CMAKE_CURRENT_SOURCE_DIR}/contracts/mcp/foundations-v1.tools.json $<TARGET_FILE:luca_application_direct>)
       set_tests_properties(luca_application_versions_test PROPERTIES TIMEOUT 120)
+      add_test(NAME luca_application_pnl_test
+        COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/application/pnl_test.py
+          $<TARGET_FILE:luca> $<TARGET_FILE:luca-mcp> $<TARGET_FILE:luca-ingest>
+          ${CMAKE_CURRENT_SOURCE_DIR}/contracts/mcp/foundations-v1.tools.json $<TARGET_FILE:luca_application_direct>)
+      set_tests_properties(luca_application_pnl_test PROPERTIES TIMEOUT 120)
       add_test(NAME luca_native_ingestion_consumer_test
         COMMAND ${CMAKE_COMMAND}
           "-DLUCA_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"

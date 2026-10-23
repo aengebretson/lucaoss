@@ -180,6 +180,24 @@ int main() {
   check(payment["state"] == "committed");
   const auto closed_period =
       take(store.close_period("close", "2026-01-31T23:59:59Z", 4, "tester", true, 1, 1));
+  Json period_query = {
+      {"book_id", "b"},
+      {"accepted_through", "4"},
+      {"policy_through", "1"},
+      {"settlement_through", "1"},
+      {"recorded_through", "2200-01-01T00:00:00Z"},
+      {"period_from", "2026-02-01T00:00:00Z"},
+      {"period_until", "2026-03-01T00:00:00Z"},
+      {"mapping_digest",
+       take(financial.call(Operation::capabilities, {{"book_id", "b"}}))["mapping_digest"]},
+      {"reporting_timezone", "UTC"},
+      {"correction_recognition", "recorded_time"},
+      {"collection", "rows"}};
+  auto unavailable_period = financial.call(Operation::query_pnl, period_query);
+  check(!unavailable_period && unavailable_period.error().code == "PERIOD_RETENTION_UNAVAILABLE");
+  period_query["period_from"] = "2026-01-02T00:00:00Z";
+  unavailable_period = financial.call(Operation::query_pnl, period_query);
+  check(!unavailable_period && unavailable_period.error().code == "PERIOD_RETENTION_UNAVAILABLE");
   auto refund = settlement;
   refund["idempotency_key"] = "closed-refund";
   refund["request"]["cash"] = "40";

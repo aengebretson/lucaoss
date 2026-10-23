@@ -1,4 +1,5 @@
 #include "internal.hpp"
+#include "luca/accounting/period_pnl_rows.hpp"
 #include "luca/ingestion/policy.hpp"
 #include "luca/ingestion/settlement.hpp"
 #include "luca/reconciliation/trade_accounting.hpp"
@@ -339,6 +340,186 @@ Json accounting_report(const BookBinding &b, const Json &a) {
                {"control_scope", "whole_journals_before_display_filters"},
                {"breaks", breaks},
                {"unrealized_pnl", "unavailable; no valuation inputs"}});
+}
+Json query_pnl(const BookBinding &b, const Json &a) {
+  // Full native immutable prefixes are loaded before any display selection.
+  // A host without a period result store cannot verify retained close anchors.
+  require(take(b.store.periods()).at("closed_through").is_null(), "PERIOD_RETENTION_UNAVAILABLE");
+  require(sequence(a.at("accepted_through")) <= 1000 &&
+              sequence(a.at("settlement_through")) <= 1000 &&
+              sequence(a.at("policy_through")) <= 256 && b.accounts.size() <= 256,
+          "PERIOD_REPLAY_LIMIT_EXCEEDED");
+  require(!b.accounts.empty(), "LOT_ACCOUNT_REQUIRED");
+  const auto from = stamp(a.at("period_from")), until = stamp(a.at("period_until"));
+  require(from != Timestamp::min() && from < until, "INVALID_PERIOD_CONTEXT");
+  const auto collection = a.at("collection").get<std::string>();
+  require(collection == "rows" || (!a.contains("account") && !a.contains("instrument")),
+          "INVALID_ARGUMENTS");
+  Json selection = a;
+  selection["effective_at"] =
+      serialization::detail::canonical_timestamp(until - std::chrono::nanoseconds{1});
+  auto s = snapshot(b, selection);
+  const auto policy_through = sequence(a.at("policy_through"));
+  const auto cash_through = sequence(a.at("settlement_through"));
+  const auto history = take(b.store.policy_history());
+  require(policy_through <= history.at("through_sequence").get<std::uint64_t>(),
+          "POLICY_SEQUENCE_UNAVAILABLE");
+  std::map<std::uint64_t, Timestamp> knowledge;
+  Json policy_knowledge = Json::array(), raw_policy = Json::array();
+  for (const auto &row : history.at("knowledge")) {
+    auto n = row.at("sequence").get<std::uint64_t>();
+    if (n > policy_through)
+      continue;
+    require(!row.at("recorded_at").is_null(), "POLICY_KNOWLEDGE_UNAVAILABLE");
+    require(knowledge.emplace(n, stamp(row.at("recorded_at"))).second, "INVALID_POLICY_HISTORY");
+    policy_knowledge.push_back(
+        {{"sequence", std::to_string(n)}, {"recorded_at", row.at("recorded_at")}});
+  }
+  std::vector<accounting::KnownPolicyRevision> policies;
+  for (const auto &row : history.at("revisions")) {
+    auto revision = take(ingestion::policy_revision(row));
+    if (revision.sequence > policy_through)
+      continue;
+    require(knowledge.contains(revision.sequence), "POLICY_KNOWLEDGE_UNAVAILABLE");
+    policies.push_back({revision, knowledge.at(revision.sequence)});
+    raw_policy.push_back(row);
+  }
+  require(raw_policy.dump().size() <= 4 * 1024 * 1024, "PROJECTION_LIMIT_EXCEEDED");
+  require(cash_through <= take(b.store.book_state()).at("settlement_sequence").get<std::uint64_t>(),
+          "SETTLEMENT_SEQUENCE_UNAVAILABLE");
+  std::vector<accounting::SettlementEvent> cash;
+  Json raw_cash = Json::array();
+  std::size_t cash_bytes = 0;
+  while (cash.size() < cash_through) {
+    auto batch = take(b.store.settlement_events(cash.size(), 100));
+    require(!batch.empty(), "SETTLEMENT_SEQUENCE_UNAVAILABLE");
+    for (auto row : batch) {
+      if (row.at("sequence").get<std::uint64_t>() > cash_through)
+        break;
+      cash_bytes += row.dump().size();
+      require(cash_bytes <= 32 * 1024 * 1024, "PROJECTION_LIMIT_EXCEEDED");
+      auto e = take(ingestion::settlement_event(row));
+      require(e.sequence == cash.size() + 1, "INVALID_SETTLEMENT_PREFIX");
+      require(e.ledger_through <= s.ledger.size(), "INPUT_REVISION_INCOMPATIBLE");
+      cash.push_back(e);
+      raw_cash.push_back(std::move(row));
+    }
+  }
+  std::vector<accounting::PolicyTarget> targets;
+  for (const auto &v : b.accounts)
+    targets.push_back({s.input.at("book_id"), v.legal_entity, v.custodian_account, v.account});
+  const accounting::PeriodLimits limits{512, 200000};
+  const auto report = accounting::project_period_accounting(
+      s.ledger, targets, policies, cash,
+      {from, until, s.recorded, s.ledger.size(), policy_through, cash_through,
+       a.at("reporting_timezone"), std::string(accounting::period_chart_version),
+       accounting::CorrectionRecognition::recorded_time},
+      {accounting::ChargeTreatment::capitalize_opening, accounting::CashRecognition::both_legs}, {},
+      limits);
+  if (!report)
+    throw ingestion::Failure{report.error().code};
+  const auto selected = accounting::select_period_pnl(
+      *report, {a.value("account", std::string{}), a.value("instrument", std::string{})});
+  if (!selected)
+    throw ingestion::Failure{selected.error().code};
+  const auto amounts = [](const accounting::PeriodPnlAmounts &v) {
+    return Json{{"economic_realized", money(v.economic)},
+                {"recognized_realized", money(v.recognized)},
+                {"deferred_realized", money(v.deferred)}};
+  };
+  Json rows = Json::array(), totals = Json::array(), diagnostics = Json::array();
+  for (const auto &v : collection == "rows" ? selected->totals : report->pnl)
+    totals.push_back({{"currency", v.currency.code()},
+                      {"opening", amounts(v.opening)},
+                      {"activity", amounts(v.movement)},
+                      {"closing", amounts(v.closing)}});
+  if (collection == "rows") {
+    for (const auto &v : selected->rows) {
+      const auto &pool = v.key.pool;
+      rows.push_back({{"book_id", pool.book},
+                      {"legal_entity", pool.legal_entity},
+                      {"custodian_account", pool.custodian_account},
+                      {"account", v.key.account},
+                      {"instrument", pool.instrument},
+                      {"currency", pool.currency},
+                      {"opening", amounts(v.opening)},
+                      {"activity", amounts(v.movement)},
+                      {"closing", amounts(v.closing)},
+                      {"opening_charges_complete", v.opening_charges_complete},
+                      {"closing_charges_complete", v.closing_charges_complete},
+                      {"record_ids", identifiers(v.records)},
+                      {"settlement_ids", v.settlements},
+                      {"entry_ids", identifiers(v.entries)}});
+    }
+  } else if (collection == "daily") {
+    for (const auto &v : report->daily_pnl)
+      rows.push_back(
+          {{"day", serialization::detail::canonical_date(*SettlementDate::create(v.day))},
+           {"currency", v.currency.code()},
+           {"activity", amounts(v.movement)},
+           {"entry_ids", identifiers(v.entries)}});
+  } else {
+    // Exportable full canonical/source evidence, including inputs excluded by the
+    // knowledge cutoff; those are evidence, never asserted to be period activity.
+    for (auto row : s.rows)
+      rows.push_back({{"kind", "ledger"}, {"ledger", transaction_row(std::move(row))}});
+    for (std::size_t i = 0; i < policies.size(); ++i)
+      rows.push_back(
+          {{"kind", "policy"},
+           {"revision", raw_policy.at(i)},
+           {"recorded_at", serialization::detail::canonical_timestamp(policies[i].recorded_at)}});
+    for (auto row : raw_cash) {
+      row["sequence"] = std::to_string(row.at("sequence").get<std::uint64_t>());
+      row["ledger_through"] = std::to_string(row.at("ledger_through").get<std::uint64_t>());
+      rows.push_back({{"kind", "settlement"}, {"settlement", std::move(row)}});
+    }
+  }
+  for (const auto &v : report->diagnostics)
+    diagnostics.push_back({{"code", v.code},
+                           {"id", v.id},
+                           {"affects_supported_coverage", v.affects_supported_coverage}});
+  s.input["policy_through"] = a.at("policy_through");
+  s.input["settlement_through"] = a.at("settlement_through");
+  s.input["policy_revisions"] = raw_policy;
+  s.input["policy_knowledge"] = policy_knowledge;
+  s.input["settlement_digest"] = digest(raw_cash);
+  s.input["projection"] = std::string(accounting::period_accounting_version);
+  s.input["chart_version"] = std::string(accounting::period_chart_version);
+  s.input["correction_recognition"] = "recorded_time";
+  s.input["reporting_timezone"] = a.at("reporting_timezone");
+  s.input["period_from"] = a.at("period_from");
+  s.input["period_until"] = a.at("period_until");
+  s.input["recognition_rules"] = {{"charges", "capitalize_opening"}, {"cash", "both_legs"}};
+  s.input["replay_limits"] = {{"max_boundaries", limits.max_boundaries},
+                              {"max_replay_work", limits.max_replay_work}};
+  s.input["core_evidence"] = {{"input_digest", report->inputs.input_digest},
+                              {"ledger_digest", report->inputs.ledger_digest},
+                              {"policy_digest", report->inputs.policy_digest},
+                              {"settlement_digest", report->inputs.settlement_digest},
+                              {"history_digest", report->history_digest}};
+  // A concurrent close invalidates availability, rather than returning an
+  // unanchored open-history result for a book that acquired a protected baseline.
+  require(take(b.store.periods()).at("closed_through").is_null(), "PERIOD_RETENTION_UNAVAILABLE");
+  return page(b, a, std::move(rows),
+              {{"input", s.input},
+               {"collection", collection},
+               {"report_id", report->report_id},
+               {"meaning", "activity=period_realized_pnl; opening/closing=as_of_realized_pnl; "
+                           "gains_positive; no_valuation"},
+               {"coverage", coverage()},
+               {"supported_complete", report->supported_complete},
+               {"coverage_scope",
+                "supported_cash_equity_cost_based_slice_only; diagnostics_before_display_filters"},
+               {"diagnostics", diagnostics},
+               {"totals", totals},
+               {"totals_scope", collection == "rows" ? "all_filtered_rows_before_pagination"
+                                                     : "whole_book_by_currency"},
+               {"retention_available", false},
+               {"unrealized_pnl", nullptr},
+               {"other_income", nullptr},
+               {"expenses", nullptr},
+               {"fx", nullptr},
+               {"cash_flow", nullptr}});
 }
 Json query_transactions(const BookBinding &b, const Json &a) {
   auto s = snapshot(b, a);

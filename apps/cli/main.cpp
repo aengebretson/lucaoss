@@ -11,6 +11,7 @@ Usage: luca --profile FILE COMMAND [--request JSONFILE]
   transactions | lots | transactions query
   report (collection: journals, trial_balance, obligations, actual_settlements, reconciliation)
   settlement submit | settlement refund | settlement status
+  pnl query (collection: rows, daily, evidence)
   transactions edit | transactions delete | transactions evidence
   worker run --book ID [--max-jobs N]   bounded drain; requires process grant
   schemas                             permitted MCP schemas for this profile
@@ -70,6 +71,7 @@ int main(int argc, char **argv) {
         {"transactions", Operation::transactions},
         {"lots", Operation::lots},
         {"report", Operation::accounting_report},
+        {"pnl query", Operation::query_pnl},
         {"transactions query", Operation::query_transactions},
         {"settlement submit", Operation::submit_settlement},
         {"settlement refund", Operation::submit_refund},
