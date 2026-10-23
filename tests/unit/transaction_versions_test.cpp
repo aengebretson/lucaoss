@@ -24,6 +24,9 @@ int main(){
   versions=transaction_versions(ledger,at(5));
   assert(versions.back().activation_effective_at==at(2) && !versions.back().void_effective_at);
   assert(ledger.resolve(at(5),at(2)-std::chrono::nanoseconds{1}).active_events()[0].record().record_id().value()=="v1");
+  take(ledger.accept(LifecycleRecordDraft::reverse(EconomicEventId{"reversal"},EventId{"v3"},at(5),cash("reverse",-175))));
+  versions=transaction_versions(ledger,at(5));assert(versions.back().activation_effective_at==at(2));
+  assert(ledger.resolve(at(5),at(2)-std::chrono::nanoseconds{1}).active_events().size()==1);
   auto bytes=serialization::canonical_bytes(ledger);auto replay=take(serialization::decode_lifecycle_ledger(bytes));
   assert(serialization::canonical_bytes(replay)==bytes);
   LifecycleLedger separate;take(separate.accept(LifecycleRecordDraft::originate(EconomicEventId{"e"},at(1),cash("v1",100))));
