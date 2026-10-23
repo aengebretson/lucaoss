@@ -1,0 +1,946 @@
+{
+  "type": "object",
+  "required": [
+    "contract",
+    "synthetic",
+    "cases"
+  ],
+  "properties": {
+    "contract": {
+      "const": "luca.corporate-actions.cash-dividends/1"
+    },
+    "synthetic": {
+      "const": true
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "engine_support",
+          "expectation_status",
+          "decision_ids",
+          "assumptions",
+          "identity",
+          "sources",
+          "action_revisions",
+          "eligibility_revisions",
+          "payments",
+          "submissions",
+          "policy",
+          "evaluations"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "engine_support": {
+            "const": "unsupported"
+          },
+          "expectation_status": {
+            "type": "string",
+            "enum": [
+              "specified_fixture",
+              "conditional"
+            ]
+          },
+          "decision_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "identity": {
+            "type": "object",
+            "required": [
+              "action_id",
+              "security_id",
+              "book_id",
+              "legal_entity_id",
+              "custodian_account_id",
+              "account_id",
+              "entitlement_id",
+              "entitlement_kind"
+            ],
+            "properties": {
+              "action_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "security_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "book_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "legal_entity_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "custodian_account_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "account_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entitlement_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "entitlement_kind": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "system",
+                "reference",
+                "payload",
+                "sha256",
+                "received_at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "system": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reference": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "payload": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "received_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "action_revisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "predecessor",
+                "status",
+                "rate",
+                "currency",
+                "announced_on",
+                "ex_on",
+                "record_on",
+                "record_timezone",
+                "pay_on",
+                "effective_at",
+                "recorded_at",
+                "source_id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "predecessor": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "announced",
+                    "amended",
+                    "cancelled"
+                  ]
+                },
+                "rate": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                },
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "announced_on": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "ex_on": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "record_on": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "record_timezone": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "pay_on": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "effective_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "eligibility_revisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "predecessor",
+                "action_revision_id",
+                "quantity",
+                "settled_quantity",
+                "adjustments",
+                "observed_at",
+                "recorded_at",
+                "ledger_through",
+                "settlement_through",
+                "rule_id",
+                "source_id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "predecessor": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "action_revision_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantity": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+                },
+                "settled_quantity": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+                },
+                "adjustments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "record_id",
+                      "source_id",
+                      "quantity",
+                      "reason"
+                    ],
+                    "properties": {
+                      "record_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "quantity": {
+                        "type": "string",
+                        "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 0
+                },
+                "observed_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "ledger_through": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "settlement_through": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "rule_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "reference",
+                "account_id",
+                "entitlement_id",
+                "currency",
+                "gross",
+                "withholding",
+                "fees",
+                "cash",
+                "actual_at",
+                "recorded_at",
+                "source_id",
+                "reverses"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reference": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "account_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "entitlement_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$"
+                },
+                "gross": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                },
+                "withholding": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                },
+                "fees": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                },
+                "cash": {
+                  "type": "string",
+                  "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,18})?$"
+                },
+                "actual_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reverses": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "payload_ref",
+                "payload_digest",
+                "expected",
+                "payload"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "payload_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "payload_digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "expected": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "replayed",
+                    "conflict",
+                    "PERIOD_CLOSED"
+                  ]
+                },
+                "payload": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "policy": {
+            "type": "object",
+            "required": [
+              "id",
+              "version",
+              "recognition",
+              "right_established_at",
+              "right_evidence",
+              "withholding_class",
+              "fee_class",
+              "rounding_scale",
+              "rounding_mode",
+              "history_through",
+              "revision_ids",
+              "field_origins",
+              "target",
+              "digest",
+              "recognition_rule_id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "recognition": {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "accrual",
+                  "unspecified"
+                ]
+              },
+              "right_established_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "right_evidence": {
+                "type": "string",
+                "minLength": 1
+              },
+              "withholding_class": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "recoverable_asset",
+                  "unresolved"
+                ]
+              },
+              "fee_class": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "expense"
+                ]
+              },
+              "rounding_scale": {
+                "const": 6
+              },
+              "rounding_mode": {
+                "const": "half_even"
+              },
+              "history_through": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "revision_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "field_origins": {
+                "type": "object",
+                "required": [
+                  "recognition",
+                  "eligibility",
+                  "rounding"
+                ],
+                "properties": {
+                  "recognition": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "eligibility": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "rounding": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              },
+              "target": {
+                "type": "object",
+                "required": [
+                  "book_id",
+                  "legal_entity_id",
+                  "custodian_account_id",
+                  "account_id"
+                ],
+                "properties": {
+                  "book_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "legal_entity_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "custodian_account_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "account_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "recognition_rule_id": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "evaluations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "context",
+                "resolved_inputs",
+                "expected",
+                "trace"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "context": {
+                  "type": "object",
+                  "required": [
+                    "economic_as_of",
+                    "recorded_through",
+                    "ledger_through",
+                    "policy_through"
+                  ],
+                  "properties": {
+                    "economic_as_of": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "recorded_through": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "ledger_through": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "policy_through": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "resolved_inputs": {
+                  "type": "object",
+                  "required": [
+                    "action_revision_id",
+                    "eligibility_revision_id",
+                    "payment_ids"
+                  ],
+                  "properties": {
+                    "action_revision_id": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "eligibility_revision_id": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "payment_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 0
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "expected": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "position_before",
+                    "position_after",
+                    "gross",
+                    "unpaid",
+                    "cash",
+                    "receivable",
+                    "payable",
+                    "income",
+                    "withholding_asset",
+                    "fee_expense",
+                    "suspense_liability",
+                    "balance_lines",
+                    "gross_exact",
+                    "rounding_residual"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "OK",
+                        "PERIOD_CLOSED",
+                        "FX_POLICY_REQUIRED",
+                        "RECOGNITION_POLICY_REQUIRED",
+                        "WITHHOLDING_POLICY_REQUIRED"
+                      ]
+                    },
+                    "position_before": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+                    },
+                    "position_after": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,8})?$"
+                    },
+                    "gross": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "unpaid": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "cash": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "receivable": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "payable": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "income": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "withholding_asset": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "fee_expense": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "suspense_liability": {
+                      "type": "string",
+                      "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                    },
+                    "balance_lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "account",
+                          "side",
+                          "amount",
+                          "currency"
+                        ],
+                        "properties": {
+                          "account": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "side": {
+                            "type": "string",
+                            "enum": [
+                              "debit",
+                              "credit"
+                            ]
+                          },
+                          "amount": {
+                            "type": "string",
+                            "pattern": "^-?(?:0|[1-9][0-9]*)\\.[0-9]{6}$"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$"
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "minItems": 0
+                    },
+                    "gross_exact": {
+                      "type": "object",
+                      "required": [
+                        "numerator",
+                        "denominator"
+                      ],
+                      "properties": {
+                        "numerator": {
+                          "type": "string",
+                          "pattern": "^-?[0-9]+$"
+                        },
+                        "denominator": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "rounding_residual": {
+                      "type": "object",
+                      "required": [
+                        "numerator",
+                        "denominator"
+                      ],
+                      "properties": {
+                        "numerator": {
+                          "type": "string",
+                          "pattern": "^-?[0-9]+$"
+                        },
+                        "denominator": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]*$"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "trace": {
+                  "type": "object",
+                  "required": [
+                    "action_id",
+                    "entitlement_id",
+                    "action_revision_ids",
+                    "eligibility_revision_ids",
+                    "source_ids",
+                    "policy_id",
+                    "policy_revision_ids",
+                    "mapping_version",
+                    "engine_version",
+                    "projection_version",
+                    "policy_digest"
+                  ],
+                  "properties": {
+                    "action_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "entitlement_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "action_revision_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 0
+                    },
+                    "eligibility_revision_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 0
+                    },
+                    "source_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 0
+                    },
+                    "policy_id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "policy_revision_ids": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "minItems": 1
+                    },
+                    "mapping_version": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "engine_version": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "projection_version": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "policy_digest": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:luca:corporate-actions:cash-dividends:1"
+}

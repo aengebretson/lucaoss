@@ -1,0 +1,1591 @@
+{
+  "contract": "luca.corporate-actions.other-actions/1",
+  "synthetic": true,
+  "cases": [
+    {
+      "id": "RA-01",
+      "kind": "forward_split",
+      "description": "2:1 preserves carrying and opening order",
+      "engine_support": "unsupported",
+      "expectation_status": "specified_fixture",
+      "decision_ids": [],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-01",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "125",
+        "ratio_numerator": "2",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "125",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "1000",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "250",
+        "remaining_carrying": "1000",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ],
+        "whole_unit_entitlement": "250"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-01:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-01:source"
+      },
+      "sources": [
+        {
+          "id": "RA-01:source",
+          "system": "synthetic:agent",
+          "reference": "RA-01:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"125\",\"total\":\"1000.000000\"}],\"quantity\":\"125\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"2\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "2377d6f4dba712af7360d6f3a58f1865b3978b1e3d3f4bfe42641fa69b15405d",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-02",
+      "kind": "reverse_split",
+      "description": "1:3 exact fraction and separately priced cash-in-lieu",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-FRACTIONS",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-02",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "10",
+        "ratio_numerator": "1",
+        "ratio_denominator": "3",
+        "carrying_amount": "90",
+        "cash_consideration": "0",
+        "fraction_price": "9",
+        "allocation_weights": [
+          "9/10",
+          "1/10"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "10",
+            "principal": "80.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "90.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "1",
+        "fraction_denominator": "3",
+        "successor_carrying": "81",
+        "fraction_carrying": "9",
+        "cash_in_lieu": "3.000000",
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "3",
+        "remaining_carrying": "81",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "72.000000",
+            "commissions": "7.200000",
+            "fees": "1.800000",
+            "total": "81.000000"
+          },
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "fraction",
+            "principal": "8.000000",
+            "commissions": "0.800000",
+            "fees": "0.200000",
+            "total": "9.000000"
+          }
+        ],
+        "whole_unit_entitlement": "3"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-02:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-02:source"
+      },
+      "sources": [
+        {
+          "id": "RA-02:source",
+          "system": "synthetic:agent",
+          "reference": "RA-02:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"9/10\",\"1/10\"],\"carrying_amount\":\"90\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":\"9\",\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"80.000000\",\"quantity\":\"10\",\"total\":\"90.000000\"}],\"quantity\":\"10\",\"ratio_denominator\":\"3\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "9bcf0bf36ed7d87c4ade16148bfb5ac6b256e4c94365af9346f10c00b85ae456",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-03",
+      "kind": "reverse_split",
+      "description": "Unknown price retains unpaid fractional right",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-FRACTIONS",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-03",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "10",
+        "ratio_numerator": "1",
+        "ratio_denominator": "3",
+        "carrying_amount": "90",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "9/10",
+          "1/10"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "10",
+            "principal": "80.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "90.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "1",
+        "fraction_denominator": "3",
+        "successor_carrying": "81",
+        "fraction_carrying": "9",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "3",
+        "remaining_carrying": "81",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "72.000000",
+            "commissions": "7.200000",
+            "fees": "1.800000",
+            "total": "81.000000"
+          },
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "fraction",
+            "principal": "8.000000",
+            "commissions": "0.800000",
+            "fees": "0.200000",
+            "total": "9.000000"
+          }
+        ],
+        "whole_unit_entitlement": "3"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-03:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-03:source"
+      },
+      "sources": [
+        {
+          "id": "RA-03:source",
+          "system": "synthetic:agent",
+          "reference": "RA-03:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"9/10\",\"1/10\"],\"carrying_amount\":\"90\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"80.000000\",\"quantity\":\"10\",\"total\":\"90.000000\"}],\"quantity\":\"10\",\"ratio_denominator\":\"3\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "52bf43e3aaf3812c06dcfbb68f2e6df129e53c20099be24dc666f800d969b983",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-04",
+      "kind": "stock_dividend",
+      "description": "10 percent additional units; basis allocation unresolved",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-BASIS",
+        "D-FRACTIONS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-04",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "125",
+        "ratio_numerator": "1",
+        "ratio_denominator": "10",
+        "carrying_amount": "1000",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "125",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "BASIS_POLICY_REQUIRED",
+        "fraction_numerator": "1",
+        "fraction_denominator": "2",
+        "successor_carrying": null,
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "137.5",
+        "remaining_carrying": null,
+        "gain": null,
+        "lot_allocations": [],
+        "whole_unit_entitlement": "12"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-04:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": null
+      },
+      "sources": [
+        {
+          "id": "RA-04:source",
+          "system": "synthetic:agent",
+          "reference": "RA-04:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"125\",\"total\":\"1000.000000\"}],\"quantity\":\"125\",\"ratio_denominator\":\"10\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "17779d66d6c21736b26caadece6a5e6fd322547b7418f2e20eb3028eb3707ce6",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-05",
+      "kind": "identity_change",
+      "description": "Name symbol and synthetic CUSIP aliases preserve approved stable identity",
+      "engine_support": "unsupported",
+      "expectation_status": "specified_fixture",
+      "decision_ids": [],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-05",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:ALPHA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "125",
+        "ratio_numerator": "1",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [
+          {
+            "name": "old_name",
+            "value": "Synthetic Alpha Ltd"
+          },
+          {
+            "name": "new_name",
+            "value": "Synthetic Alpha Holdings"
+          },
+          {
+            "name": "old_symbol",
+            "value": "SYN-A"
+          },
+          {
+            "name": "new_symbol",
+            "value": "SYN-B"
+          },
+          {
+            "name": "old_cusip",
+            "value": "SYN000001"
+          },
+          {
+            "name": "new_cusip",
+            "value": "SYN000002"
+          },
+          {
+            "name": "continuity_approval",
+            "value": "synthetic:reference-review"
+          }
+        ],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "125",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "1000",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "125",
+        "remaining_carrying": "1000",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ],
+        "whole_unit_entitlement": "125"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-05:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-05:source"
+      },
+      "sources": [
+        {
+          "id": "RA-05:source",
+          "system": "synthetic:agent",
+          "reference": "RA-05:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[{\"name\":\"old_name\",\"value\":\"Synthetic Alpha Ltd\"},{\"name\":\"new_name\",\"value\":\"Synthetic Alpha Holdings\"},{\"name\":\"old_symbol\",\"value\":\"SYN-A\"},{\"name\":\"new_symbol\",\"value\":\"SYN-B\"},{\"name\":\"old_cusip\",\"value\":\"SYN000001\"},{\"name\":\"new_cusip\",\"value\":\"SYN000002\"},{\"name\":\"continuity_approval\",\"value\":\"synthetic:reference-review\"}],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"125\",\"total\":\"1000.000000\"}],\"quantity\":\"125\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "19618089e0a5b5d96d9d2b260170b12c269daed32b2f8371f6fe7e406a61e50c",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-06",
+      "kind": "identity_change",
+      "description": "Missing legal continuity approval blocks relabel",
+      "engine_support": "unsupported",
+      "expectation_status": "specified_fixture",
+      "decision_ids": [],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-06",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "125",
+        "ratio_numerator": "1",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "125",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "IDENTITY_REVIEW_REQUIRED",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": null,
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "125",
+        "remaining_carrying": null,
+        "gain": null,
+        "lot_allocations": [],
+        "whole_unit_entitlement": "125"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-06:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": null
+      },
+      "sources": [
+        {
+          "id": "RA-06:source",
+          "system": "synthetic:agent",
+          "reference": "RA-06:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"125\",\"total\":\"1000.000000\"}],\"quantity\":\"125\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "172c22b31e0d7c873c590a87efa957af383ffe638b8831b45e631f4102ad728f",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-07",
+      "kind": "spinoff",
+      "description": "100 parent, 25 child; explicit 80/20 carrying allocation",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-07",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "1",
+        "ratio_denominator": "4",
+        "carrying_amount": "1000",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "4/5",
+          "1/5"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "200",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "100",
+        "remaining_carrying": "800",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "792.000000",
+            "commissions": "6.400000",
+            "fees": "1.600000",
+            "total": "800.000000"
+          },
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "successor",
+            "principal": "198.000000",
+            "commissions": "1.600000",
+            "fees": "0.400000",
+            "total": "200.000000"
+          }
+        ],
+        "whole_unit_entitlement": "25"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-07:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-07:source"
+      },
+      "sources": [
+        {
+          "id": "RA-07:source",
+          "system": "synthetic:agent",
+          "reference": "RA-07:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"4/5\",\"1/5\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"4\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "e329fba407f40530fd006d0f81aaaab36fe7c3dc8d36bc373d74f4a500c8f87c",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-08",
+      "kind": "stock_merger",
+      "description": "100 old replaced by 50 new with supplied carrying",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-08",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "1",
+        "ratio_denominator": "2",
+        "carrying_amount": "1000",
+        "cash_consideration": "0",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "agent_confirmed_stock",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "1000",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "0.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "100",
+        "remaining_quantity": "0",
+        "remaining_carrying": "0",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "successor",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ],
+        "whole_unit_entitlement": "50"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-08:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-08:source"
+      },
+      "sources": [
+        {
+          "id": "RA-08:source",
+          "system": "synthetic:agent",
+          "reference": "RA-08:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"0\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"agent_confirmed_stock\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"2\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "7177a316c73bc66bff550b046d4318455bd1db22d297e9e05ebf37a43e688bd7",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-09",
+      "kind": "mixed_merger",
+      "description": "Confirmed election: 25 new and 600 cash, explicit 400/600 basis",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-ELECTION",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-09",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "1",
+        "ratio_denominator": "4",
+        "carrying_amount": "1000",
+        "cash_consideration": "600",
+        "fraction_price": null,
+        "allocation_weights": [
+          "2/5",
+          "3/5"
+        ],
+        "election": "agent_confirmed_mixed",
+        "finality": false,
+        "additional_components": [
+          {
+            "name": "cash_component_carrying",
+            "value": "600"
+          }
+        ],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "400",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "600.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "100",
+        "remaining_quantity": "0",
+        "remaining_carrying": "0",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "successor",
+            "principal": "396.000000",
+            "commissions": "3.200000",
+            "fees": "0.800000",
+            "total": "400.000000"
+          },
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "cash_relief",
+            "principal": "594.000000",
+            "commissions": "4.800000",
+            "fees": "1.200000",
+            "total": "600.000000"
+          }
+        ],
+        "whole_unit_entitlement": "25"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-09:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-09:source"
+      },
+      "sources": [
+        {
+          "id": "RA-09:source",
+          "system": "synthetic:agent",
+          "reference": "RA-09:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[{\"name\":\"cash_component_carrying\",\"value\":\"600\"}],\"allocation_weights\":[\"2/5\",\"3/5\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"600\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"agent_confirmed_mixed\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"4\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "9fc2c7ade43bb42a2d02ece9b1c64fade40a5d9f0ed2f3f887083fd498e4a7a0",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-10",
+      "kind": "cash_merger",
+      "description": "100 retired for cash consideration 1200, explicit carrying relief",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-10",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "0",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "1200",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "agent_confirmed_cash",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "0",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "1200.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "100",
+        "remaining_quantity": "0",
+        "remaining_carrying": "0",
+        "gain": "200",
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "cash_relief",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ],
+        "whole_unit_entitlement": "0"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-10:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-10:source"
+      },
+      "sources": [
+        {
+          "id": "RA-10:source",
+          "system": "synthetic:agent",
+          "reference": "RA-10:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"1200\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"agent_confirmed_cash\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"0\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "c80ad8f287e1807be170cc72cbc3f19f3801e448176b952561cbc2719396c124",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-11",
+      "kind": "mixed_merger",
+      "description": "Missing election or default and basis blocks derived result",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-ELECTION",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-11",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "1",
+        "ratio_denominator": "4",
+        "carrying_amount": "1000",
+        "cash_consideration": "600",
+        "fraction_price": null,
+        "allocation_weights": [],
+        "election": "unresolved",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "ELECTION_AND_BASIS_REQUIRED",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": null,
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "600.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "100",
+        "remaining_carrying": null,
+        "gain": null,
+        "lot_allocations": [],
+        "whole_unit_entitlement": "25"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-11:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": null
+      },
+      "sources": [
+        {
+          "id": "RA-11:source",
+          "system": "synthetic:agent",
+          "reference": "RA-11:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[],\"carrying_amount\":\"1000\",\"cash_consideration\":\"600\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"unresolved\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"4\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "d2c1d2527c85e28b62ed31e7c0fb9a3af34bb9a0795ca29562e2359cfc9b7073",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-12",
+      "kind": "full_call",
+      "description": "Full retirement with principal and premium separated",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-LIQUIDATION"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-12",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "0",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "1020",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": true,
+        "additional_components": [
+          {
+            "name": "principal",
+            "value": "1000"
+          },
+          {
+            "name": "premium",
+            "value": "20"
+          },
+          {
+            "name": "interest",
+            "value": "0"
+          },
+          {
+            "name": "fees",
+            "value": "0"
+          }
+        ],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "0",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "1020.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "100",
+        "remaining_quantity": "0",
+        "remaining_carrying": "0",
+        "gain": "20",
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "cash_relief",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ],
+        "whole_unit_entitlement": "0"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-12:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-12:source"
+      },
+      "sources": [
+        {
+          "id": "RA-12:source",
+          "system": "synthetic:agent",
+          "reference": "RA-12:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[{\"name\":\"principal\",\"value\":\"1000\"},{\"name\":\"premium\",\"value\":\"20\"},{\"name\":\"interest\",\"value\":\"0\"},{\"name\":\"fees\",\"value\":\"0\"}],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"1020\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":true,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"0\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "90194efb99df80eab1faaf37003b1733ab4381b11785dfb69c5f81450a9ef6db",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-13",
+      "kind": "final_liquidation",
+      "description": "Finality evidence retires all units for 900",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-LIQUIDATION"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-13",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "0",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "900",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": true,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "0",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "900.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "100",
+        "remaining_quantity": "0",
+        "remaining_carrying": "0",
+        "gain": "-100",
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "cash_relief",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ],
+        "whole_unit_entitlement": "0"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-13:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-13:source"
+      },
+      "sources": [
+        {
+          "id": "RA-13:source",
+          "system": "synthetic:agent",
+          "reference": "RA-13:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"900\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":true,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"0\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "36a5ce11b9b0403c25c8b0741d9fe648912f03863e06cf526af1aea052976cad",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-14",
+      "kind": "partial_liquidation",
+      "description": "Continuing units; explicitly supplied carrying reduction",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-LIQUIDATION",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-14",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "1",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "200",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [
+          {
+            "name": "carrying_reduction",
+            "value": "200"
+          }
+        ],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "800",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "200.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "100",
+        "remaining_carrying": "800",
+        "gain": null,
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "792.000000",
+            "commissions": "6.400000",
+            "fees": "1.600000",
+            "total": "800.000000"
+          },
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "distribution_reduction",
+            "principal": "198.000000",
+            "commissions": "1.600000",
+            "fees": "0.400000",
+            "total": "200.000000"
+          }
+        ],
+        "whole_unit_entitlement": "100"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-14:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-14:source"
+      },
+      "sources": [
+        {
+          "id": "RA-14:source",
+          "system": "synthetic:agent",
+          "reference": "RA-14:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[{\"name\":\"carrying_reduction\",\"value\":\"200\"}],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"200\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"1\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "b52ff98c3a6886241f3d3be633512b1fafb30cfed96b16eb32c4274bd6820171",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-15",
+      "kind": "partial_redemption",
+      "description": "20 units retired; 80 continue, explicit carrying relief",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-LIQUIDATION",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-15",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "0",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "220",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [
+          {
+            "name": "retired_quantity",
+            "value": "20"
+          },
+          {
+            "name": "carrying_relief",
+            "value": "200"
+          }
+        ],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "OK",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": "800",
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "220.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "20",
+        "remaining_quantity": "80",
+        "remaining_carrying": "800",
+        "gain": "20",
+        "lot_allocations": [
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "remaining",
+            "principal": "792.000000",
+            "commissions": "6.400000",
+            "fees": "1.600000",
+            "total": "800.000000"
+          },
+          {
+            "input_lot_id": "synthetic:lot-1",
+            "component_role": "cash_relief",
+            "principal": "198.000000",
+            "commissions": "1.600000",
+            "fees": "0.400000",
+            "total": "200.000000"
+          }
+        ],
+        "whole_unit_entitlement": "0"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-15:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": "RA-15:source"
+      },
+      "sources": [
+        {
+          "id": "RA-15:source",
+          "system": "synthetic:agent",
+          "reference": "RA-15:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[{\"name\":\"retired_quantity\",\"value\":\"20\"},{\"name\":\"carrying_relief\",\"value\":\"200\"}],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"220\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"0\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "ed1b6e9b80a6845248f5333c86b0768730811fc85151918fe09c84f8705236e3",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "RA-16",
+      "kind": "final_liquidation",
+      "description": "Missing finality/basis blocks retirement classification",
+      "engine_support": "unsupported",
+      "expectation_status": "conditional",
+      "decision_ids": [
+        "D-LIQUIDATION",
+        "D-BASIS"
+      ],
+      "assumptions": [
+        "Exact synthetic mechanics only; basis inputs are explicit examples, no tax rule.",
+        "No actual cash or delivery is inferred from scheduled dates."
+      ],
+      "identity": {
+        "action_id": "synthetic:RA-16",
+        "security_id": "synthetic:security:ALPHA",
+        "successor_id": "synthetic:security:BETA",
+        "account_id": "synthetic:account-a"
+      },
+      "inputs": {
+        "quantity": "100",
+        "ratio_numerator": "0",
+        "ratio_denominator": "1",
+        "carrying_amount": "1000",
+        "cash_consideration": "900",
+        "fraction_price": null,
+        "allocation_weights": [
+          "1"
+        ],
+        "election": "not_applicable",
+        "finality": false,
+        "additional_components": [],
+        "currency": "USD",
+        "effective_at": "2026-10-20T12:00:00Z",
+        "recorded_at": "2026-10-21T09:00:00Z",
+        "actual_delivery_confirmed": false,
+        "input_lots": [
+          {
+            "id": "synthetic:lot-1",
+            "quantity": "100",
+            "principal": "990.000000",
+            "commissions": "8.000000",
+            "fees": "2.000000",
+            "total": "1000.000000"
+          }
+        ]
+      },
+      "expected": {
+        "code": "FINALITY_AND_BASIS_REQUIRED",
+        "fraction_numerator": "0",
+        "fraction_denominator": "1",
+        "successor_carrying": null,
+        "fraction_carrying": "0",
+        "cash_in_lieu": null,
+        "consideration": "900.000000",
+        "actual_cash": "0.000000",
+        "retired_quantity": "0",
+        "remaining_quantity": "100",
+        "remaining_carrying": null,
+        "gain": null,
+        "lot_allocations": [],
+        "whole_unit_entitlement": "0"
+      },
+      "trace": {
+        "source_ids": [
+          "RA-16:source"
+        ],
+        "input_lot_ids": [
+          "synthetic:lot-1"
+        ],
+        "policy_id": "fixture:transform/1",
+        "mapping_version": "fixture:map/1",
+        "allocation_evidence_id": null
+      },
+      "sources": [
+        {
+          "id": "RA-16:source",
+          "system": "synthetic:agent",
+          "reference": "RA-16:source",
+          "payload": "{\"actual_delivery_confirmed\":false,\"additional_components\":[],\"allocation_weights\":[\"1\"],\"carrying_amount\":\"1000\",\"cash_consideration\":\"900\",\"currency\":\"USD\",\"effective_at\":\"2026-10-20T12:00:00Z\",\"election\":\"not_applicable\",\"finality\":false,\"fraction_price\":null,\"input_lots\":[{\"commissions\":\"8.000000\",\"fees\":\"2.000000\",\"id\":\"synthetic:lot-1\",\"principal\":\"990.000000\",\"quantity\":\"100\",\"total\":\"1000.000000\"}],\"quantity\":\"100\",\"ratio_denominator\":\"1\",\"ratio_numerator\":\"0\",\"recorded_at\":\"2026-10-21T09:00:00Z\"}",
+          "sha256": "1205d725f0456895f0fa48fe4a109e056a8376fbfbe17d82ca09bd04e430c252",
+          "received_at": "2026-10-01T08:00:00Z"
+        }
+      ]
+    }
+  ]
+}
