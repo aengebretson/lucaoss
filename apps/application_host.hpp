@@ -41,7 +41,7 @@ inline std::unique_ptr<application::SqliteApplication> open(const std::filesyste
   std::vector<application::BookBinding> bindings;
   for (const auto &b : config.at("books")) {
     keys(b, {"root", "config", "accounts", "mapping_version", "inspect", "submit", "process",
-             "submit_sources"});
+             "submit_sources", "settlement_actor"});
     auto store = ingestion::SqliteStore::open(b.at("root").get<std::string>(), b.at("config"));
     if (!store)
       throw store.error();
@@ -52,6 +52,7 @@ inline std::unique_ptr<application::SqliteApplication> open(const std::filesyste
                                      b.value("submit", false),
                                      b.value("process", false),
                                      b.value("submit_sources", std::vector<std::string>{})};
+    binding.settlement_actor = b.value("settlement_actor", std::string{"local-profile"});
     if (b.contains("accounts"))
       for (const auto &a : b.at("accounts")) {
         keys(a, {"account", "legal_entity", "custodian_account"});

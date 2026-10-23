@@ -407,3 +407,15 @@ a pure ledger admission predicate; receipt persistence, locking and accepted
 sequence fencing remain in the optional native SQLite host. See
 [dated cancellation and period closure](dated-void-periods.md) for semantics,
 embedding boundaries and schema upgrade/rollback constraints.
+
+
+### Bounded application reporting
+
+The optional SQLite application facade also exposes existing trade-accounting
+projections and actual settlement/refund receipt/status. Synchronous report reads
+select explicit immutable ledger/policy/settlement prefixes and complete configured
+custody pools. Content-derived manifests bind pages and JSON/JSONL exports while
+workers continue appending. They do not create durable jobs or assert staging
+completeness. Journals remain regenerated as-of snapshots, and the facade adds no
+financial arithmetic. See [CLI/MCP reporting](cli-mcp-reporting.md) for the executed
+bound, evidence, permissions and limitations.

@@ -88,6 +88,8 @@ public:
                             std::optional<std::uint64_t> expected_policy_sequence = {},
                             std::optional<std::uint64_t> expected_settlement_sequence = {}) const;
   Result<Json> ledger_records(std::uint64_t after = 0, std::size_t limit = 100) const;
+  // Immutable canonical rows plus admission/source/context evidence.
+  Result<Json> ledger_evidence(std::uint64_t after = 0, std::size_t limit = 100) const;
   Result<Json> work_attempts(std::string import_id, std::uint64_t after = 0,
                              std::size_t limit = 100) const;
   [[nodiscard]] std::filesystem::path path() const;

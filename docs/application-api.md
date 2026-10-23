@@ -1,5 +1,9 @@
 # Shared application API — v1 design
 
+Additional implemented operations: [bounded accounting reports, accepted transaction
+history, settlement and refund submission](cli-mcp-reporting.md). The report-job
+API below remains a proposal.
+
 Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
 It exposes existing ingestion/status/errors, policy inspection, canonical
 transactions and economic LIFO lots through the optional SQLite application facade.

@@ -18,6 +18,7 @@ struct BookBinding {
   std::string mapping_version;
   bool inspect = true, submit = false, process = false;
   std::vector<std::string> submit_sources;
+  std::string settlement_actor = "local-profile";
 };
 enum class Operation {
   books,
@@ -32,7 +33,12 @@ enum class Operation {
   resolve_policy,
   policy_result,
   transactions,
-  lots
+  lots,
+  accounting_report,
+  submit_settlement,
+  submit_refund,
+  settlement_status,
+  query_transactions
 };
 // All responses are owned documents in the existing optional storage boundary.
 // The pure financial targets acquire no JSON/storage/transport dependencies.

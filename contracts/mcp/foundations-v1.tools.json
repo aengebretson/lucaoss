@@ -4441,6 +4441,3552 @@
         "idempotentHint": true,
         "openWorldHint": false
       }
+    },
+    {
+      "name": "luca_accounting_report",
+      "description": "Bounded synchronous as-of accounting projection. Explicit immutable prefixes and cutoffs; journals are regenerated snapshots, not period activity. All pages/exports bind the same result identity.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "accepted_through": {
+            "type": "string",
+            "pattern": "0|[1-9][0-9]{0,18}"
+          },
+          "recorded_through": {
+            "type": "string",
+            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+          },
+          "effective_at": {
+            "type": "string",
+            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+          },
+          "mapping_digest": {
+            "type": "string",
+            "pattern": "[0-9a-f]{64}"
+          },
+          "policy_through": {
+            "type": "string",
+            "pattern": "0|[1-9][0-9]{0,18}"
+          },
+          "settlement_through": {
+            "type": "string",
+            "pattern": "0|[1-9][0-9]{0,18}"
+          },
+          "collection": {
+            "type": "string",
+            "enum": [
+              "journals",
+              "trial_balance",
+              "obligations",
+              "actual_settlements",
+              "reconciliation"
+            ]
+          },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "jsonl"
+            ]
+          },
+          "chart_account": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "[A-Z]{3}"
+          }
+        },
+        "required": [
+          "book_id",
+          "accepted_through",
+          "recorded_through",
+          "effective_at",
+          "mapping_digest",
+          "policy_through",
+          "settlement_through",
+          "collection"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "accounting_report"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "result_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "input": {
+                        "type": "object",
+                        "properties": {
+                          "tenant_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "book_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "accepted_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "recorded_through": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                          },
+                          "effective_at": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                          },
+                          "mapping_digest": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "mapping_version": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "account_bindings": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "legal_entity": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "custodian_account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              },
+                              "required": [
+                                "account",
+                                "legal_entity",
+                                "custodian_account"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "ledger_digest": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "engine": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "policy_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "settlement_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "policy_revisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "legal_entity": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "subject": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "actor": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "scope": {
+                                  "type": "string",
+                                  "enum": [
+                                    "legal_entity",
+                                    "custodian_account",
+                                    "account"
+                                  ]
+                                },
+                                "effective_from": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                },
+                                "sequence": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "lot_selection": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "LIFO"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "recognition": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "unspecified",
+                                        "cash",
+                                        "accrual"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "legal_entity",
+                                "subject",
+                                "actor",
+                                "scope",
+                                "effective_from",
+                                "sequence",
+                                "lot_selection",
+                                "recognition"
+                              ],
+                              "additionalProperties": true
+                            }
+                          },
+                          "resolved_policies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "schema": {
+                                  "const": "luca.resolved-policy/1"
+                                },
+                                "book": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "legal_entity": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "custodian_account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "lot_selection": {
+                                  "const": "LIFO"
+                                },
+                                "recognition": {
+                                  "type": "string",
+                                  "enum": [
+                                    "unspecified",
+                                    "cash",
+                                    "accrual"
+                                  ]
+                                },
+                                "recognition_applied": {
+                                  "const": false
+                                },
+                                "lot_source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "recognition_source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "effective_at": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                },
+                                "through_sequence": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "digest": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{64}$"
+                                },
+                                "revisions": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "legal_entity": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "subject": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "actor": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "scope": {
+                                        "type": "string",
+                                        "enum": [
+                                          "legal_entity",
+                                          "custodian_account",
+                                          "account"
+                                        ]
+                                      },
+                                      "effective_from": {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "lot_selection": {
+                                        "anyOf": [
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "LIFO"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "recognition": {
+                                        "anyOf": [
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "unspecified",
+                                              "cash",
+                                              "accrual"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "legal_entity",
+                                      "subject",
+                                      "actor",
+                                      "scope",
+                                      "effective_from",
+                                      "sequence",
+                                      "lot_selection",
+                                      "recognition"
+                                    ],
+                                    "additionalProperties": true
+                                  }
+                                }
+                              },
+                              "required": [
+                                "schema",
+                                "book",
+                                "account",
+                                "legal_entity",
+                                "custodian_account",
+                                "lot_selection",
+                                "recognition",
+                                "recognition_applied",
+                                "lot_source",
+                                "recognition_source",
+                                "effective_at",
+                                "through_sequence",
+                                "digest",
+                                "revisions"
+                              ],
+                              "additionalProperties": true
+                            }
+                          },
+                          "settlement_digest": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "projection": {
+                            "const": "equity-journals/1"
+                          },
+                          "recognition_rules": {
+                            "type": "object",
+                            "properties": {
+                              "charges": {
+                                "const": "capitalize_opening"
+                              },
+                              "cash": {
+                                "const": "both_legs",
+                                "maxLength": 256
+                              }
+                            },
+                            "required": [
+                              "charges",
+                              "cash"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "tenant_id",
+                          "book_id",
+                          "accepted_through",
+                          "recorded_through",
+                          "effective_at",
+                          "mapping_digest",
+                          "mapping_version",
+                          "account_bindings",
+                          "ledger_digest",
+                          "engine",
+                          "policy_through",
+                          "settlement_through",
+                          "policy_revisions",
+                          "resolved_policies",
+                          "settlement_digest",
+                          "projection",
+                          "recognition_rules"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "meaning": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "coverage": {
+                        "type": "object",
+                        "properties": {
+                          "selection": {
+                            "const": "admitted_prefix_only"
+                          },
+                          "staged_inputs_included": {
+                            "const": false
+                          },
+                          "staging_completeness": {
+                            "const": "unknown"
+                          },
+                          "diagnostics": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 512
+                          }
+                        },
+                        "required": [
+                          "selection",
+                          "staged_inputs_included",
+                          "staging_completeness",
+                          "diagnostics"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "selection": {
+                        "type": "object",
+                        "properties": {
+                          "book_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "accepted_through": {
+                            "type": "string",
+                            "pattern": "0|[1-9][0-9]{0,18}"
+                          },
+                          "recorded_through": {
+                            "type": "string",
+                            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+                          },
+                          "effective_at": {
+                            "type": "string",
+                            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+                          },
+                          "mapping_digest": {
+                            "type": "string",
+                            "pattern": "[0-9a-f]{64}"
+                          },
+                          "policy_through": {
+                            "type": "string",
+                            "pattern": "0|[1-9][0-9]{0,18}"
+                          },
+                          "settlement_through": {
+                            "type": "string",
+                            "pattern": "0|[1-9][0-9]{0,18}"
+                          },
+                          "collection": {
+                            "type": "string",
+                            "enum": [
+                              "journals",
+                              "trial_balance",
+                              "obligations",
+                              "actual_settlements",
+                              "reconciliation"
+                            ]
+                          },
+                          "chart_account": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "[A-Z]{3}"
+                          }
+                        },
+                        "required": [
+                          "book_id",
+                          "accepted_through",
+                          "recorded_through",
+                          "effective_at",
+                          "mapping_digest",
+                          "policy_through",
+                          "settlement_through",
+                          "collection"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "rows_digest": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "total_rows": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,18})$"
+                      },
+                      "collection": {
+                        "enum": [
+                          "journals",
+                          "trial_balance",
+                          "obligations",
+                          "actual_settlements",
+                          "reconciliation"
+                        ]
+                      },
+                      "charges_complete": {
+                        "type": "boolean"
+                      },
+                      "currency_controls": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "currency": {
+                              "type": "string",
+                              "pattern": "^[A-Z]{3}$"
+                            },
+                            "debits": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "credits": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "debit_balances": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "credit_balances": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "currency",
+                            "debits",
+                            "credits",
+                            "debit_balances",
+                            "credit_balances"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "control_scope": {
+                        "const": "whole_journals_before_display_filters"
+                      },
+                      "breaks": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "record_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "amount": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "settlement_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "record_id",
+                            "amount",
+                            "settlement_ids"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unrealized_pnl": {
+                        "const": "unavailable; no valuation inputs"
+                      }
+                    },
+                    "required": [
+                      "result_id",
+                      "input",
+                      "meaning",
+                      "coverage",
+                      "selection",
+                      "rows_digest",
+                      "total_rows",
+                      "collection",
+                      "charges_complete",
+                      "currency_controls",
+                      "control_scope",
+                      "breaks",
+                      "unrealized_pnl"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "entry_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "line_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "chart_account": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "side": {
+                              "enum": [
+                                "debit",
+                                "credit"
+                              ]
+                            },
+                            "amount": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "effective_at": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                            },
+                            "recorded_at": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                            },
+                            "recognized_on": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                            },
+                            "lineage": {
+                              "type": "object",
+                              "properties": {
+                                "record_ids": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  }
+                                },
+                                "economic_event_ids": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  }
+                                },
+                                "source_record_ids": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  }
+                                },
+                                "reverses_record_id": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 256
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "record_ids",
+                                "economic_event_ids",
+                                "source_record_ids",
+                                "reverses_record_id"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "trace": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  },
+                                  "policy_digest": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "relief_records": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 256
+                                    }
+                                  },
+                                  "settlement_ids": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 256
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "account",
+                                  "policy_digest",
+                                  "relief_records",
+                                  "settlement_ids"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "entry_id",
+                            "line_id",
+                            "chart_account",
+                            "side",
+                            "amount",
+                            "effective_at",
+                            "recorded_at",
+                            "recognized_on",
+                            "lineage",
+                            "trace"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "book_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "chart_account": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "debits": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "credits": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "net": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entry_id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  },
+                                  "line_id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  }
+                                },
+                                "required": [
+                                  "entry_id",
+                                  "line_id"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "book_id",
+                            "chart_account",
+                            "debits",
+                            "credits",
+                            "net",
+                            "lines"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "record_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "economic_event_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "account": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "contractual_cash": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "actual_cash": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "outstanding_cash": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "record_id",
+                            "economic_event_id",
+                            "account",
+                            "contractual_cash",
+                            "actual_cash",
+                            "outstanding_cash"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "account": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "trade_record": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "economic_event": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effective_at": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                            },
+                            "recorded_at": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                            },
+                            "sequence": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,18})$"
+                            },
+                            "ledger_through": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,18})$"
+                            },
+                            "cash": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "currency": {
+                              "type": "string",
+                              "pattern": "^[A-Z]{3}$"
+                            },
+                            "source_record": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "source": {
+                              "type": "object"
+                            },
+                            "reverses": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "actor": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "amount": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "account",
+                            "trade_record",
+                            "economic_event",
+                            "effective_at",
+                            "recorded_at",
+                            "sequence",
+                            "ledger_through",
+                            "cash",
+                            "currency",
+                            "source_record",
+                            "source",
+                            "reverses",
+                            "actor",
+                            "amount"
+                          ],
+                          "additionalProperties": true
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "control": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "expected": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "journal": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "difference": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "control",
+                            "expected",
+                            "journal",
+                            "difference"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "next_cursor": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "has_more": {
+                    "type": "boolean"
+                  },
+                  "total_rows": {
+                    "type": "string",
+                    "pattern": "0|[1-9][0-9]{0,18}"
+                  },
+                  "export": {
+                    "type": "object",
+                    "properties": {
+                      "media_type": {
+                        "const": "application/x-ndjson"
+                      },
+                      "encoding": {
+                        "const": "UTF-8"
+                      },
+                      "content": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1048576
+                      }
+                    },
+                    "required": [
+                      "media_type",
+                      "encoding",
+                      "content"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "manifest",
+                  "items",
+                  "next_cursor",
+                  "has_more",
+                  "total_rows"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "luca_submit_settlement",
+      "description": "Durably receive an actual partial or full trade cash settlement. Receipt precedes asynchronous financial validation/admission; inspect settlement_status. Identical scoped key and actor recover the receipt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "account": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "trade_record": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "cash": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "[A-Z]{3}"
+              },
+              "effective_at": {
+                "type": "string",
+                "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "source_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "reference": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "source_id",
+                  "reference"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "account",
+              "trade_record",
+              "cash",
+              "currency",
+              "effective_at",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "book_id",
+          "idempotency_key",
+          "request"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "submit_settlement"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "received"
+                    ]
+                  },
+                  "durable_acceptance": {
+                    "type": "boolean"
+                  },
+                  "completion": {
+                    "type": "string",
+                    "enum": [
+                      "pending_or_in_progress"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "state",
+                  "durable_acceptance",
+                  "completion"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "luca_submit_refund",
+      "description": "Durably receive an actual exact full refund of a named non-refund settlement. Receipt precedes asynchronous financial validation/admission; inspect settlement_status. Identical scoped key and actor recover the receipt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "account": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "trade_record": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "cash": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "[A-Z]{3}"
+              },
+              "effective_at": {
+                "type": "string",
+                "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "source_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "reference": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "source_id",
+                  "reference"
+                ],
+                "additionalProperties": false
+              },
+              "reverses": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            },
+            "required": [
+              "account",
+              "trade_record",
+              "cash",
+              "currency",
+              "effective_at",
+              "source",
+              "reverses"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "book_id",
+          "idempotency_key",
+          "request"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "submit_refund"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "received"
+                    ]
+                  },
+                  "durable_acceptance": {
+                    "type": "boolean"
+                  },
+                  "completion": {
+                    "type": "string",
+                    "enum": [
+                      "pending_or_in_progress"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "state",
+                  "durable_acceptance",
+                  "completion"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "luca_settlement_status",
+      "description": "Inspect durable settlement/refund processing, accepted evidence or retained invalid request/error.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "book_id",
+          "idempotency_key"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "settlement_status"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "state": {
+                        "const": "pending"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "state"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "state": {
+                        "const": "committed"
+                      },
+                      "event": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "account": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "trade_record": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "economic_event": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "effective_at": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                          },
+                          "recorded_at": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                          },
+                          "sequence": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "ledger_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "cash": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$"
+                          },
+                          "source_record": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "source": {
+                            "type": "object"
+                          },
+                          "reverses": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              }
+                            ]
+                          },
+                          "actor": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "account",
+                          "trade_record",
+                          "economic_event",
+                          "effective_at",
+                          "recorded_at",
+                          "sequence",
+                          "ledger_through",
+                          "cash",
+                          "currency",
+                          "source_record",
+                          "source",
+                          "reverses",
+                          "actor"
+                        ],
+                        "additionalProperties": true
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "state",
+                      "event"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "state": {
+                        "const": "invalid"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "actor": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "request": {
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "actor",
+                          "request"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "state",
+                      "code",
+                      "request"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "luca_query_transactions",
+      "description": "Query accepted immutable lifecycle history at explicit economic/knowledge cutoffs. Period is [period_from,period_to). Status is lifecycle status, never unadmitted ingestion status; use import records/errors for staged inputs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "accepted_through": {
+            "type": "string",
+            "pattern": "0|[1-9][0-9]{0,18}"
+          },
+          "recorded_through": {
+            "type": "string",
+            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+          },
+          "effective_at": {
+            "type": "string",
+            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+          },
+          "mapping_digest": {
+            "type": "string",
+            "pattern": "[0-9a-f]{64}"
+          },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "json",
+              "jsonl"
+            ]
+          },
+          "period_from": {
+            "type": "string",
+            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+          },
+          "period_to": {
+            "type": "string",
+            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+          },
+          "filters": {
+            "type": "object",
+            "properties": {
+              "account": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "instrument": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "superseded",
+                  "voided",
+                  "cancellation"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "equity_trade",
+                  "cash_movement",
+                  "cancellation"
+                ]
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "book_id",
+          "accepted_through",
+          "recorded_through",
+          "effective_at",
+          "mapping_digest"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "query_transactions"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "manifest": {
+                    "type": "object",
+                    "properties": {
+                      "result_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "input": {
+                        "type": "object",
+                        "properties": {
+                          "tenant_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "book_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "accepted_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "recorded_through": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                          },
+                          "effective_at": {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                          },
+                          "mapping_digest": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "mapping_version": {
+                            "type": "string",
+                            "minLength": 0,
+                            "maxLength": 256
+                          },
+                          "account_bindings": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "legal_entity": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "custodian_account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              },
+                              "required": [
+                                "account",
+                                "legal_entity",
+                                "custodian_account"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "ledger_digest": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "engine": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "policy_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "settlement_through": {
+                            "type": "string",
+                            "pattern": "^(0|[1-9][0-9]{0,18})$"
+                          },
+                          "policy_revisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "legal_entity": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "subject": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "actor": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "scope": {
+                                  "type": "string",
+                                  "enum": [
+                                    "legal_entity",
+                                    "custodian_account",
+                                    "account"
+                                  ]
+                                },
+                                "effective_from": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                },
+                                "sequence": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "lot_selection": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "LIFO"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "recognition": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "unspecified",
+                                        "cash",
+                                        "accrual"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "legal_entity",
+                                "subject",
+                                "actor",
+                                "scope",
+                                "effective_from",
+                                "sequence",
+                                "lot_selection",
+                                "recognition"
+                              ],
+                              "additionalProperties": true
+                            }
+                          },
+                          "resolved_policies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "schema": {
+                                  "const": "luca.resolved-policy/1"
+                                },
+                                "book": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "legal_entity": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "custodian_account": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "lot_selection": {
+                                  "const": "LIFO"
+                                },
+                                "recognition": {
+                                  "type": "string",
+                                  "enum": [
+                                    "unspecified",
+                                    "cash",
+                                    "accrual"
+                                  ]
+                                },
+                                "recognition_applied": {
+                                  "const": false
+                                },
+                                "lot_source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "recognition_source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "effective_at": {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                },
+                                "through_sequence": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "digest": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{64}$"
+                                },
+                                "revisions": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "legal_entity": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "subject": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "actor": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      },
+                                      "scope": {
+                                        "type": "string",
+                                        "enum": [
+                                          "legal_entity",
+                                          "custodian_account",
+                                          "account"
+                                        ]
+                                      },
+                                      "effective_from": {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                      },
+                                      "sequence": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "lot_selection": {
+                                        "anyOf": [
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "LIFO"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "recognition": {
+                                        "anyOf": [
+                                          {
+                                            "type": "null"
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "unspecified",
+                                              "cash",
+                                              "accrual"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "legal_entity",
+                                      "subject",
+                                      "actor",
+                                      "scope",
+                                      "effective_from",
+                                      "sequence",
+                                      "lot_selection",
+                                      "recognition"
+                                    ],
+                                    "additionalProperties": true
+                                  }
+                                }
+                              },
+                              "required": [
+                                "schema",
+                                "book",
+                                "account",
+                                "legal_entity",
+                                "custodian_account",
+                                "lot_selection",
+                                "recognition",
+                                "recognition_applied",
+                                "lot_source",
+                                "recognition_source",
+                                "effective_at",
+                                "through_sequence",
+                                "digest",
+                                "revisions"
+                              ],
+                              "additionalProperties": true
+                            }
+                          },
+                          "settlement_digest": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "projection": {
+                            "const": "equity-journals/1"
+                          },
+                          "recognition_rules": {
+                            "type": "object",
+                            "properties": {
+                              "charges": {
+                                "const": "capitalize_opening"
+                              },
+                              "cash": {
+                                "const": "both_legs"
+                              }
+                            },
+                            "required": [
+                              "charges",
+                              "cash"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "tenant_id",
+                          "book_id",
+                          "accepted_through",
+                          "recorded_through",
+                          "effective_at",
+                          "mapping_digest",
+                          "mapping_version",
+                          "account_bindings",
+                          "ledger_digest",
+                          "engine"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "meaning": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "coverage": {
+                        "type": "object",
+                        "properties": {
+                          "selection": {
+                            "const": "admitted_prefix_only"
+                          },
+                          "staged_inputs_included": {
+                            "const": false
+                          },
+                          "staging_completeness": {
+                            "const": "unknown"
+                          },
+                          "diagnostics": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 512
+                          }
+                        },
+                        "required": [
+                          "selection",
+                          "staged_inputs_included",
+                          "staging_completeness",
+                          "diagnostics"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "selection": {
+                        "type": "object",
+                        "properties": {
+                          "book_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "accepted_through": {
+                            "type": "string",
+                            "pattern": "0|[1-9][0-9]{0,18}"
+                          },
+                          "recorded_through": {
+                            "type": "string",
+                            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+                          },
+                          "effective_at": {
+                            "type": "string",
+                            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+                          },
+                          "mapping_digest": {
+                            "type": "string",
+                            "pattern": "[0-9a-f]{64}"
+                          },
+                          "period_from": {
+                            "type": "string",
+                            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+                          },
+                          "period_to": {
+                            "type": "string",
+                            "pattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?Z"
+                          },
+                          "filters": {
+                            "type": "object",
+                            "properties": {
+                              "account": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "instrument": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "source": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "superseded",
+                                  "voided",
+                                  "cancellation"
+                                ]
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "equity_trade",
+                                  "cash_movement",
+                                  "cancellation"
+                                ]
+                              }
+                            },
+                            "required": [],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "book_id",
+                          "accepted_through",
+                          "recorded_through",
+                          "effective_at",
+                          "mapping_digest"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "rows_digest": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "total_rows": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,18})$"
+                      },
+                      "collection": {
+                        "enum": [
+                          "journals",
+                          "trial_balance",
+                          "obligations",
+                          "actual_settlements",
+                          "reconciliation"
+                        ]
+                      },
+                      "charges_complete": {
+                        "type": "boolean"
+                      },
+                      "currency_controls": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "currency": {
+                              "type": "string",
+                              "pattern": "^[A-Z]{3}$"
+                            },
+                            "debits": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "credits": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "debit_balances": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "credit_balances": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "currency",
+                            "debits",
+                            "credits",
+                            "debit_balances",
+                            "credit_balances"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "control_scope": {
+                        "const": "whole_journals_before_display_filters"
+                      },
+                      "breaks": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "record_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "amount": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "string",
+                                  "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "settlement_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "record_id",
+                            "amount",
+                            "settlement_ids"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "unrealized_pnl": {
+                        "const": "unavailable; no valuation inputs"
+                      }
+                    },
+                    "required": [
+                      "result_id",
+                      "input",
+                      "meaning",
+                      "coverage",
+                      "selection",
+                      "rows_digest",
+                      "total_rows"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "sequence": {
+                          "type": "string",
+                          "pattern": "^(0|[1-9][0-9]{0,18})$"
+                        },
+                        "canonical": {
+                          "type": "string",
+                          "pattern": "^([0-9a-f]{2})+$"
+                        },
+                        "digest": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "record_id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "economic_id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "commit_id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "transaction": {
+                          "type": "object",
+                          "properties": {
+                            "record_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "economic_event_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "account_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "action": {
+                              "type": "string",
+                              "enum": [
+                                "originate",
+                                "correct",
+                                "cancel",
+                                "reverse"
+                              ]
+                            },
+                            "recorded_at": {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                            },
+                            "source_record_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              }
+                            },
+                            "causal_record_id": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "cancellation_at": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                }
+                              ]
+                            },
+                            "event": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "cash_movement"
+                                        },
+                                        "effective_at": {
+                                          "type": "string",
+                                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                        },
+                                        "amount": {
+                                          "type": "object",
+                                          "properties": {
+                                            "amount": {
+                                              "type": "string",
+                                              "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                            },
+                                            "currency": {
+                                              "type": "string",
+                                              "pattern": "^[A-Z]{3}$"
+                                            }
+                                          },
+                                          "required": [
+                                            "amount",
+                                            "currency"
+                                          ],
+                                          "additionalProperties": false
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "effective_at",
+                                        "amount"
+                                      ],
+                                      "additionalProperties": true
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "const": "equity_trade"
+                                        },
+                                        "effective_at": {
+                                          "type": "string",
+                                          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                        },
+                                        "instrument_id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 256
+                                        },
+                                        "quantity": {
+                                          "type": "string",
+                                          "pattern": "^-?[0-9]+\\.[0-9]{8}$"
+                                        },
+                                        "price": {
+                                          "type": "string",
+                                          "pattern": "^-?[0-9]+\\.[0-9]{8}$"
+                                        },
+                                        "quote_currency": {
+                                          "type": "string",
+                                          "pattern": "^[A-Z]{3}$"
+                                        },
+                                        "settlement_date": {
+                                          "type": "string",
+                                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                        },
+                                        "charges": {
+                                          "anyOf": [
+                                            {
+                                              "type": "null"
+                                            },
+                                            {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 512
+                                                  },
+                                                  "category": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "commission",
+                                                      "exchange",
+                                                      "regulatory",
+                                                      "other"
+                                                    ]
+                                                  },
+                                                  "payee": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 512
+                                                  },
+                                                  "amount": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "amount": {
+                                                        "type": "string",
+                                                        "pattern": "^-?[0-9]+\\.[0-9]{6}$"
+                                                      },
+                                                      "currency": {
+                                                        "type": "string",
+                                                        "pattern": "^[A-Z]{3}$"
+                                                      }
+                                                    },
+                                                    "required": [
+                                                      "amount",
+                                                      "currency"
+                                                    ],
+                                                    "additionalProperties": false
+                                                  },
+                                                  "state": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "reported",
+                                                      "scheduled",
+                                                      "unreported"
+                                                    ]
+                                                  },
+                                                  "schedule_version": {
+                                                    "type": "string",
+                                                    "minLength": 0,
+                                                    "maxLength": 512
+                                                  }
+                                                },
+                                                "required": [
+                                                  "id",
+                                                  "category",
+                                                  "payee",
+                                                  "amount",
+                                                  "state",
+                                                  "schedule_version"
+                                                ],
+                                                "additionalProperties": true
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "effective_at",
+                                        "instrument_id",
+                                        "quantity",
+                                        "price",
+                                        "quote_currency",
+                                        "settlement_date",
+                                        "charges"
+                                      ],
+                                      "additionalProperties": true
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            "status": {
+                              "enum": [
+                                "active",
+                                "superseded",
+                                "voided",
+                                "cancellation"
+                              ]
+                            },
+                            "processing_status": {
+                              "const": "committed"
+                            },
+                            "instrument_id": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "next_record_id": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "void_at": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                }
+                              ]
+                            },
+                            "version_contract": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            }
+                          },
+                          "required": [
+                            "record_id",
+                            "economic_event_id",
+                            "account_id",
+                            "action",
+                            "recorded_at",
+                            "source_record_ids",
+                            "causal_record_id",
+                            "cancellation_at",
+                            "event",
+                            "status",
+                            "processing_status",
+                            "instrument_id",
+                            "next_record_id",
+                            "void_at",
+                            "version_contract"
+                          ],
+                          "additionalProperties": true
+                        },
+                        "encoding": {
+                          "const": "luca.lifecycle.canonical"
+                        },
+                        "admission": {
+                          "type": "object",
+                          "properties": {
+                            "commit_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "import_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "group_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "member_hash": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "validation_run_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "admission_run_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "context": {
+                              "type": "object",
+                              "properties": {
+                                "adapter": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "normalization": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "rules": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "engine": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "reference_snapshot": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              },
+                              "required": [
+                                "adapter",
+                                "normalization",
+                                "rules",
+                                "engine",
+                                "reference_snapshot"
+                              ],
+                              "additionalProperties": true
+                            },
+                            "engine_version": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "book_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "prior_revision": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,18})$"
+                            },
+                            "ledger_revision": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,18})$"
+                            },
+                            "record_count": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "first_sequence": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,18})$"
+                            },
+                            "last_sequence": {
+                              "type": "string",
+                              "pattern": "^(0|[1-9][0-9]{0,18})$"
+                            },
+                            "recorded_ns": {
+                              "type": "string",
+                              "pattern": "^-?[0-9]+$"
+                            }
+                          },
+                          "required": [
+                            "commit_id",
+                            "import_id",
+                            "group_id",
+                            "member_hash",
+                            "validation_run_id",
+                            "admission_run_id",
+                            "context",
+                            "engine_version",
+                            "book_id",
+                            "prior_revision",
+                            "ledger_revision",
+                            "record_count",
+                            "first_sequence",
+                            "last_sequence",
+                            "recorded_ns"
+                          ],
+                          "additionalProperties": true
+                        },
+                        "source_metadata": {
+                          "type": "object",
+                          "properties": {
+                            "source_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "format": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "validation_context_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "atomicity": {
+                              "type": "string",
+                              "enum": [
+                                "independent_groups",
+                                "whole_import"
+                              ]
+                            },
+                            "client_reference": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            }
+                          },
+                          "required": [
+                            "source_id",
+                            "format",
+                            "validation_context_id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "validation_context": {
+                          "type": "object",
+                          "properties": {
+                            "adapter": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "normalization": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "rules": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "engine": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "reference_snapshot": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            }
+                          },
+                          "required": [
+                            "adapter",
+                            "normalization",
+                            "rules",
+                            "engine",
+                            "reference_snapshot"
+                          ],
+                          "additionalProperties": true
+                        },
+                        "original_submission_context": {
+                          "type": "object",
+                          "properties": {
+                            "adapter": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "normalization": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "rules": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "engine": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "reference_snapshot": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            }
+                          },
+                          "required": [
+                            "adapter",
+                            "normalization",
+                            "rules",
+                            "engine",
+                            "reference_snapshot"
+                          ],
+                          "additionalProperties": true
+                        }
+                      },
+                      "required": [
+                        "sequence",
+                        "canonical",
+                        "digest",
+                        "record_id",
+                        "economic_id",
+                        "commit_id",
+                        "transaction",
+                        "encoding",
+                        "admission",
+                        "source_metadata",
+                        "validation_context",
+                        "original_submission_context"
+                      ],
+                      "additionalProperties": true
+                    }
+                  },
+                  "next_cursor": {
+                    "type": [
+                      "null",
+                      "string"
+                    ]
+                  },
+                  "has_more": {
+                    "type": "boolean"
+                  },
+                  "total_rows": {
+                    "type": "string",
+                    "pattern": "0|[1-9][0-9]{0,18}"
+                  },
+                  "export": {
+                    "type": "object",
+                    "properties": {
+                      "media_type": {
+                        "const": "application/x-ndjson"
+                      },
+                      "encoding": {
+                        "const": "UTF-8"
+                      },
+                      "content": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1048576
+                      }
+                    },
+                    "required": [
+                      "media_type",
+                      "encoding",
+                      "content"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "manifest",
+                  "items",
+                  "next_cursor",
+                  "has_more",
+                  "total_rows"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
     }
   ]
 }

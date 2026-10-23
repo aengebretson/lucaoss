@@ -574,6 +574,23 @@ Result<Json> SqliteStore::ledger_records(std::uint64_t after, std::size_t limit)
     return rows;
   });
 }
+Result<Json> SqliteStore::ledger_evidence(std::uint64_t after, std::size_t limit) const {
+  return guarded([&] {
+    integer(limit, 1, impl_->limits["max_page_size"]);
+    integer(after, 0, INT64_MAX);
+    auto db = impl_->db();
+    auto rows = db.rows("SELECT l.*, c.body AS admission, i.metadata AS source_metadata, i.context AS original_submission_context "
+      "FROM ledger_records l JOIN commits c ON c.id=l.commit_id JOIN imports i ON i.id=c.import_id "
+      "WHERE l.sequence>? ORDER BY l.sequence LIMIT ?", {after, limit});
+    for (auto &row : rows) {
+      const auto &bytes = row["canonical"].get_binary();
+      row["canonical"] = hex(std::as_bytes(std::span{bytes}));
+      for (const auto *key : {"admission", "source_metadata", "original_submission_context"}) row[key] = parse(row[key]);
+      row["validation_context"] = row.at("admission").at("context");
+    }
+    return rows;
+  });
+}
 Result<Json> SqliteStore::work_attempts(std::string id, std::uint64_t after,
                                         std::size_t limit) const {
   return guarded([&] {

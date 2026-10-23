@@ -137,3 +137,15 @@ in-memory acceptance comparison, not durable-ingestion throughput.
 ## Custodian lots
 
 `luca_lot_benchmark` (enable `LUCA_BUILD_BENCHMARKS`) measures admission, lifecycle resolution and the LIFO fold for long/short crossing, 1,000 custodian pools, and deep short inventory. Each input has two separate charge components. See [lot accounting](../../docs/lots-and-charges.md) for workload counts and the initial measured baseline. This is a CPU in-memory benchmark, not network/storage throughput.
+
+## Bounded application reporting
+
+`python3 -B tests/benchmarks/application_reporting_benchmark.py BUILD [COUNTS...]`
+creates disposable native books, admits synthetic trades in existing atomic
+groups, and measures three full CLI report calls per size. It includes startup,
+SQLite reads, complete projection/materialization/hash and first-page encoding;
+receipt/admission setup is excluded. It records explicit projection-limit
+rejections rather than treating them as available reports. The 2026-10-23
+[review evidence](../../docs/reviews/CLI_MCP_REPORTING_20261023.md) describes the
+measured synchronous boundary and distinguishes typed-core timings from complete
+adapter latency. Results are not production SLAs or before/after improvements.

@@ -88,9 +88,12 @@ int main(int argc, char **argv) {
                           {"capabilities", {{"tools", {{"listChanged", false}}}}},
                           {"serverInfo", {{"name", "luca-oss"}, {"version", "0.1.0"}}},
                           {"instructions",
-                           "Durable import receipts precede asynchronous validation and admission. "
+                           "Durable import and actual-settlement receipts precede asynchronous "
+                           "validation and admission. "
                            "Inspect retained status and diagnostics before asserting financial "
-                           "completion. Lot results are economic LIFO projections only."}}}};
+                           "completion. Accounting reports are pinned as-of projections, not "
+                           "period activity. "
+                           "Lot results are economic LIFO projections only."}}}};
           }
         } else if (!ready)
           response = error(id, -32002, "Server not initialized");

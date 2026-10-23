@@ -529,3 +529,13 @@ these via its shared log and explicit report cutoffs. See
 [the API and boundaries](dated-void-periods.md). Production migration, bulk import
 UI, option accounting and full accounting statements remain subsequent work;
 this increment does not claim those milestones complete.
+
+
+### Implemented bounded CLI/MCP reporting
+
+The optional shared C++ SQLite facade now exposes journals, trial balance,
+obligations, actual cash settlement and internal accounting controls, filtered
+accepted transaction history, settlement/refund receipt/status and paginated
+JSON/JSONL export. [The implementation contract](cli-mcp-reporting.md) distinguishes
+these operations from proposed durable report jobs, period P&L and immutable
+edit/delete adapters awaiting the separate reviewed accounting contract.

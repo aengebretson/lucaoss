@@ -114,6 +114,7 @@ Json transaction(Json row) {
   return row;
 }
 } // namespace
+Json transaction_row(Json row) { return transaction(std::move(row)); }
 std::string mapping_digest(const BookBinding &b) {
   Json rows = Json::array();
   for (const auto &a : b.accounts)
