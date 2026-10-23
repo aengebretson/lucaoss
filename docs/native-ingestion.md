@@ -1,5 +1,12 @@
 # Native asynchronous ingestion boundary
 
+Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
+It exposes existing ingestion/status/errors, policy inspection, canonical
+transactions and economic LIFO lots through the optional SQLite application facade.
+The broader storage-independent API, report jobs and unfinished accounting
+operations described below remain proposals; use `foundations-v1.tools.json`
+for the executable MCP catalog.
+
 Decision, 2026-10-21: the user requires Luca's asynchronous ingestion APIs and
 execution to be C++. The earlier Python orchestration in PR #22 is superseded.
 The optional native runtime now directly calls the existing financial library.
@@ -99,7 +106,7 @@ operations through MCP and verify equivalent results. Shared batch preparation,
 incremental evidence and concurrent ingestion/report benchmarks remain explicit
 roadmap work; no new throughput or production accounting claims are implied.
 
-There is no MCP server or network listener in the current runtime. Report jobs,
+A bounded stdio MCP adapter is now available; there is no network listener. Report jobs,
 CLI reporting/export commands and the full application API remain planned.
 
 ## Verification and limits
@@ -124,4 +131,4 @@ retaining original execution/mapping evidence alongside a normalized transaction
 It shares the existing native worker and strict financial admission. Enterprise
 can link this component directly from its C++ OMS outbox worker; this is an
 initial consumer, not implementation of the full proposed application facade,
-report service, unified CLI or MCP server.
+report service. The newer bounded CLI/MCP facade is documented separately above.

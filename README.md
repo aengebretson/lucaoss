@@ -87,8 +87,11 @@ errors/status and atomic ledger admission. Embed the optional
 There is no Python runtime or subprocess bridge. Financial-only targets retain
 no storage or network dependency. Direct C++ integration is the default; native
 CLI tools and an optional MCP adapter use the same application operations.
-The CLI ingestion commands exist today; the common reporting API, CLI reporting
-commands, projection coverage and MCP server remain planned. OSS has no graphical
+The native ingestion commands remain supported. The bounded
+[CLI and stdio MCP foundations](docs/cli-mcp-foundations.md) now expose existing
+durable ingestion, policy evidence, canonical transactions and economic LIFO lots
+through `luca::application_sqlite`. The broader typed application API and durable
+report jobs remain proposed. OSS has no graphical
 UI. See the [integration direction](docs/native-ingestion.md#integration-direction),
 [draft shared C++ API](docs/application-api.md), [CLI contract](docs/cli.md) and
 [MCP tool schemas](contracts/mcp/v1.tools.json).

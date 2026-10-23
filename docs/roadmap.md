@@ -1,5 +1,12 @@
 # LUCA Roadmap
 
+Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
+It exposes existing ingestion/status/errors, policy inspection, canonical
+transactions and economic LIFO lots through the optional SQLite application facade.
+The broader storage-independent API, report jobs and unfinished accounting
+operations described below remain proposals; use `foundations-v1.tools.json`
+for the executable MCP catalog.
+
 Policy configuration boundary: implemented versioned entity defaults,
 custodian/account overrides, LIFO-only execution, independent recognition
 preferences and retained resolved evidence. See [contract](policy-configuration.md).

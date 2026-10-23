@@ -1,5 +1,12 @@
 # LUCA Design
 
+Implemented bounded slice: [CLI and stdio MCP foundations](cli-mcp-foundations.md).
+It exposes existing ingestion/status/errors, policy inspection, canonical
+transactions and economic LIFO lots through the optional SQLite application facade.
+The broader storage-independent API, report jobs and unfinished accounting
+operations described below remain proposals; use `foundations-v1.tools.json`
+for the executable MCP catalog.
+
 Versioned policy configuration now uses a pure C++ resolver and optional SQLite
 revision/evidence storage. Entity defaults and custody/account overrides resolve
 lot selection independently of recognition preferences. See
