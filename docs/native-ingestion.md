@@ -10,8 +10,9 @@ The optional native runtime now directly calls the existing financial library.
 | JSONL shape/identity adapter and reference checks | Native C++ ingestion adapter |
 | Durable receipt, immutable payloads, transfer, status/errors/history, leases and admission coordination | Optional compiled `luca::ingestion_sqlite` library |
 | Owned receipt queue and background execution | C++ futures, bounded queue, `std::jthread` and stop tokens |
-| Local reference application | Native `luca-ingest` |
-| REST transport, when added | Optional µWebSockets/µSockets adapter |
+| Command-line operations | Native `luca-ingest` today; reporting commands planned |
+| Enterprise integration | Direct C++ library integration by default |
+| Agent integration | Optional MCP adapter, planned |
 | Legacy store generation and cross-language migration assertions | Python test fixtures only |
 
 `SqliteStore` has an explicit book scope and owns no global mutable state. It
@@ -34,41 +35,72 @@ checked portable fallback; canonical financial encoding/hashes are unchanged.
 No generic scheduler,
 interpreter, cloud framework or broker is added to financial targets.
 
-## REST choice
+## Integration direction
 
-Use µWebSockets over its µSockets foundation when implementing the REST contract.
-The library supports HTTP routes as well as WebSockets and scales through isolated
-applications/event loops per thread. Its documentation requires socket access on
-the owning loop and provides `Loop::defer` for cross-thread completion. µSockets
-is the lower-level eventing/network/crypto foundation, not a separate REST router.
-Sources: [µWebSockets architecture](https://github.com/uNetworking/uWebSockets),
-[threading/request lifetime documentation](https://github.com/uNetworking/uWebSockets/blob/master/misc/READMORE.md),
-[µSockets](https://github.com/uNetworking/uSockets).
+Updated decision, 2026-10-21: default to linking Luca OSS directly into the
+enterprise C++ backend. Native CLI tools and an optional MCP server expose the
+same application operations. OSS supplies no graphical UI; enterprise owns
+screens, dashboards, presentation and user workflows. The earlier selection of
+µWebSockets/µSockets is withdrawn. Neither library was added as a dependency.
+REST and gRPC hosts are deferred until a concrete consumer requires them.
 
-No workload-equivalent experiment establishes a faster alternative for Luca.
-Framework marketing benchmarks cannot establish durable ingestion latency. Use
-this transport choice and compare end-to-end receipt p50/p95/p99, concurrent
-uploads, status polling, slow/disconnected clients, bounded memory, TLS behavior
-and worker/report contention when the adapter is implemented.
+Keep financial calculations in the pure libraries. Specify a small C++
+application API for submission, durable status/errors, pinned report requests,
+report jobs, result pages and evidence. The existing storage-specific JSON API
+is not yet that complete application contract. CLI and MCP must call the same
+operations rather than implement separate financial or validation rules.
 
-The transport must:
+### Native CLI
 
-1. Authorize tenant/book/source and enforce transport limits before storage work.
-2. Copy required request metadata before the request callback returns; never pass
-   borrowed request objects or socket pointers to financial/storage workers.
-3. Stream large bodies through bounded storage handoffs with read backpressure;
-   avoid buffering every upload on the event-loop thread.
-4. Run SQLite, fsync, parsing, validation and report work on bounded native workers.
-5. Return `202` only after durable receipt/work intent commits; marshal completion
-   to the owning loop and handle an aborted response without dereferencing it.
-6. Preserve idempotency after disconnection: a lost response can still correspond
-   to a committed receipt, and the client retries the same key.
-7. Keep polling/status durable and notifications optional. WebSocket delivery
-   never substitutes for stored status or transactional work intent.
+The existing `luca-ingest` executable supports receipt, uploads, workers,
+status/record/error/history inspection, revalidation and ledger reads. Extend
+this foundation with report requests, job status, paginated results, export and
+evidence drilldown as the report API is implemented. A unified `luca` command
+layout is proposed, not implemented; preserve existing command compatibility
+or document an explicit migration.
 
-No listener, REST framework dependency, authentication deployment or HTTP
-performance acceptance is included in the current C++ runtime slice. The existing
-HTTP specification remains the target for that next adapter.
+Commands should offer readable text and stable versioned JSON output, documented
+exit codes, errors on stderr, explicit book/store configuration and bounded
+input/output. Define receipt-only completion separately from optional bounded
+waiting for validation/admission or report completion. A successful submission
+does not assert financial validity. CLI exit, timeout or interruption must not
+discard already durable work. Do not silently launch detached workers; document
+whether a command owns a worker or requires an independently running worker.
+These are acceptance requirements, not claims about current CLI formatting.
+
+### Optional MCP adapter
+
+Plan tools for bounded submission, import status, retained diagnostics, report
+requests/status/pages and source evidence. Keep large batches in authorized
+staging and large results in paginated/exported artifacts, outside model context.
+Start with stdio for a client-launched local process; add Streamable HTTP only
+when remote access is required. Pin a protocol version compatible with target
+clients. MCP transport does not choose a particular HTTP framework.
+Sources: [MCP tools](https://modelcontextprotocol.io/specification/2026-07-28/server/tools),
+[MCP transports](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports).
+
+Every entry point must preserve scope authorization, immutable source evidence,
+bounded ownership/backpressure, scoped idempotency and acknowledgement only
+after durable receipt/work intent. Local commands use trusted local book/store
+configuration; remote callers require authenticated authorization. Notifications
+and connection state never replace durable job status. Financial values remain
+exact, and adapter serialization does not redefine canonical ledger bytes.
+
+### Next bounded slice
+
+Review the drafted [C++ application API](application-api.md), [CLI command
+contract](cli.md) and [MCP schemas](../contracts/mcp/v1.tools.json) before
+implementing new adapters. Prove one cash/equity history through direct C++ and
+CLI: durable receipt, retained invalid/blocked records, admission, pinned
+positions/cash/journals/trial balances and evidence. Reports must identify the
+accepted revision, policy/reference versions and time cutoffs, with staged
+exclusions and projection lag distinguished. Then expose the same bounded
+operations through MCP and verify equivalent results. Shared batch preparation,
+incremental evidence and concurrent ingestion/report benchmarks remain explicit
+roadmap work; no new throughput or production accounting claims are implied.
+
+There is no MCP server or network listener in the current runtime. Report jobs,
+CLI reporting/export commands and the full application API remain planned.
 
 ## Verification and limits
 
@@ -84,3 +116,12 @@ See [the host guide](../apps/ingestion-host/README.md) and
 allocation, per-group durable transaction costs, worker cache memory and storage
 contention still need profiling and representative budgets. C++ alone does not
 guarantee linear scaling or establish reporting/GPU performance.
+
+## Enterprise FIX intake increment
+
+The [source-envelope adapter](execution-envelopes.md) adds an explicit format for
+retaining original execution/mapping evidence alongside a normalized transaction.
+It shares the existing native worker and strict financial admission. Enterprise
+can link this component directly from its C++ OMS outbox worker; this is an
+initial consumer, not implementation of the full proposed application facade,
+report service, unified CLI or MCP server.

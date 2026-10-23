@@ -53,12 +53,11 @@ project_settlement_obligations(std::span<const LedgerEntry> entries,
             if (event.settlement_date().value() <= context.settlement_as_of_date)
               return {};
 
-            const auto gross = value(event.quantity(), event.price(),
-                                     event.quote_currency());
+            const auto gross = trade_cash(event);
             if (!gross)
               return std::unexpected(SettlementProjectionError::valuation_overflow);
 
-            const auto direction = event.quantity().scaled_value() > 0
+            const auto direction = gross->scaled_value() < 0
                                        ? SettlementDirection::payable
                                        : SettlementDirection::receivable;
             Money magnitude = *gross;

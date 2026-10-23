@@ -270,7 +270,20 @@ inline void append_cash_movement(CanonicalBytes &output, const CashMovement &val
 }
 
 inline void append_equity_trade(CanonicalBytes &output, const EquityTrade &value) {
-  append_map(output, 8);
+  append_map(output, value.charges() ? 9 : 8);
+  if (value.charges()) {
+    append_key(output, "charges");
+    append_array(output, value.charges()->size());
+    for (const auto& c : *value.charges()) {
+      append_map(output, 6);
+      append_key(output, "amount"); append_money(output, c.amount);
+      append_key(output, "category"); append_required_text(output, c.category);
+      append_key(output, "id"); append_identifier(output, c.id);
+      append_key(output, "payee"); append_required_text(output, c.payee);
+      append_key(output, "schedule_version"); append_nul_free_text(output, c.schedule_version);
+      append_key(output, "state"); append_required_text(output, c.state);
+    }
+  }
   append_key(output, "header");
   append_event_header(output, value.header());
   append_key(output, "instrument");
@@ -282,7 +295,7 @@ inline void append_equity_trade(CanonicalBytes &output, const EquityTrade &value
   append_key(output, "quote_currency");
   append_text(output, value.quote_currency().code());
   append_key(output, "schema_version");
-  append_text(output, "luca.economic-event.v1");
+  append_text(output, value.charges() ? "luca.economic-event.v2" : "luca.economic-event.v1");
   append_key(output, "settlement_date");
   append_text(output, canonical_date(value.settlement_date()));
   append_key(output, "variant");

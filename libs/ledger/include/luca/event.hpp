@@ -2,6 +2,7 @@
 
 #include "luca/core.hpp"
 #include "luca/time.hpp"
+#include "luca/trade_charges.hpp"
 
 #include <expected>
 #include <utility>
@@ -58,13 +59,18 @@ class EquityTrade {
  public:
   [[nodiscard]] static std::expected<EquityTrade, ValueError> create(
       EventHeader header, InstrumentId instrument, Quantity quantity, Price price,
-      Currency quote_currency, SettlementDate settlement_date) {
+      Currency quote_currency, SettlementDate settlement_date,
+      std::optional<TradeCharges> charges = std::nullopt) {
     if (instrument.value().empty())
       return std::unexpected(ValueError::empty_identifier);
     if (quantity.scaled_value() == 0)
       return std::unexpected(ValueError::zero_quantity);
+    if (charges) {
+      auto valid = validate_charges(*charges, quote_currency);
+      if (!valid) return std::unexpected(valid.error());
+    }
     return EquityTrade(std::move(header), std::move(instrument), quantity, price,
-                       quote_currency, settlement_date);
+                       quote_currency, settlement_date, std::move(charges));
   }
 
   [[nodiscard]] const EventHeader& header() const noexcept { return header_; }
@@ -73,14 +79,15 @@ class EquityTrade {
   [[nodiscard]] Price price() const noexcept { return price_; }
   [[nodiscard]] Currency quote_currency() const noexcept { return quote_currency_; }
   [[nodiscard]] SettlementDate settlement_date() const noexcept { return settlement_date_; }
+  [[nodiscard]] const std::optional<TradeCharges>& charges() const noexcept { return charges_; }
   bool operator==(const EquityTrade&) const = default;
 
  private:
   EquityTrade(EventHeader header, InstrumentId instrument, Quantity quantity,
-              Price price, Currency quote_currency, SettlementDate settlement_date)
+              Price price, Currency quote_currency, SettlementDate settlement_date, std::optional<TradeCharges> charges)
       : header_(std::move(header)), instrument_(std::move(instrument)),
         quantity_(quantity), price_(price), quote_currency_(quote_currency),
-        settlement_date_(settlement_date) {}
+        settlement_date_(settlement_date), charges_(std::move(charges)) {}
 
   EventHeader header_;
   InstrumentId instrument_;
@@ -88,7 +95,22 @@ class EquityTrade {
   Price price_;
   Currency quote_currency_;
   SettlementDate settlement_date_;
+  std::optional<TradeCharges> charges_;
 };
+
+// Signed cash flow: buys pay principal plus charges; sells receive principal
+// less charges. Legacy unreported charges retain the original gross behavior.
+[[nodiscard]] inline std::expected<Money, ValueError> trade_cash(const EquityTrade& trade) {
+  auto gross = value(trade.quantity(), trade.price(), trade.quote_currency());
+  if (!gross) return std::unexpected(gross.error());
+  auto cash = Money::from_scaled(0, trade.quote_currency()).subtract(*gross);
+  if (!cash) return std::unexpected(cash.error());
+  if (trade.charges()) for (const auto& charge : *trade.charges()) {
+    cash = cash->subtract(charge.amount);
+    if (!cash) return std::unexpected(cash.error());
+  }
+  return cash;
+}
 
 using EconomicEvent = std::variant<CashMovement, EquityTrade>;
 

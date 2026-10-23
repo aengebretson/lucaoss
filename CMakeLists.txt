@@ -157,6 +157,11 @@ if(LUCA_BUILD_TESTS)
       set_tests_properties(luca_native_ingestion_consumer_test PROPERTIES TIMEOUT 120)
     endif()
   endif()
+  add_executable(luca_lots_test tests/unit/lots_test.cpp)
+  target_link_libraries(luca_lots_test PRIVATE luca::accounting luca::adapters Threads::Threads)
+  target_compile_definitions(luca_lots_test PRIVATE LUCA_LOT_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/lifo-lots/trades.tsv")
+  add_test(NAME luca_lots_test COMMAND luca_lots_test)
+
   add_executable(luca_prepared_admission_test tests/unit/prepared_admission_test.cpp)
   target_link_libraries(luca_prepared_admission_test PRIVATE luca::adapters)
   add_test(NAME luca_prepared_admission_test COMMAND luca_prepared_admission_test)
@@ -404,4 +409,9 @@ if(LUCA_BUILD_BENCHMARKS)
   target_compile_definitions(pacioli_benchmarks PRIVATE
     LUCA_BENCHMARK_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
     LUCA_BENCHMARK_COMPILER="${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+endif()
+
+if(LUCA_BUILD_BENCHMARKS)
+  add_executable(luca_lot_benchmark tests/benchmarks/lot_benchmark.cpp)
+  target_link_libraries(luca_lot_benchmark PRIVATE luca::accounting)
 endif()

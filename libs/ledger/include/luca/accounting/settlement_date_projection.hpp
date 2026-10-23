@@ -260,7 +260,7 @@ entry(const LifecycleRecord &record, const AccountingPolicyIdentity &policy,
 
 [[nodiscard]] inline std::expected<Money, SettlementDateProjectionError>
 positive_trade_value(const EquityTrade &trade, const EventId &record_id) {
-  if (trade.price().scaled_value() <= 0)
+  if (trade.charges().has_value() || trade.price().scaled_value() <= 0)
     return std::unexpected(error(SettlementDateProjectionDiagnosticCategory::unsupported_event,
                                  "fixture settlement-date policy requires a positive equity price",
                                  record_id));

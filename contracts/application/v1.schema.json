@@ -1,0 +1,2919 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:luca:application:1",
+  "title": "Luca application v1 contract exchanges",
+  "description": "Draft adapter contracts, not canonical ledger encoding or an implemented server. Definitions define operation inputs/results; root validates illustrative request/response exchanges.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "capabilities"
+        },
+        "request": {
+          "$ref": "#/$defs/capabilities_request"
+        },
+        "response": {
+          "$ref": "#/$defs/capabilities_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "stage_file"
+        },
+        "request": {
+          "$ref": "#/$defs/stage_file_request"
+        },
+        "response": {
+          "$ref": "#/$defs/stage_file_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "submit_import"
+        },
+        "request": {
+          "$ref": "#/$defs/submit_import_request"
+        },
+        "response": {
+          "$ref": "#/$defs/submit_import_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "get_import_status"
+        },
+        "request": {
+          "$ref": "#/$defs/get_import_status_request"
+        },
+        "response": {
+          "$ref": "#/$defs/get_import_status_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "read_records"
+        },
+        "request": {
+          "$ref": "#/$defs/read_records_request"
+        },
+        "response": {
+          "$ref": "#/$defs/read_records_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "read_diagnostics"
+        },
+        "request": {
+          "$ref": "#/$defs/read_diagnostics_request"
+        },
+        "response": {
+          "$ref": "#/$defs/read_diagnostics_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "revalidate_import"
+        },
+        "request": {
+          "$ref": "#/$defs/revalidate_import_request"
+        },
+        "response": {
+          "$ref": "#/$defs/revalidate_import_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "request_report"
+        },
+        "request": {
+          "$ref": "#/$defs/request_report_request"
+        },
+        "response": {
+          "$ref": "#/$defs/request_report_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "get_report_status"
+        },
+        "request": {
+          "$ref": "#/$defs/get_report_status_request"
+        },
+        "response": {
+          "$ref": "#/$defs/get_report_status_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "read_report_page"
+        },
+        "request": {
+          "$ref": "#/$defs/read_report_page_request"
+        },
+        "response": {
+          "$ref": "#/$defs/read_report_page_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "get_evidence"
+        },
+        "request": {
+          "$ref": "#/$defs/get_evidence_request"
+        },
+        "response": {
+          "$ref": "#/$defs/get_evidence_response"
+        }
+      },
+      "required": [
+        "operation",
+        "request",
+        "response"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[^\\u0000]+$"
+    },
+    "count": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "maxLength": 20
+    },
+    "money": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+      "maxLength": 32
+    },
+    "nonnegative_money": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$",
+      "maxLength": 32
+    },
+    "quantity": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]{1,8})?$",
+      "maxLength": 32
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "validation": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "validating",
+        "valid",
+        "invalid",
+        "blocked"
+      ]
+    },
+    "commitment": {
+      "type": "string",
+      "enum": [
+        "not_committed",
+        "queued",
+        "committed",
+        "conflict"
+      ]
+    },
+    "report_kind": {
+      "type": "string",
+      "enum": [
+        "positions",
+        "settled_cash",
+        "settlement_obligations",
+        "journal_lines",
+        "trial_balance"
+      ]
+    },
+    "page_request": {
+      "type": "object",
+      "properties": {
+        "cursor": {
+          "$ref": "#/$defs/id"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 100
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_ARGUMENT",
+            "UNAUTHORIZED",
+            "FORBIDDEN",
+            "NOT_FOUND",
+            "UNSUPPORTED_CAPABILITY",
+            "IDEMPOTENCY_CONFLICT",
+            "STALE_REVISION",
+            "CURSOR_EXPIRED",
+            "RESULT_EXPIRED",
+            "RESOURCE_LIMIT",
+            "STORE_UNAVAILABLE",
+            "INPUTS_DEADLINE_EXCEEDED",
+            "REQUIRED_INPUTS_INVALID",
+            "OUTCOME_UNKNOWN",
+            "CANCELLED",
+            "DEADLINE_EXCEEDED",
+            "INTERNAL"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400000
+        }
+      },
+      "required": [
+        "code",
+        "detail",
+        "request_id",
+        "retryable"
+      ],
+      "additionalProperties": false
+    },
+    "source_locator": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "$ref": "#/$defs/count"
+        },
+        "length": {
+          "$ref": "#/$defs/count"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "offset",
+        "length",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "context_descriptor": {
+      "type": "object",
+      "properties": {
+        "context_id": {
+          "$ref": "#/$defs/id"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "context_id",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "api_version": {
+          "const": "luca.application/1"
+        },
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "validation_contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/context_descriptor"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "calculation_contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/context_descriptor"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "report_kinds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/report_kind"
+          },
+          "minItems": 0,
+          "maxItems": 5
+        },
+        "max_page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "max_inline_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65536
+        },
+        "max_payload_bytes": {
+          "$ref": "#/$defs/count"
+        },
+        "max_queued_bytes": {
+          "$ref": "#/$defs/count"
+        },
+        "snapshot_ttl_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "result_ttl_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "command_ttl_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stage_file_enabled": {
+          "type": "boolean"
+        },
+        "input_root_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "api_version",
+        "book_id",
+        "formats",
+        "validation_contexts",
+        "calculation_contexts",
+        "report_kinds",
+        "max_page_size",
+        "max_inline_bytes",
+        "max_payload_bytes",
+        "max_queued_bytes",
+        "snapshot_ttl_seconds",
+        "result_ttl_seconds",
+        "command_ttl_seconds",
+        "stage_file_enabled",
+        "input_root_ids",
+        "source_ids"
+      ],
+      "additionalProperties": false
+    },
+    "payload_reference": {
+      "type": "object",
+      "properties": {
+        "payload_id": {
+          "$ref": "#/$defs/id"
+        },
+        "bytes": {
+          "$ref": "#/$defs/count"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "required": [
+        "payload_id",
+        "bytes",
+        "sha256",
+        "expires_at"
+      ],
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/id"
+        },
+        "format": {
+          "$ref": "#/$defs/id"
+        },
+        "validation_context_id": {
+          "$ref": "#/$defs/id"
+        },
+        "atomicity": {
+          "type": "string",
+          "enum": [
+            "independent_groups",
+            "whole_import"
+          ]
+        },
+        "client_reference": {
+          "type": "string",
+          "maxLength": 512
+        }
+      },
+      "required": [
+        "source_id",
+        "format",
+        "validation_context_id",
+        "atomicity"
+      ],
+      "additionalProperties": false
+    },
+    "payload": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "inline"
+            },
+            "utf8": {
+              "type": "string",
+              "maxLength": 65536,
+              "description": "Also enforce <=65536 UTF-8 bytes and the configured lower limit."
+            }
+          },
+          "required": [
+            "kind",
+            "utf8"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "staged"
+            },
+            "payload_id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "kind",
+            "payload_id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "import_receipt": {
+      "type": "object",
+      "properties": {
+        "import_id": {
+          "$ref": "#/$defs/id"
+        },
+        "received_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "required": [
+        "import_id",
+        "received_at"
+      ],
+      "additionalProperties": false
+    },
+    "validation_counts": {
+      "type": "object",
+      "properties": {
+        "pending": {
+          "$ref": "#/$defs/count"
+        },
+        "validating": {
+          "$ref": "#/$defs/count"
+        },
+        "valid": {
+          "$ref": "#/$defs/count"
+        },
+        "invalid": {
+          "$ref": "#/$defs/count"
+        },
+        "blocked": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "pending",
+        "validating",
+        "valid",
+        "invalid",
+        "blocked"
+      ],
+      "additionalProperties": false
+    },
+    "commitment_counts": {
+      "type": "object",
+      "properties": {
+        "not_committed": {
+          "$ref": "#/$defs/count"
+        },
+        "queued": {
+          "$ref": "#/$defs/count"
+        },
+        "committed": {
+          "$ref": "#/$defs/count"
+        },
+        "conflict": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "not_committed",
+        "queued",
+        "committed",
+        "conflict"
+      ],
+      "additionalProperties": false
+    },
+    "import_status": {
+      "type": "object",
+      "properties": {
+        "import_id": {
+          "$ref": "#/$defs/id"
+        },
+        "status_revision": {
+          "$ref": "#/$defs/id"
+        },
+        "enumeration": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "complete",
+            "failed"
+          ]
+        },
+        "validation": {
+          "$ref": "#/$defs/validation_counts"
+        },
+        "commitment": {
+          "$ref": "#/$defs/commitment_counts"
+        },
+        "enumeration_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "import_id",
+        "status_revision",
+        "enumeration",
+        "validation",
+        "commitment",
+        "enumeration_error"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enumeration": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "enumeration_error": {
+                "$ref": "#/$defs/error"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "enumeration_error": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "staged_record": {
+      "type": "object",
+      "properties": {
+        "record_id": {
+          "$ref": "#/$defs/id"
+        },
+        "ordinal": {
+          "$ref": "#/$defs/count"
+        },
+        "validation": {
+          "$ref": "#/$defs/validation"
+        },
+        "commitment": {
+          "$ref": "#/$defs/commitment"
+        },
+        "validation_context_id": {
+          "$ref": "#/$defs/id"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "group_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "canonical_record_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accepted_revision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "diagnostic_count": {
+          "$ref": "#/$defs/count"
+        },
+        "source": {
+          "$ref": "#/$defs/source_locator"
+        }
+      },
+      "required": [
+        "record_id",
+        "ordinal",
+        "validation",
+        "commitment",
+        "validation_context_id",
+        "run_id",
+        "group_id",
+        "canonical_record_id",
+        "accepted_revision",
+        "diagnostic_count",
+        "source"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "commitment": {
+                "const": "committed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "canonical_record_id": {
+                "$ref": "#/$defs/id"
+              },
+              "accepted_revision": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "diagnostic_id": {
+          "$ref": "#/$defs/id"
+        },
+        "code": {
+          "$ref": "#/$defs/id"
+        },
+        "field": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "record_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "group_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "blocked"
+          ]
+        }
+      },
+      "required": [
+        "diagnostic_id",
+        "code",
+        "field",
+        "message",
+        "record_id",
+        "group_id",
+        "run_id",
+        "severity"
+      ],
+      "additionalProperties": false
+    },
+    "group_selection": {
+      "type": "object",
+      "properties": {
+        "group_id": {
+          "$ref": "#/$defs/id"
+        },
+        "expected_revision": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "group_id",
+        "expected_revision"
+      ],
+      "additionalProperties": false
+    },
+    "revalidation_receipt": {
+      "type": "object",
+      "properties": {
+        "revalidation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "import_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "revalidation_id",
+        "import_id"
+      ],
+      "additionalProperties": false
+    },
+    "cutoffs": {
+      "type": "object",
+      "properties": {
+        "economic_as_of": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "recorded_through": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "settlement_as_of_date": {
+          "$ref": "#/$defs/date"
+        }
+      },
+      "required": [
+        "economic_as_of",
+        "recorded_through",
+        "settlement_as_of_date"
+      ],
+      "additionalProperties": false
+    },
+    "selection": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "current_at_request"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "exact"
+            },
+            "revision": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "mode",
+            "revision"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "readiness": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "available"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "require_imports"
+            },
+            "import_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/id"
+              },
+              "minItems": 1,
+              "maxItems": 1000,
+              "uniqueItems": true
+            },
+            "deadline": {
+              "$ref": "#/$defs/timestamp"
+            }
+          },
+          "required": [
+            "mode",
+            "import_ids",
+            "deadline"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "report_filters": {
+      "type": "object",
+      "properties": {
+        "account_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "uniqueItems": true
+        },
+        "instrument_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "uniqueItems": true
+        },
+        "currencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/currency"
+          },
+          "minItems": 0,
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "chart_account_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 0,
+          "maxItems": 1000,
+          "uniqueItems": true
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "snapshot_id": {
+          "$ref": "#/$defs/id"
+        },
+        "captured_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "accepted_revision": {
+          "$ref": "#/$defs/id"
+        },
+        "enumeration_complete": {
+          "type": "boolean"
+        },
+        "pending": {
+          "$ref": "#/$defs/count"
+        },
+        "invalid": {
+          "$ref": "#/$defs/count"
+        },
+        "blocked": {
+          "$ref": "#/$defs/count"
+        },
+        "valid_uncommitted": {
+          "$ref": "#/$defs/count"
+        },
+        "admitted_after_selection": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "captured_at",
+        "accepted_revision",
+        "enumeration_complete",
+        "pending",
+        "invalid",
+        "blocked",
+        "valid_uncommitted",
+        "admitted_after_selection"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "version": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "calculation_identity": {
+      "type": "object",
+      "properties": {
+        "context_id": {
+          "$ref": "#/$defs/id"
+        },
+        "engine_version": {
+          "$ref": "#/$defs/id"
+        },
+        "projection_version": {
+          "$ref": "#/$defs/id"
+        },
+        "normalization_version": {
+          "$ref": "#/$defs/id"
+        },
+        "reference_snapshot_id": {
+          "$ref": "#/$defs/id"
+        },
+        "accounting_policy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/policy"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "context_id",
+        "engine_version",
+        "projection_version",
+        "normalization_version",
+        "reference_snapshot_id",
+        "accounting_policy"
+      ],
+      "additionalProperties": false
+    },
+    "currency_control": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "$ref": "#/$defs/currency"
+        },
+        "debits": {
+          "$ref": "#/$defs/nonnegative_money"
+        },
+        "credits": {
+          "$ref": "#/$defs/nonnegative_money"
+        }
+      },
+      "required": [
+        "currency",
+        "debits",
+        "credits"
+      ],
+      "additionalProperties": false
+    },
+    "report_manifest": {
+      "type": "object",
+      "properties": {
+        "result_id": {
+          "$ref": "#/$defs/id"
+        },
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "$ref": "#/$defs/report_kind"
+        },
+        "calculation": {
+          "$ref": "#/$defs/calculation_identity"
+        },
+        "cutoffs": {
+          "$ref": "#/$defs/cutoffs"
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "row_count": {
+          "$ref": "#/$defs/count"
+        },
+        "currency_controls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/currency_control"
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "control_scope": {
+          "type": "string",
+          "enum": [
+            "none",
+            "whole_journals_before_chart_filter"
+          ]
+        }
+      },
+      "required": [
+        "result_id",
+        "book_id",
+        "kind",
+        "calculation",
+        "cutoffs",
+        "coverage",
+        "row_count",
+        "currency_controls",
+        "expires_at",
+        "control_scope"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "journal_lines",
+                  "trial_balance"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "control_scope": {
+                "const": "whole_journals_before_chart_filter"
+              },
+              "calculation": {
+                "properties": {
+                  "accounting_policy": {
+                    "$ref": "#/$defs/policy"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "control_scope": {
+                "const": "none"
+              },
+              "currency_controls": {
+                "maxItems": 0
+              },
+              "calculation": {
+                "properties": {
+                  "accounting_policy": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "report_receipt": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "$ref": "#/$defs/id"
+        },
+        "accepted_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "required": [
+        "report_id",
+        "accepted_at"
+      ],
+      "additionalProperties": false
+    },
+    "report_status": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "$ref": "#/$defs/id"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "waiting_for_inputs",
+            "queued",
+            "running",
+            "available",
+            "failed"
+          ]
+        },
+        "selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/coverage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "manifest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/report_manifest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "failure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "report_id",
+        "state",
+        "selection",
+        "manifest",
+        "failure"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "waiting_for_inputs"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "type": "null"
+              },
+              "manifest": {
+                "type": "null"
+              },
+              "failure": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "enum": [
+                  "queued",
+                  "running"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "$ref": "#/$defs/coverage"
+              },
+              "manifest": {
+                "type": "null"
+              },
+              "failure": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "available"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "$ref": "#/$defs/coverage"
+              },
+              "manifest": {
+                "$ref": "#/$defs/report_manifest"
+              },
+              "failure": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "manifest": {
+                "type": "null"
+              },
+              "failure": {
+                "$ref": "#/$defs/error"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "position_row": {
+      "type": "object",
+      "properties": {
+        "row_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "position"
+        },
+        "account_id": {
+          "$ref": "#/$defs/id"
+        },
+        "instrument_id": {
+          "$ref": "#/$defs/id"
+        },
+        "quantity": {
+          "$ref": "#/$defs/quantity"
+        }
+      },
+      "required": [
+        "row_id",
+        "kind",
+        "account_id",
+        "instrument_id",
+        "quantity"
+      ],
+      "additionalProperties": false
+    },
+    "cash_row": {
+      "type": "object",
+      "properties": {
+        "row_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "cash"
+        },
+        "account_id": {
+          "$ref": "#/$defs/id"
+        },
+        "currency": {
+          "$ref": "#/$defs/currency"
+        },
+        "amount": {
+          "$ref": "#/$defs/money"
+        }
+      },
+      "required": [
+        "row_id",
+        "kind",
+        "account_id",
+        "currency",
+        "amount"
+      ],
+      "additionalProperties": false
+    },
+    "settlement_row": {
+      "type": "object",
+      "properties": {
+        "row_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "settlement"
+        },
+        "account_id": {
+          "$ref": "#/$defs/id"
+        },
+        "settlement_date": {
+          "$ref": "#/$defs/date"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "receivable",
+            "payable"
+          ]
+        },
+        "currency": {
+          "$ref": "#/$defs/currency"
+        },
+        "amount": {
+          "$ref": "#/$defs/money"
+        }
+      },
+      "required": [
+        "row_id",
+        "kind",
+        "account_id",
+        "settlement_date",
+        "direction",
+        "currency",
+        "amount"
+      ],
+      "additionalProperties": false
+    },
+    "journal_row": {
+      "type": "object",
+      "properties": {
+        "row_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "journal_line"
+        },
+        "entry_id": {
+          "$ref": "#/$defs/id"
+        },
+        "line_id": {
+          "$ref": "#/$defs/id"
+        },
+        "chart_account_id": {
+          "$ref": "#/$defs/id"
+        },
+        "currency": {
+          "$ref": "#/$defs/currency"
+        },
+        "debit": {
+          "$ref": "#/$defs/nonnegative_money"
+        },
+        "credit": {
+          "$ref": "#/$defs/nonnegative_money"
+        }
+      },
+      "required": [
+        "row_id",
+        "kind",
+        "entry_id",
+        "line_id",
+        "chart_account_id",
+        "currency",
+        "debit",
+        "credit"
+      ],
+      "additionalProperties": false
+    },
+    "trial_balance_row": {
+      "type": "object",
+      "properties": {
+        "row_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "const": "trial_balance"
+        },
+        "chart_account_id": {
+          "$ref": "#/$defs/id"
+        },
+        "currency": {
+          "$ref": "#/$defs/currency"
+        },
+        "debits": {
+          "$ref": "#/$defs/nonnegative_money"
+        },
+        "credits": {
+          "$ref": "#/$defs/nonnegative_money"
+        },
+        "net": {
+          "$ref": "#/$defs/money"
+        }
+      },
+      "required": [
+        "row_id",
+        "kind",
+        "chart_account_id",
+        "currency",
+        "debits",
+        "credits",
+        "net"
+      ],
+      "additionalProperties": false
+    },
+    "report_row": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/position_row"
+        },
+        {
+          "$ref": "#/$defs/cash_row"
+        },
+        {
+          "$ref": "#/$defs/settlement_row"
+        },
+        {
+          "$ref": "#/$defs/journal_row"
+        },
+        {
+          "$ref": "#/$defs/trial_balance_row"
+        }
+      ]
+    },
+    "evidence_contribution": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/id"
+        },
+        "canonical_record_id": {
+          "$ref": "#/$defs/id"
+        },
+        "economic_id": {
+          "$ref": "#/$defs/id"
+        },
+        "causal_record_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "causal_evidence_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_record_id": {
+          "$ref": "#/$defs/id"
+        },
+        "import_id": {
+          "$ref": "#/$defs/id"
+        },
+        "staged_record_id": {
+          "$ref": "#/$defs/id"
+        },
+        "journal_entry_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "journal_line_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source_locator"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "canonical_record_id",
+        "economic_id",
+        "causal_record_id",
+        "causal_evidence_id",
+        "source_record_id",
+        "import_id",
+        "staged_record_id",
+        "journal_entry_id",
+        "journal_line_id",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "record_page": {
+      "type": "object",
+      "properties": {
+        "snapshot_id": {
+          "$ref": "#/$defs/id"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/staged_record"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "expires_at",
+        "items",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "diagnostic_page": {
+      "type": "object",
+      "properties": {
+        "snapshot_id": {
+          "$ref": "#/$defs/id"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "expires_at",
+        "items",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "report_page": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "$ref": "#/$defs/id"
+        },
+        "result_id": {
+          "$ref": "#/$defs/id"
+        },
+        "rows": {
+          "type": "object",
+          "properties": {
+            "snapshot_id": {
+              "$ref": "#/$defs/id"
+            },
+            "expires_at": {
+              "$ref": "#/$defs/timestamp"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/report_row"
+              },
+              "minItems": 0,
+              "maxItems": 1000
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/id"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "expires_at",
+            "items",
+            "next_cursor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "report_id",
+        "result_id",
+        "rows"
+      ],
+      "additionalProperties": false
+    },
+    "evidence_page": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "$ref": "#/$defs/id"
+        },
+        "result_id": {
+          "$ref": "#/$defs/id"
+        },
+        "target_id": {
+          "$ref": "#/$defs/id"
+        },
+        "evidence": {
+          "type": "object",
+          "properties": {
+            "snapshot_id": {
+              "$ref": "#/$defs/id"
+            },
+            "expires_at": {
+              "$ref": "#/$defs/timestamp"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/evidence_contribution"
+              },
+              "minItems": 0,
+              "maxItems": 1000
+            },
+            "next_cursor": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/id"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "expires_at",
+            "items",
+            "next_cursor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "report_id",
+        "result_id",
+        "target_id",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "capabilities_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "book_id"
+      ],
+      "additionalProperties": false
+    },
+    "capabilities_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/capabilities"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "stage_file_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "root_id": {
+          "$ref": "#/$defs/id"
+        },
+        "relative_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\x00\\\\]+$"
+        }
+      },
+      "required": [
+        "book_id",
+        "root_id",
+        "relative_path"
+      ],
+      "additionalProperties": false
+    },
+    "stage_file_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/payload_reference"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "submit_import_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        },
+        "payload": {
+          "$ref": "#/$defs/payload"
+        }
+      },
+      "required": [
+        "book_id",
+        "idempotency_key",
+        "metadata",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "submit_import_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/import_receipt"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "get_import_status_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "import_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "book_id",
+        "import_id"
+      ],
+      "additionalProperties": false
+    },
+    "get_import_status_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/import_status"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "read_records_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "import_id": {
+          "$ref": "#/$defs/id"
+        },
+        "validation": {
+          "$ref": "#/$defs/validation"
+        },
+        "commitment": {
+          "$ref": "#/$defs/commitment"
+        },
+        "page": {
+          "$ref": "#/$defs/page_request"
+        }
+      },
+      "required": [
+        "book_id",
+        "import_id"
+      ],
+      "additionalProperties": false
+    },
+    "read_records_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/record_page"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "read_diagnostics_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "import_id": {
+          "$ref": "#/$defs/id"
+        },
+        "record_id": {
+          "$ref": "#/$defs/id"
+        },
+        "page": {
+          "$ref": "#/$defs/page_request"
+        }
+      },
+      "required": [
+        "book_id",
+        "import_id"
+      ],
+      "additionalProperties": false
+    },
+    "read_diagnostics_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/diagnostic_page"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "revalidate_import_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "import_id": {
+          "$ref": "#/$defs/id"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "validation_context_id": {
+          "$ref": "#/$defs/id"
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/group_selection"
+          },
+          "minItems": 1,
+          "maxItems": 1000
+        }
+      },
+      "required": [
+        "book_id",
+        "import_id",
+        "idempotency_key",
+        "validation_context_id",
+        "groups"
+      ],
+      "additionalProperties": false
+    },
+    "revalidate_import_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/revalidation_receipt"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "request_report_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "kind": {
+          "$ref": "#/$defs/report_kind"
+        },
+        "calculation_context_id": {
+          "$ref": "#/$defs/id"
+        },
+        "cutoffs": {
+          "$ref": "#/$defs/cutoffs"
+        },
+        "selection": {
+          "$ref": "#/$defs/selection"
+        },
+        "readiness": {
+          "$ref": "#/$defs/readiness"
+        },
+        "filters": {
+          "$ref": "#/$defs/report_filters"
+        }
+      },
+      "required": [
+        "book_id",
+        "idempotency_key",
+        "kind",
+        "calculation_context_id",
+        "cutoffs",
+        "selection",
+        "readiness",
+        "filters"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "readiness": {
+                "properties": {
+                  "mode": {
+                    "const": "require_imports"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "properties": {
+                  "mode": {
+                    "const": "current_at_request"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "positions"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "filters": {
+                "properties": {
+                  "currencies": {
+                    "maxItems": 0
+                  },
+                  "chart_account_ids": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "settled_cash",
+                  "settlement_obligations"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "filters": {
+                "properties": {
+                  "instrument_ids": {
+                    "maxItems": 0
+                  },
+                  "chart_account_ids": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "journal_lines",
+                  "trial_balance"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "filters": {
+                "properties": {
+                  "instrument_ids": {
+                    "maxItems": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "request_report_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/report_receipt"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "get_report_status_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "report_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "book_id",
+        "report_id"
+      ],
+      "additionalProperties": false
+    },
+    "get_report_status_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/report_status"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "read_report_page_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "report_id": {
+          "$ref": "#/$defs/id"
+        },
+        "page": {
+          "$ref": "#/$defs/page_request"
+        }
+      },
+      "required": [
+        "book_id",
+        "report_id"
+      ],
+      "additionalProperties": false
+    },
+    "read_report_page_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/report_page"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    },
+    "get_evidence_request": {
+      "type": "object",
+      "properties": {
+        "book_id": {
+          "$ref": "#/$defs/id"
+        },
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "report_id": {
+          "$ref": "#/$defs/id"
+        },
+        "target_id": {
+          "$ref": "#/$defs/id"
+        },
+        "page": {
+          "$ref": "#/$defs/page_request"
+        }
+      },
+      "required": [
+        "book_id",
+        "report_id",
+        "target_id"
+      ],
+      "additionalProperties": false
+    },
+    "get_evidence_response": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": true
+            },
+            "result": {
+              "$ref": "#/$defs/evidence_page"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "result"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "api_version": {
+              "const": "luca.application/1"
+            },
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "$ref": "#/$defs/error"
+            }
+          },
+          "required": [
+            "api_version",
+            "ok",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "type": "object"
+    }
+  },
+  "x-luca-mcp-tools": [
+    {
+      "operation": "capabilities",
+      "description": "Read supported operations, contexts, formats, limits and retention for an authorized book.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "stage_file",
+      "description": "Optional local-only tool. Copy a file from a configured input-root ID into durable staging. Reject root escapes/symlinks; this is not an import receipt.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "submit_import",
+      "description": "Durably receive transaction bytes and processing intent; return before asynchronous financial validation. Retry identical content/options with the same key.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "get_import_status",
+      "description": "Read retained import status. Counts cover enumerated records; receipt is distinct from validation and commitment.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "read_records",
+      "description": "Read a bounded snapshot page of staged records. Retain validation and commitment separately; repeat filters with a cursor.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "read_diagnostics",
+      "description": "Read retained errors/blocked reasons as data, including import-level enumeration errors.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "revalidate_import",
+      "description": "Schedule version-checked revalidation of explicit groups against an immutable context. Preserve prior errors; do not bypass ledger admission.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "request_report",
+      "description": "Create a durable report job with explicit context, cutoffs and readiness. Return job receipt, not computed rows; poll status.",
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "get_report_status",
+      "description": "Read durable job state, pinned coverage, complete result manifest or retained failure.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "read_report_page",
+      "description": "Read rows from one immutable available report result. All pages and totals share its pinned revision/context.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "operation": "get_evidence",
+      "description": "Read paginated source/event/journal lineage for a row or causal evidence ID in this report result. No arbitrary file or SQL access.",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

@@ -27,9 +27,11 @@ retained as prior evidence. This report describes the native revision.
 - Python runtime files and the financial helper process are removed from the
   application. Original schema-1 Python intake code remains only as a frozen test
   fixture that creates legacy stores for native migration/compatibility tests.
-- The optional future REST adapter is selected as µWebSockets over µSockets.
-  Neither an HTTP dependency nor a listener is introduced by this slice; see
-  [the native architecture decision](../native-ingestion.md).
+- At this verification baseline, the optional future REST adapter was selected
+  as µWebSockets over µSockets; no HTTP dependency or listener was introduced.
+  Subsequent user direction supersedes that selection with direct C++ linking,
+  native CLI tools and optional MCP; see the current
+  [integration direction](../native-ingestion.md#integration-direction).
 
 ## Correctness and packaging
 

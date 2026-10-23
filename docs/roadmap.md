@@ -67,9 +67,17 @@ cleanup. Actual verification and intake-only measurements are in
 retained per-record errors/status, context-pinned runs, dependency wakeups,
 lease fencing and atomic canonical admission/recovery, plus local processing
 benchmarks. Runtime APIs/workers are C++; Python is retained only in tests and
-analysis. The optional REST adapter will use µWebSockets/µSockets. Next:
-projection coverage over pinned accepted revisions and an HTTP adapter; shared projection batches and incremental projection evidence remain
-separate checkpoints.
+analysis. Direct C++ integration is the default; CLI tools and an optional MCP
+adapter share application operations. No network framework is selected. Next:
+review the drafted [C++ application API](application-api.md), [CLI commands](cli.md)
+and [MCP tools](../contracts/mcp/v1.tools.json); implement the facade and deliver projection
+coverage over pinned accepted revisions and the direct C++/CLI accounting path,
+then expose the same operations through MCP. Report jobs, CLI reporting/export
+commands and MCP are not implemented. OSS has no graphical UI; enterprise owns
+screens and presentation. REST/gRPC hosts are deferred. See
+[integration direction and CLI requirements](native-ingestion.md#integration-direction).
+Shared projection batches and incremental projection evidence remain separate
+checkpoints.
 
 Retain original submissions as immutable evidence, including invalid/unparseable
 records. Distinguish durable receipt from authoritative ledger acceptance. A
@@ -297,11 +305,12 @@ These capabilities connect LUCA to the outside world but do not define the core 
 
 ### Bindings and execution hosts
 
-- C++ library API
-- CLI
+- C++ library API as the default enterprise integration
+- Native CLI tools for ingestion, workers, status, reports, export and evidence
+- Optional MCP server over the same application operations
 - Python bindings
 - C ABI where useful
-- REST/gRPC service host if demanded by integrations
+- Deferred REST/gRPC service host if demanded by integrations
 - WebAssembly only if a concrete local/browser use case emerges
 
 ### Agent integration
@@ -477,3 +486,19 @@ actions, lots/P&L, securities finance and broader scaling remain sequenced
 follow-ups; the minimal-core performance requirements above are now foundational.
 See [the eleven feature designs](oss-program-20260930/README.md). Runtime acceptance
 for this increment is pending while automated test execution is paused.
+
+## Enterprise execution intake increment — 2026-10-22
+
+An additive [source-envelope format](execution-envelopes.md) is implemented in the
+native reference runtime. The paired enterprise review diff adds a durable OMS
+execution outbox and direct-library C++ delivery, preserving source, receipt and
+validation/commitment status. Current admission is the existing cash/equity
+model; unsupported derivatives and missing booking data remain explicit retained
+exceptions. Historical replay, production policy/instrument expansion, full
+report coverage and shared application/CLI/MCP implementation remain open. This
+adds a bounded enterprise consumer to checkpoint 3, not acceptance of every
+minimal-core checkpoint or a production deployment.
+
+## Custodian lots and charges implementation
+
+C++ LIFO long/short lot relief, separate exact trade charges, economic P&L and firm aggregation are implemented in the [lot accounting contract](lots-and-charges.md). Native `cash-equity/2` ingestion retains charge errors and canonical v2 amounts. Next: general-ledger sale/short recognition, broker schedule selection/administration, affected-pool lot checkpoints and broader workload benchmarks. This implementation supersedes the earlier long-only/FIFO proposal for the first lot slice; no tax-compliance or deployment claim is implied.

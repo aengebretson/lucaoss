@@ -180,9 +180,18 @@ The frozen Python implementation under `tests/ingestion/legacy_reference` is onl
 a schema-1 compatibility fixture. Python remains useful in tests and benchmark
 analysis; it is absent from the installed native ingestion runtime.
 
-The optional REST adapter will use **µWebSockets over µSockets**, following the
-user's choice. Those dependencies are not needed for this non-networked slice.
-The event loop must keep socket ownership on its thread, offload blocking
-storage/financial work, enforce bounded streaming/backpressure, handle aborted
-requests safely, and defer responses until durable receipt. See
-[the native architecture decision](../../docs/native-ingestion.md).
+Direct C++ library integration is the default for enterprise consumers. The
+native CLI remains a supported interface; reporting/job/export commands and an
+optional MCP adapter are planned around shared application operations. OSS has
+no graphical UI. No network framework is selected or required; REST/gRPC hosts
+are deferred. See [the integration direction](../../docs/native-ingestion.md#integration-direction)
+for the CLI/MCP contracts still to be designed and implemented.
+
+## Source-preserving envelopes
+
+The additive `luca.transactions.envelope.jsonl/1` adapter accepts `{transaction,
+source}` records, retaining the complete source envelope while applying existing
+cash/equity lifecycle validation to the inner transaction. An explicit context
+selects the format. See [format and limits](../../docs/execution-envelopes.md).
+Enterprise's native FIX outbox uses this boundary; no MCP or HTTP service is
+required. The generic format adds no instrument or production accounting policy.

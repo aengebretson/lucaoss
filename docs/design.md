@@ -353,10 +353,15 @@ Engine, policy, context and input identities accompany canonical results; operat
   for each append. Projection/checkpoint preparation is unchanged. Component
   exports keep SQLite/JSON/thread dependencies out of financial-only consumers.
   Patched SQLite uses WAL/FULL; older runtimes use DELETE/EXTRA with pinned profiles.
-  The [native architecture decision](native-ingestion.md) selects optional
-  µWebSockets/µSockets for REST, keeping storage/financial work off socket loops.
-  HTTP, projection coverage and distributed storage/performance acceptance remain
-  separate work.
+  The [integration direction](native-ingestion.md#integration-direction) defaults
+  to direct C++ linking. CLI tools and an optional MCP adapter share application
+  operations; report jobs/pages/evidence and the MCP server remain planned.
+  OSS has no graphical UI; enterprise owns presentation and user workflows.
+  Draft contracts are in the [shared application API](application-api.md),
+  [CLI specification](cli.md) and [MCP catalog](../contracts/mcp/v1.tools.json);
+  they add no installed runtime interface yet.
+  No HTTP framework is selected. Projection coverage and distributed
+  storage/performance acceptance remain separate work.
 
 - [Journal balances](journal-balances.md) reduce whole journals under an explicit
   book/revision/policy/context contract and merge disjoint compatible partials.
@@ -371,3 +376,7 @@ Engine, policy, context and input identities accompany canonical results; operat
 - [Trade reconciliation](trade-reconciliation.md) compares explicitly mapped trade identities with separate immutable observations. The bounded CSV adapter is available through opt-in `luca::adapters`; core targets keep their existing dependency graph.
 
 The library's core functions have no hidden database or network access. Configuring or compiling these interfaces does not establish runtime financial correctness; executed conformance and integration evidence must be recorded separately.
+
+## Custodian lots and charges implementation
+
+C++ LIFO long/short lot relief, separate exact trade charges, economic P&L and firm aggregation are implemented in the [lot accounting contract](lots-and-charges.md). Native `cash-equity/2` ingestion retains charge errors and canonical v2 amounts. Next: general-ledger sale/short recognition, broker schedule selection/administration, affected-pool lot checkpoints and broader workload benchmarks. This implementation supersedes the earlier long-only/FIFO proposal for the first lot slice; no tax-compliance or deployment claim is implied.
