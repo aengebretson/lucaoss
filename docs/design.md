@@ -430,3 +430,15 @@ workers continue appending. They do not create durable jobs or assert staging
 completeness. Journals remain regenerated as-of snapshots, and the facade adds no
 financial arithmetic. See [CLI/MCP reporting](cli-mcp-reporting.md) for the executed
 bound, evidence, permissions and limitations.
+
+
+### Immutable-version application adapters
+
+Shared application edit/delete operations translate authorized commands into native
+whole-import source envelopes and retain actor/reason evidence. The typed lifecycle
+engine owns pair admission, natural keys, dated gates and closed-period protection.
+Application replay uses the explicit restoration API over complete commit prefixes;
+query metadata uses the shared version helper. Hash-verified source evidence is a
+bounded read, independent of authoritative canonical calculations. See
+[CLI/MCP immutable versions](cli-mcp-versions.md). Period accounting remains a
+separate reviewed contract.

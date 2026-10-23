@@ -2210,11 +2210,41 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 9007199254740991
+                  },
+                  "knowledge": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "sequence": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 10000
+                        },
+                        "recorded_at": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string",
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "sequence",
+                        "recorded_at"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
                   "revisions",
-                  "through_sequence"
+                  "through_sequence",
+                  "knowledge"
                 ],
                 "additionalProperties": true
               }
@@ -4918,6 +4948,37 @@
                               "cash"
                             ],
                             "additionalProperties": false
+                          },
+                          "policy_selection": {
+                            "const": "explicit_sequence"
+                          },
+                          "policy_knowledge": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sequence": {
+                                  "type": "string",
+                                  "pattern": "^(0|[1-9][0-9]{0,18})$"
+                                },
+                                "recorded_at": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string",
+                                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "sequence",
+                                "recorded_at"
+                              ],
+                              "additionalProperties": false
+                            }
                           }
                         },
                         "required": [
@@ -4937,7 +4998,9 @@
                           "resolved_policies",
                           "settlement_digest",
                           "projection",
-                          "recognition_rules"
+                          "recognition_rules",
+                          "policy_selection",
+                          "policy_knowledge"
                         ],
                         "additionalProperties": false
                       },
@@ -6577,7 +6640,8 @@
                   "active",
                   "superseded",
                   "voided",
-                  "cancellation"
+                  "cancellation",
+                  "pending_activation"
                 ]
               },
               "type": {
@@ -7096,7 +7160,8 @@
                                   "active",
                                   "superseded",
                                   "voided",
-                                  "cancellation"
+                                  "cancellation",
+                                  "pending_activation"
                                 ]
                               },
                               "type": {
@@ -7566,7 +7631,8 @@
                                 "active",
                                 "superseded",
                                 "voided",
-                                "cancellation"
+                                "cancellation",
+                                "pending_activation"
                               ]
                             },
                             "processing_status": {
@@ -7611,6 +7677,75 @@
                               "type": "string",
                               "minLength": 1,
                               "maxLength": 256
+                            },
+                            "predecessor_id": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "void_version_id": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "replacement_version_id": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              ]
+                            },
+                            "void_effective_at": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                }
+                              ]
+                            },
+                            "void_recorded_at": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                }
+                              ]
+                            },
+                            "activation_effective_at": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -7628,7 +7763,13 @@
                             "instrument_id",
                             "next_record_id",
                             "void_at",
-                            "version_contract"
+                            "version_contract",
+                            "predecessor_id",
+                            "void_version_id",
+                            "replacement_version_id",
+                            "void_effective_at",
+                            "void_recorded_at",
+                            "activation_effective_at"
                           ],
                           "additionalProperties": true
                         },
@@ -8009,6 +8150,653 @@
           }
         },
         "additionalProperties": false
+      }
+    },
+    {
+      "name": "luca_edit_transaction",
+      "description": "Durably receive an immutable dated void plus linked replacement in one atomic admission group. Original and history remain. Financial validation, natural keys and closed-period fences run asynchronously in the native C++ worker; inspect import status/errors. Requires submit, original source grant and configured account. Trusted actor and reason retained in source envelope. Same key/request recovers original receipt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "original_record_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "validation_context_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "void_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "replacement_event_utf8": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192,
+            "description": "Native cash/equity event JSON, without lifecycle wrapper. Invalid JSON/event contents are retained validation failures and cannot publish a cancellation alone."
+          }
+        },
+        "required": [
+          "book_id",
+          "idempotency_key",
+          "original_record_id",
+          "validation_context_id",
+          "void_at",
+          "reason",
+          "replacement_event_utf8"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "edit_transaction"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "import_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "receipt": {
+                    "const": "durable"
+                  },
+                  "received_at": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "properties": {
+                      "algorithm": {
+                        "const": "sha256"
+                      },
+                      "digest": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "bytes": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "algorithm",
+                      "digest",
+                      "bytes"
+                    ],
+                    "additionalProperties": true
+                  },
+                  "durability_profile": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "durable_acceptance": {
+                    "const": true
+                  },
+                  "completion": {
+                    "const": "pending_or_in_progress"
+                  }
+                },
+                "required": [
+                  "import_id",
+                  "receipt",
+                  "received_at",
+                  "payload",
+                  "durability_profile",
+                  "durable_acceptance",
+                  "completion"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "luca_delete_transaction",
+      "description": "Durably receive an immutable dated deletion/audit cancellation. Original and history remain. Financial validation, natural keys and closed-period fences run asynchronously in the native C++ worker; inspect import status/errors. Requires submit, original source grant and configured account. Trusted actor and reason retained in source envelope. Same key/request recovers original receipt.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "original_record_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "validation_context_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "void_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "book_id",
+          "idempotency_key",
+          "original_record_id",
+          "validation_context_id",
+          "void_at",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "delete_transaction"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "import_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "receipt": {
+                    "const": "durable"
+                  },
+                  "received_at": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z$"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "properties": {
+                      "algorithm": {
+                        "const": "sha256"
+                      },
+                      "digest": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "bytes": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "algorithm",
+                      "digest",
+                      "bytes"
+                    ],
+                    "additionalProperties": true
+                  },
+                  "durability_profile": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "durable_acceptance": {
+                    "const": true
+                  },
+                  "completion": {
+                    "const": "pending_or_in_progress"
+                  }
+                },
+                "required": [
+                  "import_id",
+                  "receipt",
+                  "received_at",
+                  "payload",
+                  "durability_profile",
+                  "durable_acceptance",
+                  "completion"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "luca_transaction_evidence",
+      "description": "Read bounded, hash-verified immutable source bytes and source/admission locator for an accepted normalized record identity. Source is evidence, not authoritative financial computation. Includes retained edit/delete actor, reason and command when present.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "book_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "record_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "book_id",
+          "record_id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "required": [
+          "api_version",
+          "operation",
+          "ok",
+          "data",
+          "error"
+        ],
+        "properties": {
+          "api_version": {
+            "const": "luca.foundations/1"
+          },
+          "operation": {
+            "const": "transaction_evidence"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "record_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "import_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "source_metadata": {
+                    "type": "object",
+                    "properties": {
+                      "source_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "format": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "validation_context_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "atomicity": {
+                        "type": "string",
+                        "enum": [
+                          "independent_groups",
+                          "whole_import"
+                        ]
+                      },
+                      "client_reference": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "replaces": {
+                        "type": "object",
+                        "properties": {
+                          "import_id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          },
+                          "record_ids": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            }
+                          }
+                        },
+                        "required": [
+                          "import_id",
+                          "record_ids"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "source_id",
+                      "format",
+                      "validation_context_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "source_record_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "locator": {
+                    "type": "object",
+                    "properties": {
+                      "byte_offset": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,18})$"
+                      },
+                      "byte_length": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,18})$"
+                      },
+                      "line": {
+                        "type": "string",
+                        "pattern": "^(0|[1-9][0-9]{0,18})$"
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "byte_offset",
+                      "byte_length",
+                      "line",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "transaction": {
+                    "type": "object",
+                    "properties": {
+                      "record_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "economic_event_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "account_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      },
+                      "action": {
+                        "enum": [
+                          "originate",
+                          "correct",
+                          "cancel",
+                          "reverse"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "record_id",
+                      "economic_event_id",
+                      "account_id",
+                      "action"
+                    ],
+                    "additionalProperties": true
+                  },
+                  "payload_utf8": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 65536
+                  },
+                  "authority": {
+                    "const": "source_evidence_only"
+                  }
+                },
+                "required": [
+                  "record_id",
+                  "import_id",
+                  "source_metadata",
+                  "source_record_id",
+                  "locator",
+                  "transaction",
+                  "payload_utf8",
+                  "authority"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  },
+                  "exit_code": {
+                    "type": "integer"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "not_accepted",
+                      "unknown",
+                      "read_failed"
+                    ]
+                  },
+                  "retry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "code",
+                  "retryable",
+                  "exit_code",
+                  "outcome",
+                  "retry"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
       }
     }
   ]

@@ -33,11 +33,13 @@ int main() {
                      {"rules", "cash-equity/2"},
                      {"engine", "luca/0.1"},
                      {"reference_snapshot", "r"}}}}}};
-  std::atomic<bool> fault = true, settlement_fault = true;
+  std::atomic<bool> fault = true, settlement_fault = true, version_fault = false;
   luca::ingestion::Hooks hooks;
   hooks.checkpoint = [&](std::string_view point) {
     if (point == "after_receipt_commit" && fault.exchange(false))
       throw std::runtime_error("injected uncertain outcome");
+    if (point == "after_receipt_commit" && version_fault.exchange(false))
+      throw std::runtime_error("injected uncertain version receipt");
     if (point == "settlement_receipt_after_commit" && settlement_fault.exchange(false))
       throw std::runtime_error("injected uncertain settlement receipt");
   };
@@ -98,22 +100,45 @@ int main() {
         take(readonly.call(Operation::import_status, scope)));
   check(take(resumed.call(Operation::policy_result,
                           {{"book_id", "b"}, {"evidence_id", evidence.at("id")}})) == evidence);
-  auto edit_request=request;edit_request["idempotency_key"]="atomic-edit";
-  edit_request["payload_utf8"]=Json{{"record_id","void"},{"economic_event_id","e1"},{"account_id","a"},{"action","cancel"},{"causal_record_id","r1"},{"void_at","2026-01-02T00:00:00Z"}}.dump()+"\n"+
-    Json{{"record_id","r2"},{"economic_event_id","e1"},{"account_id","a"},{"action","correct"},{"causal_record_id","void"},
-      {"event",{{"type","cash_movement"},{"effective_at","2026-01-01T00:00:00Z"},{"currency","USD"},{"amount","150"}}}}.dump()+"\n";
-  take(app.call(Operation::submit_import,edit_request));take(app.drain("b"));
-  auto restored_store=take(luca::ingestion::SqliteStore::open(temp,config));
-  SqliteApplication restored_app({{restored_store,{{"a","firm","custody"}},"m",true,false,false,{}}});
-  const auto capabilities=take(restored_app.call(Operation::capabilities,{{"book_id","b"}}));
-  Json lots_request={{"book_id","b"},{"accepted_through","3"},{"policy_through","1"},
-    {"effective_at","2026-02-01T00:00:00Z"},{"recorded_through","2099-01-01T00:00:00Z"},
-    {"collection","trades"},{"mapping_digest",capabilities.at("mapping_digest")}};
-  auto lots=take(restored_app.call(Operation::lots,lots_request));
+  auto edit_request = request;
+  edit_request["idempotency_key"] = "atomic-edit";
+  edit_request["payload_utf8"] =
+      Json{{"record_id", "void"}, {"economic_event_id", "e1"}, {"account_id", "a"},
+           {"action", "cancel"},  {"causal_record_id", "r1"},  {"void_at", "2026-01-02T00:00:00Z"}}
+          .dump() +
+      "\n" +
+      Json{{"record_id", "r2"},
+           {"economic_event_id", "e1"},
+           {"account_id", "a"},
+           {"action", "correct"},
+           {"causal_record_id", "void"},
+           {"event",
+            {{"type", "cash_movement"},
+             {"effective_at", "2026-01-01T00:00:00Z"},
+             {"currency", "USD"},
+             {"amount", "150"}}}}
+          .dump() +
+      "\n";
+  take(app.call(Operation::submit_import, edit_request));
+  take(app.drain("b"));
+  auto restored_store = take(luca::ingestion::SqliteStore::open(temp, config));
+  SqliteApplication restored_app(
+      {{restored_store, {{"a", "firm", "custody"}}, "m", true, false, false, {}}});
+  const auto capabilities = take(restored_app.call(Operation::capabilities, {{"book_id", "b"}}));
+  Json lots_request = {{"book_id", "b"},
+                       {"accepted_through", "3"},
+                       {"policy_through", "1"},
+                       {"effective_at", "2026-02-01T00:00:00Z"},
+                       {"recorded_through", "2099-01-01T00:00:00Z"},
+                       {"collection", "trades"},
+                       {"mapping_digest", capabilities.at("mapping_digest")}};
+  auto lots = take(restored_app.call(Operation::lots, lots_request));
   check(lots.at("items").empty());
-  lots_request["accepted_through"]="2";
-  auto split=restored_app.call(Operation::lots,lots_request);
-  check(!split && split.error().code=="INPUT_REVISION_SPLITS_COMMIT"); // financial replay reached the paired replacement
+  lots_request["accepted_through"] = "2";
+  auto split = restored_app.call(Operation::lots, lots_request);
+  check(!split &&
+        split.error().code ==
+            "INPUT_REVISION_SPLITS_COMMIT"); // financial replay reached the paired replacement
   SqliteApplication financial({{store, {{"a", "firm", "custody"}}, "m", true, true, true, {"s"}}});
   auto buy = request;
   buy["idempotency_key"] = "buy";
@@ -153,7 +178,8 @@ int main() {
   auto payment = take(financial.call(Operation::settlement_status,
                                      {{"book_id", "b"}, {"idempotency_key", "payment"}}));
   check(payment["state"] == "committed");
-  take(store.close_period("close", "2026-01-31T23:59:59Z", 4, "tester", true, 1, 1));
+  const auto closed_period =
+      take(store.close_period("close", "2026-01-31T23:59:59Z", 4, "tester", true, 1, 1));
   auto refund = settlement;
   refund["idempotency_key"] = "closed-refund";
   refund["request"]["cash"] = "40";
@@ -170,6 +196,45 @@ int main() {
   check(take(financial.call(Operation::settlement_status,
                             {{"book_id", "b"}, {"idempotency_key", "open-refund"}}))["state"] ==
         "committed");
+  auto envelope_context = config["contexts"]["v1"];
+  envelope_context["adapter"] = "luca.transactions.envelope.jsonl/1";
+  take(store.register_context("versions", envelope_context));
+  Json edit = {{"book_id", "b"},
+               {"idempotency_key", "closed-edit"},
+               {"original_record_id", accepted[2]["record_id"]},
+               {"validation_context_id", "versions"},
+               {"void_at", "2026-01-15T00:00:00Z"},
+               {"reason", "synthetic correction"},
+               {"replacement_event_utf8", Json{{"type", "cash_movement"},
+                                               {"effective_at", "2026-01-01T00:00:00Z"},
+                                               {"currency", "USD"},
+                                               {"amount", "175"}}
+                                              .dump()}};
+  auto closed_receipt = take(financial.call(Operation::edit_transaction, edit));
+  take(financial.drain("b"));
+  check(take(store.book_state())["last_sequence"] == 4);
+  auto closed_diagnostics = take(financial.call(
+      Operation::read_diagnostics, {{"book_id", "b"}, {"import_id", closed_receipt["import_id"]}}));
+  bool found_closed = false;
+  for (const auto &d : closed_diagnostics["items"])
+    found_closed = found_closed || d["code"] == "PERIOD_CLOSED";
+  check(found_closed);
+  edit["idempotency_key"] = "open-edit";
+  edit["void_at"] = "2026-02-05T00:00:00Z";
+  version_fault = true;
+  auto uncertain_edit = financial.call(Operation::edit_transaction, edit);
+  check(!uncertain_edit && uncertain_edit.error().code == "OUTCOME_UNKNOWN");
+  auto recovered_edit = take(financial.call(Operation::edit_transaction, edit));
+  check(take(financial.call(Operation::edit_transaction, edit)) == recovered_edit);
+  take(financial.drain("b"));
+  check(take(store.book_state())["last_sequence"] == 6);
+  check(take(store.periods())["closes"][0] == closed_period);
+  auto actor_binding =
+      BookBinding{store, {{"a", "firm", "custody"}}, "m", true, true, false, {"s"}};
+  actor_binding.transaction_actor = "another-actor";
+  SqliteApplication changed_actor({actor_binding});
+  auto actor_conflict = changed_actor.call(Operation::edit_transaction, edit);
+  check(!actor_conflict && actor_conflict.error().code == "IDEMPOTENCY_CONFLICT");
   check(!app.call(static_cast<Operation>(999), Json::object()));
   check(document(static_cast<Operation>(999),
                  std::unexpected(luca::ingestion::Failure{"INVALID_ARGUMENTS"}))

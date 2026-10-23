@@ -3,6 +3,7 @@
 #include "luca/ingestion/settlement.hpp"
 #include "luca/reconciliation/trade_accounting.hpp"
 #include "luca/serialization/canonical_decode.hpp"
+#include "luca/transaction_versions.hpp"
 #include <charconv>
 
 namespace luca::application::detail {
@@ -78,7 +79,8 @@ Snapshot snapshot(const BookBinding &b, const Json &a) {
       auto decoded = serialization::decode_lifecycle_record(raw);
       require(decoded && decoded->acceptance_sequence == s.ledger.records().size() + 1,
               "LEDGER_CORRUPT");
-      require(bool(s.ledger.accept(decoded->draft)), "LEDGER_CORRUPT");
+      require(bool(s.ledger.restore_record(decoded->draft, decoded->acceptance_sequence)),
+              "LEDGER_CORRUPT");
       s.rows.push_back(row);
     }
   }
@@ -219,6 +221,13 @@ Json accounting_report(const BookBinding &b, const Json &a) {
   s.input["policy_through"] = a.at("policy_through");
   s.input["settlement_through"] = a.at("settlement_through");
   s.input["policy_revisions"] = selected_revisions;
+  s.input["policy_selection"] = "explicit_sequence";
+  s.input["policy_knowledge"] = Json::array();
+  for (auto row : history.at("knowledge"))
+    if (row.at("sequence").get<std::uint64_t>() <= policy_through) {
+      row["sequence"] = std::to_string(row.at("sequence").get<std::uint64_t>());
+      s.input["policy_knowledge"].push_back(std::move(row));
+    }
   s.input["resolved_policies"] = evidence;
   s.input["settlement_digest"] = digest(raw_settlements);
   s.input["projection"] = "equity-journals/1";
@@ -338,6 +347,10 @@ Json query_transactions(const BookBinding &b, const Json &a) {
   require(from < to, "INVALID_ARGUMENTS");
   const auto filters = a.value("filters", Json::object());
   const auto resolved = s.ledger.resolve(s.recorded, s.economic);
+  const auto versions = transaction_versions(s.ledger, s.recorded);
+  std::map<std::string, const TransactionVersion *> version_index;
+  for (const auto &v : versions)
+    version_index.emplace(v.version_id, &v);
   std::map<std::string, const LifecycleRecord *> heads, successors;
   std::set<std::string> active;
   for (const auto &c : resolved.chains())
@@ -362,10 +375,16 @@ Json query_transactions(const BookBinding &b, const Json &a) {
         continue;
     } else if (*when > s.economic || *when < from || *when >= to)
       continue;
-    const auto status = r.action() == LifecycleAction::cancel               ? "cancellation"
-                        : active.contains(r.record_id().value())            ? "active"
-                        : head->second->action() == LifecycleAction::cancel ? "voided"
-                                                                            : "superseded";
+    const auto &version = *version_index.at(r.record_id().value());
+    const auto status =
+        r.action() == LifecycleAction::cancel    ? "cancellation"
+        : active.contains(r.record_id().value()) ? "active"
+        : version.activation_effective_at && *version.activation_effective_at > s.economic
+            ? "pending_activation"
+        : version.void_version_id &&
+                (!version.void_effective_at || *version.void_effective_at <= s.economic)
+            ? "voided"
+            : "superseded";
     auto row = transaction_row(s.rows.at(i));
     auto &tx = row["transaction"];
     const auto type = tx.at("event").is_null() ? Json("cancellation") : tx.at("event").at("type");
@@ -397,7 +416,17 @@ Json query_transactions(const BookBinding &b, const Json &a) {
                         ? Json(serialization::detail::canonical_timestamp(
                               *successor->second->cancellation_at()))
                         : Json();
-    tx["version_contract"] = "immutable_lifecycle_history; retrospective_correct_is_not_dated_edit";
+    const auto optional_id = [](const auto &value) { return value ? Json(*value) : Json(); };
+    const auto optional_time = [](const auto &value) {
+      return value ? Json(serialization::detail::canonical_timestamp(*value)) : Json();
+    };
+    tx["predecessor_id"] = optional_id(version.predecessor_id);
+    tx["void_version_id"] = optional_id(version.void_version_id);
+    tx["replacement_version_id"] = optional_id(version.replacement_version_id);
+    tx["void_effective_at"] = optional_time(version.void_effective_at);
+    tx["void_recorded_at"] = optional_time(version.void_recorded_at);
+    tx["activation_effective_at"] = optional_time(version.activation_effective_at);
+    tx["version_contract"] = "immutable-dated-versions/1";
     rows.push_back(std::move(row));
   }
   return page(b, a, std::move(rows),

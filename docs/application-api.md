@@ -1,5 +1,9 @@
 # Shared application API — v1 design
 
+The dependent [immutable-version adapter increment](cli-mcp-versions.md) adds
+schema-6 replay compatibility, edit/delete and hash-verified source evidence.
+Earlier limits in this guide describe its original implemented slice.
+
 Additional implemented operations: [bounded accounting reports, accepted transaction
 history, settlement and refund submission](cli-mcp-reporting.md). The report-job
 API below remains a proposal.

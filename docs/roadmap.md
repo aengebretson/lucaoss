@@ -545,3 +545,12 @@ accepted transaction history, settlement/refund receipt/status and paginated
 JSON/JSONL export. [The implementation contract](cli-mcp-reporting.md) distinguishes
 these operations from proposed durable report jobs, period P&L and immutable
 edit/delete adapters awaiting the separate reviewed accounting contract.
+
+
+### Implemented immutable-version application adapters
+
+The schema-6 dependent increment exposes dated atomic edit/deletion receipt/status
+through existing import diagnostics, immutable version/activation metadata and
+hash-verified original source evidence in shared C++, CLI and stdio MCP.
+Period P&L, balanced period movements and financial statements remain conditional
+on the separate reviewed period-accounting contract.
