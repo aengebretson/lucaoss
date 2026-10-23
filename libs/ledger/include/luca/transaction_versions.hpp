@@ -22,6 +22,8 @@ inline std::vector<TransactionVersion> transaction_versions(
         r.causal_record_id() ? std::optional{r.causal_record_id()->value()} : std::nullopt,
         {}, {}, r.recorded_at(), r.effective_at(), {}, {}, r.action(), {}});
     index[r.record_id().value()] = out.size()-1;
+    if(r.causal_record_id())
+      out.back().activation_effective_at = out.at(index.at(r.causal_record_id()->value())).activation_effective_at;
     if (r.action() == LifecycleAction::cancel && r.causal_record_id()) {
       auto& original = out.at(index.at(r.causal_record_id()->value()));
       original.void_version_id = r.record_id().value();
@@ -29,11 +31,9 @@ inline std::vector<TransactionVersion> transaction_versions(
       original.void_recorded_at = r.recorded_at();
       out.back().void_effective_at = r.cancellation_at();
       out.back().void_recorded_at = r.recorded_at();
-      out.back().activation_effective_at = original.activation_effective_at;
     } else if (r.action() == LifecycleAction::correct && r.causal_record_id()) {
       auto& predecessor = out.at(index.at(r.causal_record_id()->value()));
       predecessor.replacement_version_id = r.record_id().value();
-      out.back().activation_effective_at = predecessor.activation_effective_at;
       if (predecessor.action == LifecycleAction::cancel && predecessor.predecessor_id) {
         auto& original = out.at(index.at(*predecessor.predecessor_id));
         original.replacement_version_id = r.record_id().value();
