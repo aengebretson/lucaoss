@@ -502,3 +502,12 @@ minimal-core checkpoint or a production deployment.
 ## Custodian lots and charges implementation
 
 C++ LIFO long/short lot relief, separate exact trade charges, economic P&L and firm aggregation are implemented in the [lot accounting contract](lots-and-charges.md). Native `cash-equity/2` ingestion retains charge errors and canonical v2 amounts. Next: general-ledger sale/short recognition, broker schedule selection/administration, affected-pool lot checkpoints and broader workload benchmarks. This implementation supersedes the earlier long-only/FIFO proposal for the first lot slice; no tax-compliance or deployment claim is implied.
+
+### Shared-book lifecycle increment
+
+Implemented for review: dated cancellation, pure closed-period admission guard,
+native durable close receipts and accepted-prefix fencing. Enterprise consumes
+these via its shared log and explicit report cutoffs. See
+[the API and boundaries](dated-void-periods.md). Production migration, bulk import
+UI, option accounting and full accounting statements remain subsequent work;
+this increment does not claim those milestones complete.

@@ -677,7 +677,50 @@ void charged_transactions() {
   check(take(legacy.status(rejected))["validation_counts"]["invalid"]==1);
 }
 } // namespace
+void period_controls() {
+  Temp root;
+  auto store=opened(root);
+  auto first=receive(store,Json::array({cash()}));
+  error(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",0,"operator"),"PERIOD_WORK_PENDING");
+  drain(store);
+  error(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",0,"operator"),"PERIOD_REVIEW_STALE");
+  auto receipt=take(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",1,"operator"));
+  check(take(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",1,"operator"))==receipt);
+  error(store.close_period("close-a","2026-10-21T23:59:59.999999999Z",1,"operator"),"PERIOD_IDEMPOTENCY_CONFLICT");
+  auto late=receive(store,Json::array({cash("late","late")}),"late");
+  check(take(store.close_period("close-a","2026-10-20T23:59:59.999999999Z",1,"operator",false))==receipt);
+  error(store.close_period("close-b","2026-10-21T00:00:00Z",1,"operator",false),"PERIOD_WORK_PENDING");
+  drain(store);
+  check(take(store.book_state())["last_sequence"]==1);
+  auto diagnostics=items(store,"diagnostics",late);bool closed=false;
+  for(auto d:diagnostics) if(d.value("code","")=="PERIOD_CLOSED") closed=true;
+  check(closed);
+  Json cancel={{"record_id","delete"},{"economic_event_id","e1"},{"action","cancel"},
+               {"account_id","portfolio-a"},{"causal_record_id","r1"}};
+  receive(store,Json::array({cancel}),"delete");drain(store);check(take(store.book_state())["last_sequence"]==1);
+  auto malformed=cancel;malformed["record_id"]="bad-void";malformed["void_at"]=42;
+  auto invalid=receive(store,Json::array({malformed}),"bad-void");drain(store);
+  check(take(store.status(invalid))["validation_counts"]["invalid"]==1);
+  auto replacement=cash("closed-correction","e1");replacement["action"]="correct";
+  replacement["causal_record_id"]="r1";replacement["event"]["effective_at"]="2026-10-21T00:00:00Z";
+  auto corrected=receive(store,Json::array({replacement}),"closed-correction");drain(store);
+  check(take(store.status(corrected))["commitment_record_counts"]["conflict"]==1);
+  cancel["record_id"]="void";cancel["void_at"]="2026-10-21T00:00:00Z";
+  receive(store,Json::array({cancel}),"void");drain(store);check(take(store.book_state())["last_sequence"]==2);
+  auto reopened=take(SqliteStore::open(root.path,config()));
+  check(take(reopened.periods())["closes"][0]==receipt);
+  auto records=take(reopened.ledger_records());
+  luca::LifecycleLedger history;
+  for(auto record:records){
+    std::vector<std::byte> bytes;auto hex=record["canonical"].get<std::string>();
+    for(std::size_t j=0;j<hex.size();j+=2)bytes.push_back(static_cast<std::byte>(std::stoul(hex.substr(j,2),nullptr,16)));
+    auto decoded=luca::serialization::decode_lifecycle_record(bytes);check(bool(decoded));check(bool(history.accept(decoded->draft)));
+  }
+  check(history.resolve(luca::Timestamp::max(),*luca::adapters::parse_transaction_timestamp("2026-10-20T23:59:59Z")).active_events().size()==1);
+  check(history.resolve(luca::Timestamp::max(),*luca::adapters::parse_transaction_timestamp("2026-10-21T00:00:00Z")).active_events().empty());
+}
 int main() {
+  period_controls();
   charged_transactions();
   source_envelopes();
   receipt_errors_and_replay();

@@ -159,7 +159,7 @@ if(LUCA_BUILD_TESTS)
   endif()
   add_executable(luca_lots_test tests/unit/lots_test.cpp)
   target_link_libraries(luca_lots_test PRIVATE luca::accounting luca::adapters Threads::Threads)
-  target_compile_definitions(luca_lots_test PRIVATE LUCA_LOT_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/lifo-lots/trades.tsv")
+  target_compile_definitions(luca_lots_test PRIVATE LUCA_LOT_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/lifo-lots/trades.tsv" LUCA_DATED_VOID_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/dated-void/queries.tsv")
   add_test(NAME luca_lots_test COMMAND luca_lots_test)
 
   add_executable(luca_prepared_admission_test tests/unit/prepared_admission_test.cpp)

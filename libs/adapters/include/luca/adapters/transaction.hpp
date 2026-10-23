@@ -119,8 +119,15 @@ inline std::expected<LifecycleRecordDraft, TransactionDiagnostic> transaction(co
     return invalid("FIELD_REQUIRED","/causal_record_id","Causal reference does not match action");
   auto provenance=Provenance::create({SourceRecordId{f.evidence_id}},"luca.transactions.jsonl",f.normalization);
   if (!provenance) return invalid("FIELD_REQUIRED","","Invalid provenance");
-  if (f.action=="cancel")
-    return LifecycleRecordDraft::cancel(EventId{f.record_id},EconomicEventId{f.economic_id},EventId{f.causal_id},AccountId{f.account},recorded_at,*provenance);
+  if (f.action=="cancel") {
+    std::optional<Timestamp> at;
+    if (!f.effective_at.empty()) {
+      auto stamp = timestamp(f.effective_at);
+      if (!stamp) return std::unexpected(stamp.error());
+      at = *stamp;
+    }
+    return LifecycleRecordDraft::cancel(EventId{f.record_id},EconomicEventId{f.economic_id},EventId{f.causal_id},AccountId{f.account},recorded_at,*provenance,at);
+  }
   auto effective=timestamp(f.effective_at);
   if (!effective) return std::unexpected(effective.error());
   auto header=EventHeader::create(EventId{f.record_id},AccountId{f.account},*effective,*provenance);

@@ -637,9 +637,34 @@ void arithmetic_failures_return_no_partial_state() {
         SettlementProjectionError::valuation_overflow);
 }
 
+void dated_void_checkpoint_replay() {
+  for(bool future:{false,true}) {
+    LifecycleLedger ledger;append_prefix(ledger);
+    auto state=project_state(ledger,context());
+    auto manifest=make_manifest(ledger,state,context());
+    auto request=make_request(manifest);const auto prefix_size=ledger.records().size();
+    accept(ledger,LifecycleRecordDraft::originate(EconomicEventId{"dated-cash"},timestamp(2026,1,3,10h),
+      cash_event("dated-cash","acct-main",timestamp(2026,1,3,9h),"10","dated-cash-source")));
+    accept(ledger,LifecycleRecordDraft::cancel(EventId{"dated-void"},EconomicEventId{"dated-cash"},
+      EventId{"dated-cash"},AccountId{"acct-main"},timestamp(2026,1,4,10h),provenance("dated-void-source"),
+      future ? timestamp(2026,2,1,0h):timestamp(2026,1,30,0h)));
+    const auto result=require(apply_checkpoint_suffix(request,manifest,state,
+      ledger.records().first(prefix_size),ledger.records().subspan(prefix_size)));
+    check(result==project_state(ledger,context()));
+    // A checkpoint prefix containing a future void preserves its selected head.
+    auto next_manifest=make_manifest(ledger,result,context());
+    auto next_request=make_request(next_manifest);const auto next_size=ledger.records().size();
+    accept(ledger,LifecycleRecordDraft::originate(EconomicEventId{"after-void"},timestamp(2026,1,5,10h),
+      cash_event("after-void","acct-main",timestamp(2026,1,6,9h),"1","after-void-source")));
+    check(require(apply_checkpoint_suffix(next_request,next_manifest,result,
+      ledger.records().first(next_size),ledger.records().subspan(next_size)))==project_state(ledger,context()));
+  }
+}
+
 } // namespace
 
 int main() {
+  dated_void_checkpoint_replay();
   request_factory_categories_remain_stable();
   full_replay_equals_checkpoint_plus_lifecycle_suffix();
   zero_position_and_cash_balances_are_removed();

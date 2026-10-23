@@ -67,6 +67,11 @@ public:
                        std::optional<std::uint64_t> length = {}) const;
   Result<Json> capabilities() const;
   Result<Json> book_state() const;
+  Result<Json> periods() const;
+  // Close all dates through an inclusive UTC boundary, fencing the reviewed
+  // accepted sequence. Stable request identity makes retry safe.
+  Result<Json> close_period(std::string request_id, std::string through,
+                            std::uint64_t expected_sequence, std::string actor, bool allow_new = true) const;
   Result<Json> ledger_records(std::uint64_t after = 0, std::size_t limit = 100) const;
   Result<Json> work_attempts(std::string import_id, std::uint64_t after = 0,
                              std::size_t limit = 100) const;

@@ -216,7 +216,38 @@ void schedules() {
   rule.side = static_cast<ChargeSide>(99);
   check(!calc(-5, 0));
 }
+void dated_void() {
+  LifecycleLedger ledger;
+  add(ledger, trade("dated-buy", "5", "20", 0, charges("1", "0")));
+  const auto provenance = require(Provenance::create({SourceRecordId{"void-evidence"}},"fixture","1"));
+  auto draft = LifecycleRecordDraft::cancel(EventId{"dated-void"},EconomicEventId{"dated-buy"},
+      EventId{"dated-buy"},AccountId{"custody-a"},time_at(110),provenance,time_at(10));
+  require(ledger.accept(draft));
+  auto before = require(project_lifo_lots(ledger.resolve(time_at(200),time_at(9)),bindings));
+  check(before.open_lots.size()==1 && before.open_lots[0].remaining_quantity==require(Quantity::parse("5")));
+  check(require(project_lifo_lots(ledger.resolve(time_at(200),time_at(10)),bindings)).open_lots.empty());
+  check(require(project_lifo_lots(ledger.resolve(time_at(105),time_at(20)),bindings)).open_lots.size()==1);
+  std::ifstream fixture(LUCA_DATED_VOID_FIXTURE);check(bool(fixture));
+  std::string header;std::getline(fixture,header);
+  int recorded,economic;std::size_t count;std::size_t queries=0;
+  while(fixture>>recorded>>economic>>count) {
+    check(require(project_lifo_lots(ledger.resolve(time_at(recorded),time_at(economic)),bindings)).open_lots.size()==count);
+    ++queries;
+  }
+  check(queries==4);
+  LifecycleLedger replay;
+  for (const auto& record:ledger.records()) {
+    auto decoded = require(serialization::decode_lifecycle_record(serialization::canonical_bytes(record)));
+    require(replay.accept(decoded.draft));
+  }
+  check(require(project_lifo_lots(replay.resolve(time_at(200),time_at(9)),bindings))==before);
+  check(replay.records().back().cancellation_at()==time_at(10));
+  LifecycleLedger invalid; add(invalid,trade("invalid-buy","1","10",10,TradeCharges{}));
+  check(!invalid.accept(LifecycleRecordDraft::cancel(EventId{"early-void"},EconomicEventId{"invalid-buy"},
+       EventId{"invalid-buy"},AccountId{"custody-a"},time_at(110),provenance,time_at(9))));
+}
 int main() {
+  dated_void();
   fixtures();
   edge_cases();
   schedules();

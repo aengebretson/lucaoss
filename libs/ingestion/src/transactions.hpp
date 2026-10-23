@@ -109,7 +109,7 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
   result["raw"] = data;
   const std::set<std::string> allowed = {
       "record_id",          "economic_event_id", "action",       "account_id", "causal_record_id",
-      "external_record_id", "source_event_at",   "atomic_group", "event"};
+      "external_record_id", "source_event_at",   "atomic_group", "event", "void_at"};
   for (const auto &[key, value] : data.items())
     if (!allowed.contains(key))
       result["issues"].push_back(
@@ -153,6 +153,8 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
   result["canonical_id"] = record.empty() ? Json() : Json(identity("event", record));
   result["economic_id"] = economic.empty() ? Json() : Json(identity("economic", economic));
   auto event = data.value("event", Json::object());
+  if (data.contains("void_at") && action != "cancel")
+    result["issues"].push_back(issue("FIELD_UNKNOWN", "/void_at"));
   if (action == "cancel") {
     if (data.contains("event"))
       result["issues"].push_back(issue("FIELD_UNKNOWN", "/event"));
@@ -201,7 +203,7 @@ inline Json parse_record(const SqliteStore::Impl &store, const std::string &impo
     result["packet"] = Json::array(
         {result["canonical_id"], result["economic_id"], action, account, identity("event", causal),
          evidence, "0", event_type.is_string() ? event_type : Json(""),
-         values.value("effective_at", Json("")),
+         action == "cancel" ? Json(field(data, "void_at", "/void_at", false)) : values.value("effective_at", Json("")),
          values.value("currency", values.value("quote_currency", Json(""))),
          values.value("amount", Json("")), values.value("instrument_id", Json("")),
          values.value("quantity", Json("")), values.value("price", Json("")),
