@@ -35,9 +35,10 @@ recovery, closed-period rejection and actor-bound retry identity. Existing nativ
 crash/recovery, packaging and conformance suites pass. `git diff --check` passes.
 
 Independent read-only adapter review cleared the current production diff and
-independently passed five version cases and the direct application test. Both P2
-findings (inherited activation evidence and strict source replacement metadata)
-were fixed with regressions. The financial owner separately cleared exact PR30
+independently passed five version cases and the direct application test. Both adapter P2
+findings (legacy undated cancellation status and strict source replacement metadata)
+were fixed with regressions. Inherited activation evidence was a separate core
+prerequisite. The financial owner separately cleared exact PR30
 22fd8e5, including activation through reverse descendants. Integration against
 changed main still requires fresh combined review/checks.
 
