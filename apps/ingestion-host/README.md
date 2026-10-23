@@ -1,179 +1,188 @@
-# Durable intake reference host
+# Native asynchronous ingestion
 
-This first staged-ingestion increment receives opaque bytes, retains original
-evidence and durably queues parsing. It supplies a trusted local Python API and
-CLI. Transaction parsing, validation workers/diagnostics, lifecycle admission and
-HTTP are subsequent increments; status correctly remains pending/queued here.
-An invalid JSON/CSV/binary transaction payload still receives a durable receipt.
-API envelopes, authorization scope and advertised resource limits remain checked.
+Luca's reusable ingestion runtime, durable store, background workers and CLI are
+C++23. No Python interpreter, subprocess financial engine, or HTTP server is
+required. Financial values/lifecycle rules remain in the pure C++ libraries.
+Storage and scheduling belong to the optional `luca::ingestion_sqlite` component.
+Group sealing keeps compact identity/link data rather than copying complete
+transaction documents into an all-import graph.
 
-The C++ financial libraries, package targets and arithmetic have no new dependency.
-Python 3.10+ with `sqlite3` and POSIX `fcntl`, local filesystem locking, atomic rename
-and directory/file sync are required for this optional source-tree host. There is
-no pip install, external database service or network listener. Windows, network
-filesystems, replicated durability and production HTTP authentication are outside
-this host profile. The caller must authorize the tenant/book before constructing
-the store and keep its data directory private.
+## Build and embed
 
-## Try a receipt
-
-Run from the repository root. `example-config.json` uses illustrative context
-version names; this slice retains those definitions but does not execute their
-financial rules or load reference data.
+Prerequisites for this optional component: POSIX local filesystem semantics,
+SQLite >=3.38, nlohmann/json **3.12.0**, and native threads. JSON is an external
+adapter representation, not an authoritative financial numeric type. Dependencies
+must be supplied explicitly; CMake does not download them. Ordinary financial
+library builds do not discover or link any of these dependencies.
 
 ```sh
-export PYTHONPATH="$PWD/apps/ingestion-host"
-python3 -m luca_ingestion --root /tmp/luca-intake-example \
-  --config apps/ingestion-host/example-config.json capabilities
+cmake -S . -B build/native -DLUCA_BUILD_INGESTION=ON \
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/path/to/dependencies
+cmake --build build/native --parallel 4
+cmake --install build/native --prefix /path/to/luca-install
 ```
 
-Create a metadata file with this content, and a separate payload file containing
-the exact original bytes to retain:
+Installed C++ consumers request the component explicitly:
+
+```cmake
+find_package(Luca CONFIG REQUIRED COMPONENTS ingestion_sqlite)
+target_link_libraries(my_application PRIVATE luca::ingestion_sqlite)
+```
+
+Financial-only consumers continue to use `luca::ledger`, `luca::accounting`, etc.
+The component export is separate so installing ingestion does not make JSON,
+SQLite or threads mandatory for those consumers. JSON is pinned exactly because
+its public C++ type is part of this optional adapter's compiled interface.
+
+```cpp
+#include <luca/ingestion/sqlite.hpp>
+using namespace luca::ingestion;
+
+// Config/metadata use the versioned external schemas below.
+auto opened = SqliteStore::open("/private/local/data", config);
+if (!opened) { /* handle opened.error().code */ }
+auto store = *opened;
+auto reference = store.register_reference("ref42", {
+    {"accounts", Json::array({"portfolio-a"})},
+    {"instruments", Json::array({"ABC"})}});
+
+AsyncHost runtime(store, 4); // native workers, bounded receipt executor
+// payload is owned while queued/in flight. No detached threads or interpreter.
+auto queued = runtime.submit(metadata, "submission-001", std::move(payload));
+if (!queued) { /* backpressure or stopped executor */ }
+auto receipt = queued->get(); // std::future<Result<Json>>; resolves after durability
+// Validation/admission is separate background work; inspect retained status.
+auto status = store.status((*receipt)["import_id"]);
+runtime.stop(); // finish accepted receipt submissions, then join workers
+```
+
+`SqliteStore::receive(metadata,key,istream,bytes)` provides bounded streaming
+intake for a caller-owned I/O executor. It does no transaction parsing. The
+`AsyncHost` convenience executor accepts owned buffers, bounded by 16 outstanding
+submissions and 64 MiB of queued/in-flight payload bytes by default; configure
+those budgets in its constructor. One receipt thread owns this convenience
+queue. Applications can concurrently call the thread-safe streaming store from
+their own bounded storage pool; independent stores/books can have independent
+runtimes. Database/storage reads are synchronous and must also stay off a network
+event loop. A future becoming ready means durable receipt, not financial validity.
+Shutdown need not finish all financial work: remaining intent stays durable for
+restart. `SqliteStore::open` and operations return `std::expected`; worker/runtime
+construction can throw `Failure` for incompatible configuration or resource setup.
+
+## CLI
+
+`luca-ingest` is a native executable. Use `example-config.json` and metadata:
 
 ```json
-{
-  "source_id": "custodian-a",
-  "format": "luca.transactions.jsonl/1",
-  "validation_context_id": "cash-equity-v1-ref42",
-  "atomicity": "independent_groups"
-}
+{"source_id":"custodian-a","format":"luca.transactions.jsonl/1","validation_context_id":"cash-equity-v1-ref42","atomicity":"independent_groups"}
 ```
 
 ```sh
-python3 -m luca_ingestion --root /tmp/luca-intake-example \
+build/native/libs/ingestion/luca-ingest --root /tmp/luca-data \
   --config apps/ingestion-host/example-config.json receive \
-  --metadata /path/to/metadata.json --payload /path/to/original.jsonl --key batch-001
+  --metadata /path/to/metadata.json --key batch-001 --payload /path/to/input.jsonl
+
+# /path/to/ref.json contains {"accounts":["portfolio-a"],"instruments":["ABC"]}.
+build/native/libs/ingestion/luca-ingest --root /tmp/luca-data \
+  --config apps/ingestion-host/example-config.json register-reference ref42 \
+  --definition /path/to/ref.json
+build/native/libs/ingestion/luca-ingest --root /tmp/luca-data \
+  --config apps/ingestion-host/example-config.json worker --mode drain
 ```
 
-The result contains an immutable receipt, import ID, payload SHA-256/size and
-durability profile. Its status URL identifies the proposed HTTP resource; it is
-not a running URL in this local-only slice. Repeating the same key/content/options
-returns that receipt. Changing content/options under the key fails with
-`IDEMPOTENCY_CONFLICT`. A new key creates a new submission; identical payloads are
-not silently deduplicated into a financial transaction.
+Worker modes: `once` claims at most one job, `drain` stops when no work is currently
+ready, and `watch` runs until SIGINT/SIGTERM. `drain` can leave future retries or
+blocked records. Read commands: `status ID`, `records ID`, `record ID RECORD`,
+`group ID GROUP`, `diagnostics ID`, `validation-runs ID`, `commits ID`, `events ID`,
+`work-attempts ID`, `ledger-state`, `ledger-records`, and `capabilities`.
+Pages accept `--cursor`, `--limit`, and JSON `--filters`. Payload reads use
+`payload ID --output FILE [--offset N] [--length N]`; existing output files are
+rejected. Relative status URLs name future HTTP resources, not a running listener.
 
-Use the returned ID with `status`, `events` and `payload` commands:
+Other commands preserve durable transfer/context workflows:
 
-```sh
-python3 -m luca_ingestion --root /tmp/luca-intake-example \
-  --config apps/ingestion-host/example-config.json status imp-RETURNED-ID
-python3 -m luca_ingestion --root /tmp/luca-intake-example \
-  --config apps/ingestion-host/example-config.json work
-python3 -m luca_ingestion --root /tmp/luca-intake-example \
-  --config apps/ingestion-host/example-config.json payload imp-RETURNED-ID \
-  --output /tmp/retained-evidence.bin
-```
+- `upload-create --request FILE`: `{key,expected_bytes,sha256,chunk_bytes}`.
+- `upload-put UPLOAD --index N --payload FILE --sha256 HASH`, `upload-status UPLOAD`,
+  and `upload-verify UPLOAD`.
+- `receive-upload UPLOAD --metadata FILE --key KEY` attaches a verified upload.
+- `register-context CONTEXT --definition FILE` adds an immutable definition.
+- `revalidate IMPORT --key KEY --request FILE` takes
+  `{validation_context_id,groups:[{group_id,expected_revision}]}`.
+- `recover [--after TRANSFER_ID] [--limit N]` reclaims interrupted direct transfers
+  and expired unattached uploads. Follow `next_after` until null.
 
-The output path must not exist. Payload reads can select `--offset`/`--length`.
-`work` is an inspection interface, not a worker lease or permission to process
-the same item concurrently. The persisted unique `parse_import` intent is consumed
-by the next validation increment. No empty/invalid payload is labeled validated,
-committed or projected.
+## Financial behavior and retained state
 
-## Local API and resumable uploads
+Supported versions: `luca.transactions.jsonl/1`, `source-book-identity/1`,
+`cash-equity/1`, `luca/0.1`. Cash/equity JSONL fields and lifecycle semantics are
+specified in [the API contract](../../docs/staged-ingestion-api.md). Financial
+numbers are exact decimal strings, never JSON floating-point amounts. C++ typed
+constructors reject overflow, excess precision, invalid timestamps/dates and zero
+trade quantities. Canonical identifiers are NUL-free UTF-8 NFC and are never
+silently normalized. Duplicate fields, malformed/invalid UTF-8, unsupported
+fields, invalid source timestamps and excessive JSON nesting become diagnostics.
 
-```python
-import io
-from luca_ingestion import IntakeStore
+Every nonblank input record retains a stable ordinal, original byte/line/hash
+locator and import-specific source-evidence identity. Canonical record/economic
+IDs are framed hashes of tenant/book/source labels, independent of submission
+retry keys. Original payloads never change. Explicit atomic groups and same-import
+causal closure are sealed before admission; whole-import atomicity is supported.
+Ambiguous group membership fails enumeration instead of guessing a partial commit.
+Missing predecessors/snapshots remain blocked and wake through indexed keys.
+Reference changes require a new immutable snapshot/context and explicit
+version-checked revalidation. Earlier outcomes/errors remain inspectable.
 
-# config is the parsed JSON configuration shown above; metadata is separate.
-store = IntakeStore("/private/local/data", **config)
-receipt = store.receive(metadata, "batch-001", io.BytesIO(original_bytes), len(original_bytes))
-status = store.status(receipt["import_id"])
-events = store.events(receipt["import_id"], after="0", limit=100)
-```
+Validation and commitment remain separate. A valid record can belong to a failed
+group or lose an admission race to another correction. Admission records its own
+immutable run, rechecks the current C++ ledger and commits canonical bytes/hashes,
+sequence/revision, receipt, record status, event and job completion in one SQLite
+transaction. Cache publication follows durability; recovery strictly decodes and
+reaccepts committed records. Retries cannot duplicate a group. Operational
+failures use retry history and `attention_required`, not fabricated financial
+invalidity. No public operator retry/repair endpoint is supplied yet.
 
-Direct intake requires a known byte count and a finite binary stream; reads are
-bounded to 1 MiB, including an EOF check. Evidence copy handles partial output
-writes. Receipt methods perform blocking storage I/O; a future async HTTP adapter
-must schedule them outside its event loop. There is no financial validation on
-their critical path. `IntakeError` exposes a stable code and retryability; actual
-filesystem errors can also raise `OSError`. A failed/absent response is ambiguous
-after commitment, so resolve it with the same idempotency key.
+Each `Worker` owns its in-process ledger cache. Different workers can parse and
+validate concurrently. Per-book admission uses an OS lock, lease generations and
+expected group/ledger revisions. SQLite still has one writer per book. Separate
+books have independent databases and admission locks. Source authorization and
+book access are the caller's responsibility before opening the trusted-local
+store; there is no authentication server in this component.
 
-For resumable transfer:
+Defaults: payload 256 MiB; retained/reserved payload bytes 4 GiB; 1,024 pending
+imports/transfers; chunk 4 MiB/8,192 chunks; page 1,000 items; upload TTL 24 hours.
+Worker defaults: batch 256 records, import 100,000 records, record 64 KiB, group
+1,000 records, book cache 1,000,000 records, lease 60 seconds and three attempts.
+Processing resource bounds are pinned at the first worker; batch/lease/retry
+options stay worker-local. Completed/blocked imports release pending slots so
+prerequisites can arrive; original bytes still count toward retention. Metadata,
+history, ledger disk space and process memory require external budgets.
 
-1. `create_upload(key, expected_bytes=..., sha256=..., chunk_bytes=...)` reserves
-   capacity and returns an upload ID, expiry and progress. This is not an import
-   receipt. Repeated creation is idempotent.
-2. `put_chunk(upload_id, index, bytes, sha256)` durably stores chunks out of order.
-   Equal retries succeed; conflicting bytes/checksums fail. The final chunk
-   transaction queues unique `verify_upload` work and exposes `verifying`.
-3. `verify_upload(upload_id)` performs that recoverable transfer-verification
-   operation, checks the full digest, installs immutable evidence and marks
-   `ready`. It can be retried after process death; a checksum failure remains
-   visible as `failed` with its error code. There is no background worker yet.
-4. `receive_upload(metadata, key, upload_id)` attaches the ready payload and writes
-   receipt/parse intent/status event atomically. Retry resolves the same receipt
-   even after the upload is attached. No second import can attach that upload
-   under a new request key.
+## Durability, migration and scope
 
-The CLI equivalents are `upload-create`, `upload-put`, `upload-verify`,
-`upload-status` and `receive-upload`; `--help` lists their bounded inputs. Local
-verification is an explicit operation rather than a new proposed HTTP endpoint.
-Chunk writes within an upload serialize under a process-safe lock; separate
-uploads and book shards can proceed independently.
+Tenant/book scope is hashed into a private local directory. Original files are
+flushed, installed read-only and directory-synced before receipt. Receipt,
+idempotency binding, context, event and parse intent commit atomically. Retries
+with changed content/options fail; identical content under a new key remains a
+new submission. Transfer locks use a bounded 4,096-stripe namespace.
 
-## Storage, recovery and limits
+Durability mode is pinned before opening SQLite. Patched SQLite uses WAL/FULL;
+older SQLite uses DELETE/EXTRA to avoid the upstream WAL-reset bug. Reopening a
+WAL store on an unpatched runtime is rejected. macOS full-sync settings are
+preserved. Storage SHA-256 uses CommonCrypto on macOS and a portable implementation
+on other POSIX hosts; `LUCA_INGESTION_PORTABLE_SHA256=ON` forces the portable
+backend. Both produce identical published hashes; the financial codec is unchanged.
+Schema-1 stores from the original intake host migrate atomically to
+schema 2; receipts, payloads, keys and resumable transfers retain their identities.
+Older hosts cannot reopen schema 2. No automatic profile conversion, evidence
+purge, backup/restore or power-loss certification is implied.
 
-Each tenant/book routes through a length-framed SHA-256 key into its own private
-directory/database. Scope identifiers never become filesystem paths. Original
-payloads have unique transfer names and are installed read-only after durable
-flush/rename/directory flush. `SourceRecord` and financial libraries remain
-persistence-neutral. Book/source identity and context metadata are retained;
-source authorization is checked at intake. Context definitions and limits are
-pinned at shard creation; changing them requires a future reviewed configuration
-migration, rather than silently changing existing interpretation or quotas.
+The frozen Python implementation under `tests/ingestion/legacy_reference` is only
+a schema-1 compatibility fixture. Python remains useful in tests and benchmark
+analysis; it is absent from the installed native ingestion runtime.
 
-The SQLite transaction writes receipt, scoped idempotency binding, context,
-initial event and parse work intent together. Failed direct transfers release
-quota only after deleting their unreferenced files. A competing same-key request
-keeps one receipt and removes the losing reservation/evidence. Crash-left direct
-reservations and expired unattached uploads are reclaimed through `recover`.
-Process locks prevent recovery from deleting an active writer's data; a fixed
-4,096-transfer-lock namespace bounds lock-file accumulation, plus one initialization
-lock. Hash collisions in this lock
-namespace only serialize unrelated work. Recovery pages take `after`/`limit` and
-return `next_after`; follow it until null. Attached evidence never expires with
-its original upload session.
-
-WAL is enabled only with SQLite >=3.51.3 or known patched 3.50.7+/3.44.6+ release
-lines. Older SQLite uses rollback journaling with `synchronous=EXTRA`, rather than
-exposing concurrent connections to the documented
-[WAL-reset bug](https://sqlite.org/wal.html#walreset). WAL uses `FULL`. The selected
-profile is reported in capabilities/receipts and durably pinned before the first
-database open. Reopening with a newer runtime preserves the selected mode;
-reopening a WAL store with an unpatched runtime fails before opening SQLite.
-There is no automatic live mode conversion. File syncs and SQLite full-sync settings are
-enabled on macOS. See [SQLite durability settings](https://sqlite.org/pragma.html#pragma_synchronous).
-Rollback mode can block writers/readers and is not a production scaling claim.
-
-Default per-book limits: 256 MiB per payload, 4 GiB reserved/retained payload bytes,
-1,024 pending imports/transfers, 4 MiB per chunk, 8,192 chunks, 1,000 items per page,
-and 24 hours for unattached uploads. Reservations include incomplete transfers;
-already receipted content can be retried when capacity is full. These are logical
-payload/queue limits, not physical disk reservations or limits on metadata size.
-Disk/full-sync failures prevent acknowledgement. Receipt/evidence/idempotency
-history has no automatic purge; failed uploads retain their data until expiry and
-recovery. No public delete or schema migration is provided in this increment.
-
-Durability covers the configured local storage failure domain. Process-kill tests
-prove restart behavior, not physical power-loss, disk-loss or backup/restore
-certification. Private-directory ownership/read-only files are not protection
-against a privileged local writer. A production adapter needs its own fault,
-access-control and recovery acceptance.
-
-## Verification
-
-```sh
-python3 -B -m unittest discover -s tests/ingestion -v
-python3 -B tests/benchmarks/intake_benchmark.py --records 10000 100000 1000000 \
-  --repetitions 3 --output /tmp/luca-intake-benchmark.json
-```
-
-POSIX root CMake test builds register `luca_durable_intake_test`; library-only
-consumers do not discover Python/SQLite because of this host. Tests use real files,
-SQLite transactions, concurrent processes and `SIGKILL` boundaries. Published
-fingerprint vectors live under `tests/ingestion/fixtures`. Timed benchmarks cover
-durable intake only; validation, admission, reporting and network latency remain
-unmeasured. See [recorded verification](../../docs/reviews/DURABLE_INTAKE_20261021.md).
+The optional REST adapter will use **µWebSockets over µSockets**, following the
+user's choice. Those dependencies are not needed for this non-networked slice.
+The event loop must keep socket ownership on its thread, offload blocking
+storage/financial work, enforce bounded streaming/backpressure, handle aborted
+requests safely, and defer responses until durable receipt. See
+[the native architecture decision](../../docs/native-ingestion.md).

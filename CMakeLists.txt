@@ -110,6 +110,15 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/LucaConfigVersion.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Luca)
 
+option(LUCA_BUILD_INGESTION "Build optional native SQLite ingestion runtime" OFF)
+if(LUCA_BUILD_INGESTION)
+  if(NOT UNIX)
+    message(FATAL_ERROR "Native ingestion currently requires POSIX local-filesystem semantics")
+  endif()
+  find_package(SQLite3 3.38 REQUIRED)
+  add_subdirectory(libs/ingestion)
+endif()
+
 if(LUCA_BUILD_TOOLS)
   add_subdirectory(tools/exact-cash)
 endif()
@@ -124,7 +133,34 @@ if(LUCA_BUILD_TESTS)
       COMMAND ${Python3_EXECUTABLE} -B -m unittest discover
         -s ${CMAKE_CURRENT_SOURCE_DIR}/tests/ingestion -p "test_*.py")
     set_tests_properties(luca_durable_intake_test PROPERTIES TIMEOUT 120)
+    if(TARGET luca-ingest)
+      set_tests_properties(luca_durable_intake_test PROPERTIES ENVIRONMENT "LUCA_INGESTION_CLI=$<TARGET_FILE:luca-ingest>")
+    endif()
   endif()
+  if(LUCA_BUILD_INGESTION)
+    add_executable(luca_native_ingestion_test tests/unit/native_ingestion_test.cpp)
+    target_link_libraries(luca_native_ingestion_test PRIVATE luca::ingestion_sqlite SQLite::SQLite3)
+    target_compile_definitions(luca_native_ingestion_test PRIVATE LUCA_NATIVE_VECTORS="${CMAKE_CURRENT_SOURCE_DIR}/tests/ingestion/fixtures/submission-fingerprints.json")
+    add_test(NAME luca_native_ingestion_test COMMAND luca_native_ingestion_test)
+    set_tests_properties(luca_native_ingestion_test PROPERTIES TIMEOUT 180)
+    if(TARGET luca-ingest)
+      add_test(NAME luca_native_ingestion_consumer_test
+        COMMAND ${CMAKE_COMMAND}
+          "-DLUCA_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+          "-DLUCA_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+          "-DNATIVE_TEST_DIR=${CMAKE_CURRENT_BINARY_DIR}/native-package-consumer"
+          "-DGENERATOR=${CMAKE_GENERATOR}"
+          "-DCOMPILER=${CMAKE_CXX_COMPILER}"
+          "-DBUILD_TYPE=${CMAKE_BUILD_TYPE}"
+          "-DDEPENDENCY_PREFIX=${CMAKE_PREFIX_PATH}"
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ingestion/package_consumer_test.cmake)
+      set_tests_properties(luca_native_ingestion_consumer_test PROPERTIES TIMEOUT 120)
+    endif()
+  endif()
+  add_executable(luca_prepared_admission_test tests/unit/prepared_admission_test.cpp)
+  target_link_libraries(luca_prepared_admission_test PRIVATE luca::adapters)
+  add_test(NAME luca_prepared_admission_test COMMAND luca_prepared_admission_test)
+
   add_executable(luca_journal_balances_test tests/unit/journal_balances_test.cpp)
   target_link_libraries(luca_journal_balances_test PRIVATE luca::accounting Threads::Threads)
   target_compile_definitions(luca_journal_balances_test PRIVATE

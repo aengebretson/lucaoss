@@ -340,15 +340,23 @@ Engine, policy, context and input identities accompany canonical results; operat
   retained diagnostics/status, resumable uploads, scoped idempotency and polling.
   The optional host owns storage/work intent and atomic canonical append/commit
   receipts; the financial core retains its synchronous validation semantics and
-  has no new I/O dependency. The first
-  [local intake host](../apps/ingestion-host/README.md) implements durable receipt,
-  original bytes, work intent, retries, resumable transfer and restart cleanup
-  using Python's standard SQLite/filesystem adapters. It adds no C++ target or
-  dependency. Validation workers, per-record diagnostics, ledger admission and
-  HTTP remain proposed. Patched SQLite uses WAL/FULL; older runtimes use
-  rollback/EXTRA to avoid the upstream WAL-reset bug, with the actual durability
-  profile disclosed in receipts. This is a bounded local host, not a distributed
-  storage or performance acceptance claim.
+  has no new I/O dependency. The
+  [native C++ reference runtime](../apps/ingestion-host/README.md) implements
+  durable receipt, resumable transfer, leased asynchronous validation, immutable
+  per-record diagnostics/outcomes and atomic ledger admission. The optional
+  `luca::ingestion_sqlite` component owns SQLite/filesystem I/O and native C++
+  workers; a bounded receipt executor exposes futures. It calls typed financial
+  APIs directly, with no Python interpreter or subprocess bridge. Canonical
+  records, sequence/revision, receipt, status, event and work completion commit
+  together before cache publication. Pure prepared suffixes use indexed causal
+  targets and per-record canonical evidence, without rebuilding the whole prefix
+  for each append. Projection/checkpoint preparation is unchanged. Component
+  exports keep SQLite/JSON/thread dependencies out of financial-only consumers.
+  Patched SQLite uses WAL/FULL; older runtimes use DELETE/EXTRA with pinned profiles.
+  The [native architecture decision](native-ingestion.md) selects optional
+  µWebSockets/µSockets for REST, keeping storage/financial work off socket loops.
+  HTTP, projection coverage and distributed storage/performance acceptance remain
+  separate work.
 
 - [Journal balances](journal-balances.md) reduce whole journals under an explicit
   book/revision/policy/context contract and merge disjoint compatible partials.

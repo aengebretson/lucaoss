@@ -1080,6 +1080,19 @@ read_lifecycle_ledger(decode_detail::Reader &reader) {
 
 } // namespace lifecycle_decode_detail
 
+// Decode an owned canonical record for append-log recovery; admission still checks
+// continuity and all lifecycle relationships against the actual accepted prefix.
+using DecodedLifecycleRecord = lifecycle_decode_detail::DecodedLifecycleRecord;
+[[nodiscard]] inline std::expected<DecodedLifecycleRecord, DecodeError>
+decode_lifecycle_record(std::span<const std::byte> input) {
+  decode_detail::Reader reader{input};
+  if (auto header = reader.read_header(); !header) return std::unexpected(header.error());
+  auto record = lifecycle_decode_detail::read_lifecycle_record(reader);
+  if (!record) return std::unexpected(record.error());
+  if (auto complete = reader.finish(); !complete) return std::unexpected(complete.error());
+  return record;
+}
+
 [[nodiscard]] inline std::expected<LifecycleLedger, DecodeError>
 decode_lifecycle_ledger(std::span<const std::byte> input) {
   decode_detail::Reader reader{input};

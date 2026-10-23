@@ -2,15 +2,16 @@
 
 Status: design proposal, 2026-10-21. Based on merged main
 `6dbf9da86bacf8d8a0f290c081a7da3c531114ed` (journal balances, PR #19).
-No staging implementation, durable ledger store, worker, or HTTP service is
-provided by this document. The proposed wire contract is in
+This document defines the target design; implemented local behavior is identified below. The proposed wire contract is in
 [the API specification](staged-ingestion-api.md).
 
-Implementation progress: the first [local intake host](../apps/ingestion-host/README.md)
-provides durable bytes/receipt/work intent, retry identity, resumable transfer and
-restart cleanup. It is an optional Python storage host with no financial parsing
-or new C++ dependencies. Validation/status workers, durable ledger admission and
-HTTP are not implemented. See [executed evidence](reviews/DURABLE_INTAKE_20261021.md).
+Implementation progress: the optional [local host](../apps/ingestion-host/README.md)
+now implements durable intake, leased background validation, retained record
+outcomes/errors, immutable contexts/references, revalidation and atomic canonical
+ledger admission. The optional compiled `luca::ingestion_sqlite` library owns native C++
+execution and SQLite storage; workers call the exact financial core directly.
+No interpreter or subprocess bridge is required. HTTP, projection coverage and multi-node adapters
+remain proposed. See [executed evidence](reviews/NATIVE_INGESTION_20261021.md).
 
 ## Outcome and boundary
 
@@ -52,18 +53,20 @@ flowchart LR
   O --> C
 ```
 
-| Responsibility | Proposed location | Constraint |
+| Responsibility | Location | Constraint |
 | --- | --- | --- |
 | Exact values, event invariants, lifecycle rules, journal/report calculations | Existing financial libraries | Deterministic, explicit inputs; no database, clock, network or scheduler access. |
 | Transaction parsing and normalization | Opt-in `libs/adapters` extension | Own parsed output; preserve source identity and offsets; malformed values are diagnostic results. |
-| Staging values and orchestration contracts | Opt-in `libs/ingestion`, proposed | No mandatory storage/HTTP dependency; small concrete contracts, not a generic workflow framework. |
-| Durable storage, leases, retries, admission coordination | Optional reference host under `apps/ingestion-host` | All I/O and concurrency live here; core remains usable without this host. |
+| Staging/orchestration and durable reference runtime | Opt-in native `libs/ingestion`, exported as `luca::ingestion_sqlite` | Explicit optional storage/JSON/thread dependencies, isolated from financial-only targets. |
+| Durable storage, leases, retries, admission coordination | Native optional component; reference CLI under `apps/ingestion-host` | All I/O/concurrency remains outside financial targets; no interpreter or process bridge. |
 | HTTP and polling | Host adapter | Same receipts/outcomes as local APIs; no duplicated financial rules. |
 | Production database/object store/queue bindings | Replaceable host adapters | Must pass the same durability, fencing and idempotency contract. |
 
-New package targets and dependencies require implementation review; these paths
-are a proposal, not an existing public API. There is no change to the current
-umbrella target or to `SourceRecord` ownership.
+The native component's current C++ API and exact dependency/build requirements
+are documented in [the host guide](../apps/ingestion-host/README.md). General
+storage-independent orchestration and the complete HTTP representations remain
+future boundaries. The existing umbrella target and `SourceRecord` ownership do
+not change.
 
 ## Durable storage design
 

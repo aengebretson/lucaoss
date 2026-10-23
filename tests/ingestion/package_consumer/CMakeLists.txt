@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(luca_native_consumer LANGUAGES CXX)
+find_package(Luca CONFIG REQUIRED COMPONENTS ingestion_sqlite)
+add_executable(native_consumer main.cpp)
+target_link_libraries(native_consumer PRIVATE luca::ingestion_sqlite)

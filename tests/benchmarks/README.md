@@ -103,3 +103,33 @@ compiler/version, build type and flags, dataset size, repetitions, and the exact
 command. Use comparable Release builds, and do not infer an optimization mandate
 from one result. Algorithm changes and profiling-driven optimization are
 intentionally outside this initial measurement infrastructure.
+
+## Native staged validation and admission
+
+Enable `LUCA_BUILD_INGESTION=ON` and `LUCA_BUILD_BENCHMARKS=ON`, then run:
+
+```sh
+build/native-release/libs/ingestion/luca_native_ingestion_benchmark \
+  /tmp/luca-native-ingestion.json
+```
+
+The native C++ runner separately measures durable receipt and background parse,
+exact validation and atomic admission, with 1k/10k/100k records and three fresh-store
+repetitions. Declared input groups contain at most 256 records. It also measures
+256-record incremental appends with the same worker/cache and a six-cell worker/
+book matrix with 400 independent mixed-validity records. Every result checks
+committed/invalid counts. Grouping is input atomicity, not a permitted silent
+optimization. No HTTP, reports or GPU work is measured.
+
+The older `processing-grouped.json` artifact describes the Python prototype at
+commit `22353bf`, which remains reproducible from Git history. Its source script
+and runtime are removed from the application. Do not infer a language speedup from
+unmatched durability profiles, compiler flags or workloads; see
+[the native verification report](../../docs/reviews/NATIVE_INGESTION_20261021.md).
+
+`prepared_append_benchmark.cpp` compares the unchanged public strict `accept`
+contract before/after suffix preparation. Compile it with `-std=c++23 -O3` against
+each revision's ledger include directory. It seeds 1k/10k/100k records outside
+timing, appends 100 individual records for three repetitions and hashes the full
+result outside timing. Before/after canonical hashes must match; this is an
+in-memory acceptance comparison, not durable-ingestion throughput.

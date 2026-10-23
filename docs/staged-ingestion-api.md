@@ -1,13 +1,14 @@
 # Staged ingestion API — proposed v1 contract
 
-Status: design proposal, 2026-10-21; no endpoint or C++ declaration here is
-implemented. Read with [architecture and durability rules](staged-ingestion.md).
+Status: target HTTP contract, 2026-10-21; no HTTP listener is implemented. Read with [architecture and durability rules](staged-ingestion.md).
 This is the normative human-readable wire specification for implementation
 review. An OpenAPI document should be derived when signatures are accepted.
 
 The first [local reference host](../apps/ingestion-host/README.md) implements the
-receipt/transfer/status/work-intent subset through a Python API/CLI. There is no
-HTTP listener or transaction validator yet; the endpoints below remain proposed.
+receipt/transfer, record/status/error/history reads, revalidation and automatic
+ledger admission through a native C++ API/runtime and CLI. The optional future
+HTTP adapter will use µWebSockets over µSockets. HTTP endpoints remain proposed; the local mappings and bounded differences are documented in
+[the host guide](../apps/ingestion-host/README.md).
 
 ## Common rules
 

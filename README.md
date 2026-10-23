@@ -80,19 +80,21 @@ The [journal-balance walkthrough](examples/journal-balances/README.md) derives
 trial balances under both fixture accounting policies, preserving line/source
 evidence through the new opt-in [accounting API](docs/journal-balances.md).
 
-The [durable intake reference host](apps/ingestion-host/README.md) now retains
-original payloads, durable receipts/work intent, scoped retry identities and
-resumable uploads through a local Python API/CLI. Financial libraries have no new
-storage dependency. The [architecture/design](docs/staged-ingestion.md) and
-[API specification](docs/staged-ingestion-api.md) describe the wider feature;
-asynchronous transaction validation, per-record diagnostics, ledger admission and
-HTTP remain subsequent increments.
+The [native ingestion runtime](apps/ingestion-host/README.md) now provides C++
+durable receipts, resumable uploads, asynchronous validation, retained per-record
+errors/status and atomic ledger admission. Embed the optional
+`luca::ingestion_sqlite` component or use the native `luca-ingest` application.
+There is no Python runtime or subprocess bridge. Financial-only targets retain
+no storage or network dependency. [µWebSockets over µSockets](docs/native-ingestion.md)
+is selected for the optional future REST adapter; HTTP and projection coverage
+remain open.
 
 | Canonical option | Top-level default | Embedded default | Legacy alias |
 | --- | --- | --- | --- |
 | `LUCA_BUILD_TESTS` | ON | OFF | `PACIOLI_BUILD_TESTS` |
 | `LUCA_BUILD_TOOLS` | ON | OFF | `PACIOLI_BUILD_TOOLS` |
 | `LUCA_BUILD_BENCHMARKS` | OFF | OFF | `PACIOLI_BUILD_BENCHMARKS` |
+| `LUCA_BUILD_INGESTION` | OFF | OFF | None (optional native storage/runtime component) |
 
 Explicit legacy cache entries and parent normal variables remain supported.
 When both names are defined, their boolean values must agree; a conflict stops
