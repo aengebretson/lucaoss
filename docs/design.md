@@ -380,3 +380,12 @@ The library's core functions have no hidden database or network access. Configur
 ## Custodian lots and charges implementation
 
 C++ LIFO long/short lot relief, separate exact trade charges, economic P&L and firm aggregation are implemented in the [lot accounting contract](lots-and-charges.md). Native `cash-equity/2` ingestion retains charge errors and canonical v2 amounts. Next: general-ledger sale/short recognition, broker schedule selection/administration, affected-pool lot checkpoints and broader workload benchmarks. This implementation supersedes the earlier long-only/FIFO proposal for the first lot slice; no tax-compliance or deployment claim is implied.
+
+## Dated lifecycle cancellation and optional period storage
+
+Dated cancellation is an explicit temporal input to lifecycle resolution, with
+backward-compatible undated v1 bytes and dated v2 encoding. Period protection is
+a pure ledger admission predicate; receipt persistence, locking and accepted
+sequence fencing remain in the optional native SQLite host. See
+[dated cancellation and period closure](dated-void-periods.md) for semantics,
+embedding boundaries and schema upgrade/rollback constraints.

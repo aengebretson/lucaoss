@@ -501,6 +501,50 @@ Result<Json> SqliteStore::book_state() const {
     return db.one("SELECT revision,last_sequence,recorded_ns FROM ledger_state WHERE id=1");
   });
 }
+Result<Json> SqliteStore::periods() const {
+  return guarded([&] {
+    auto db = impl_->db();
+    auto rows = db.rows("SELECT body FROM period_closes ORDER BY through_ns DESC LIMIT 1000");
+    Json result = {{"closed_through", nullptr}, {"closes", Json::array()}};
+    for (auto& row : rows) result["closes"].push_back(parse(row["body"]));
+    if (!rows.empty()) result["closed_through"] = result["closes"][0]["through"];
+    result["accepted_through"] = db.one("SELECT last_sequence FROM ledger_state WHERE id=1")["last_sequence"];
+    return result;
+  });
+}
+Result<Json> SqliteStore::close_period(std::string id, std::string through,
+                                      std::uint64_t expected, std::string actor, bool allow_new) const {
+  return guarded([&] {
+    token(id); token(actor); integer(expected,0,INT64_MAX);
+    auto stamp = adapters::parse_transaction_timestamp(through);
+    ensure(bool(stamp), "INVALID_PERIOD_BOUNDARY");
+    auto ns = stamp->time_since_epoch().count();
+    ensure(ns <= impl_->now(), "FUTURE_PERIOD_CLOSE");
+    FileLock lock(impl_->directory / "locks/admission");
+    auto db = impl_->db(true);
+    Json request = {{"request_id",id},{"through",through},{"expected_sequence",expected},{"actor",actor}};
+    auto previous = db.one("SELECT body FROM period_closes WHERE id=?",{id});
+    if (!previous.is_null()) {
+      auto receipt = parse(previous["body"]);
+      ensure(receipt["request"] == request,"PERIOD_IDEMPOTENCY_CONFLICT");
+      return receipt;
+    }
+    ensure(allow_new,"PERIOD_WORK_PENDING");
+    auto latest = db.one("SELECT through_ns FROM period_closes ORDER BY through_ns DESC LIMIT 1");
+    ensure(latest.is_null() || ns > latest["through_ns"].get<std::int64_t>(), "PERIOD_ALREADY_CLOSED");
+    auto state = db.one("SELECT * FROM ledger_state WHERE id=1");
+    ensure(state["last_sequence"] == expected,"PERIOD_REVIEW_STALE");
+    ensure(db.one("SELECT id FROM work WHERE state IN ('queued','running','retry_wait','attention_required') LIMIT 1").is_null(),"PERIOD_WORK_PENDING");
+    // Any unadmitted rows are explicitly counted in the close evidence. They can
+    // never subsequently enter a closed period because admission rechecks below.
+    auto exclusions = db.one("SELECT count(*) AS n FROM staged_records WHERE commitment!='committed'")["n"];
+    Json receipt = {{"request",request},{"through",through},{"accepted_through",expected},
+                    {"recorded_ns",state["recorded_ns"]},{"closed_at",timestamp(impl_->now())},
+                    {"excluded_records",exclusions},{"actor",actor},{"book_id",impl_->book}};
+    db.exec("INSERT INTO period_closes VALUES (?,?,?)",{id,ns,receipt.dump()});
+    db.commit(); return receipt;
+  });
+}
 Result<Json> SqliteStore::ledger_records(std::uint64_t after, std::size_t limit) const {
   return guarded([&] {
     integer(limit, 1, impl_->limits["max_page_size"]);

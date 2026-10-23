@@ -329,13 +329,17 @@ inline std::string_view lifecycle_action_name(LifecycleAction action) noexcept {
 }
 
 inline void append_lifecycle_record(CanonicalBytes &output, const LifecycleRecord &value) {
-  append_map(output, 10);
+  append_map(output, value.cancellation_at() ? 11 : 10);
   append_key(output, "acceptance_sequence");
   append_text(output, canonical_decimal(value.acceptance_sequence().value()));
   append_key(output, "account");
   append_identifier(output, value.account().value());
   append_key(output, "action");
   append_text(output, lifecycle_action_name(value.action()));
+  if (value.cancellation_at()) {
+    append_key(output, "cancellation_at");
+    append_text(output, canonical_timestamp(*value.cancellation_at()));
+  }
   append_key(output, "causal_record_id");
   if (value.causal_record_id())
     append_identifier(output, value.causal_record_id()->value());
@@ -355,7 +359,7 @@ inline void append_lifecycle_record(CanonicalBytes &output, const LifecycleRecor
   append_key(output, "recorded_at");
   append_text(output, canonical_timestamp(value.recorded_at()));
   append_key(output, "schema_version");
-  append_text(output, "luca.lifecycle-record.v1");
+  append_text(output, value.cancellation_at() ? "luca.lifecycle-record.v2" : "luca.lifecycle-record.v1");
 }
 
 inline CanonicalBytes top_level_bytes() {

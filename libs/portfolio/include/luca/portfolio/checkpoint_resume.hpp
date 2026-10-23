@@ -311,8 +311,11 @@ verify_event_relationship(const LifecycleRecord &record, const LifecycleRecord &
                    "reversal must start a distinct economic-event identity");
   }
 
-  if (record.action() == LifecycleAction::cancel)
+  if (record.action() == LifecycleAction::cancel) {
+    if (record.cancellation_at() && target.effective_at() && *record.cancellation_at() < *target.effective_at())
+      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship, "void precedes target");
     return {};
+  }
   if (record.event() == nullptr || target.event() == nullptr ||
       record.event()->index() != target.event()->index()) {
     return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
@@ -454,7 +457,8 @@ verify_manifest_lineage(const CheckpointManifest &manifest,
 
   std::unordered_map<std::string_view, const LifecycleRecord *> selected_heads;
   for (const auto &record : prefix) {
-    if (record.recorded_at() <= manifest.evaluation_context().recorded_through())
+    if (record.recorded_at() <= manifest.evaluation_context().recorded_through() &&
+        (!record.cancellation_at() || *record.cancellation_at() <= manifest.evaluation_context().economic_as_of()))
       selected_heads[record.economic_event_id().value()] = &record;
   }
   std::vector<const LifecycleRecord *> active;

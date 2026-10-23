@@ -889,7 +889,7 @@ struct DecodedLifecycleRecord {
 
 [[nodiscard]] inline std::expected<DecodedLifecycleRecord, DecodeError>
 read_lifecycle_record(decode_detail::Reader &reader) {
-  auto shape = reader.read_map(10U, "luca.lifecycle-record.v1");
+  auto shape = reader.read_map_count();
   if (!shape)
     return std::unexpected(shape.error());
   std::string_view previous;
@@ -897,6 +897,8 @@ read_lifecycle_record(decode_detail::Reader &reader) {
   auto key = reader.read_key("acceptance_sequence", previous);
   if (!key)
     return std::unexpected(key.error());
+  if (*shape != 10 && *shape != 11)
+    return std::unexpected(reader.error(DecodeDiagnosticCategory::schema_shape, "Invalid lifecycle field count"));
   auto sequence_text = reader.read_text();
   if (!sequence_text)
     return std::unexpected(sequence_text.error());
@@ -919,6 +921,18 @@ read_lifecycle_record(decode_detail::Reader &reader) {
   if (!action)
     return std::unexpected(action.error());
 
+  std::optional<Timestamp> cancellation_at;
+  if (*shape == 11) {
+    key = reader.read_key("cancellation_at", previous);
+    if (!key) return std::unexpected(key.error());
+    auto text = reader.read_text();
+    if (!text) return std::unexpected(text.error());
+    auto stamp = decode_detail::parse_timestamp(reader, *text, "void effective time");
+    if (!stamp) return std::unexpected(stamp.error());
+    cancellation_at = *stamp;
+    if (*action != LifecycleAction::cancel)
+      return std::unexpected(reader.error(DecodeDiagnosticCategory::schema_shape, "Only cancellation has a void date"));
+  }
   key = reader.read_key("causal_record_id", previous);
   if (!key)
     return std::unexpected(key.error());
@@ -974,7 +988,7 @@ read_lifecycle_record(decode_detail::Reader &reader) {
   key = reader.read_key("schema_version", previous);
   if (!key)
     return std::unexpected(key.error());
-  if (auto version = require_version(reader, "luca.lifecycle-record.v1", "lifecycle-record");
+  if (auto version = require_version(reader, *shape == 11 ? "luca.lifecycle-record.v2" : "luca.lifecycle-record.v1", "lifecycle-record");
       !version)
     return std::unexpected(version.error());
 
@@ -1020,7 +1034,7 @@ read_lifecycle_record(decode_detail::Reader &reader) {
     }
     draft = LifecycleRecordDraft::cancel(typed_record_id, typed_economic_event_id,
                                          EventId{std::move(**causal_record_id)}, typed_account,
-                                         *recorded_at, std::move(*provenance));
+                                         *recorded_at, std::move(*provenance), cancellation_at);
     break;
   case LifecycleAction::reverse:
     if (!*causal_record_id || !event) {

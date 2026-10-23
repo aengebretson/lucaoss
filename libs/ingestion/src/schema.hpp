@@ -80,4 +80,8 @@ inline constexpr std::string_view schema_two[] = {
     R"SQL(CREATE TABLE processing_config(id INTEGER PRIMARY KEY CHECK(id=1),body TEXT NOT NULL))SQL",
     R"SQL(PRAGMA user_version=2)SQL",
 };
+inline constexpr std::string_view schema_three[] = {
+    R"SQL(CREATE TABLE period_closes(id TEXT PRIMARY KEY, through_ns INTEGER UNIQUE NOT NULL, body TEXT NOT NULL))SQL",
+    R"SQL(PRAGMA user_version=3)SQL",
+};
 } // namespace luca::ingestion::detail

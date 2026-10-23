@@ -52,11 +52,13 @@ class LifecycleRecordDraft {
   [[nodiscard]] static LifecycleRecordDraft cancel(
       EventId record_id, EconomicEventId economic_event_id,
       EventId supersedes_record_id, AccountId account, Timestamp recorded_at,
-      Provenance provenance) {
-    return LifecycleRecordDraft(
+      Provenance provenance, std::optional<Timestamp> cancellation_at = {}) {
+    auto result = LifecycleRecordDraft(
         std::move(record_id), std::move(economic_event_id), std::move(account),
         LifecycleAction::cancel, recorded_at, std::move(provenance), std::nullopt,
         std::move(supersedes_record_id));
+    result.cancellation_at_ = cancellation_at;
+    return result;
   }
 
   [[nodiscard]] static LifecycleRecordDraft reverse(
@@ -81,6 +83,7 @@ class LifecycleRecordDraft {
   [[nodiscard]] const EconomicEvent* event() const noexcept {
     return event_ ? &*event_ : nullptr;
   }
+  [[nodiscard]] std::optional<Timestamp> cancellation_at() const noexcept { return cancellation_at_; }
   [[nodiscard]] const std::optional<EventId>& causal_record_id() const noexcept {
     return causal_record_id_;
   }
@@ -108,6 +111,7 @@ class LifecycleRecordDraft {
   Provenance provenance_;
   std::optional<EconomicEvent> event_;
   std::optional<EventId> causal_record_id_;
+  std::optional<Timestamp> cancellation_at_;
 };
 
 class LifecycleSequence {
@@ -142,6 +146,7 @@ class LifecycleRecord {
     if (!event_) return std::nullopt;
     return header(*event_).effective_at();
   }
+  [[nodiscard]] std::optional<Timestamp> cancellation_at() const noexcept { return cancellation_at_; }
   [[nodiscard]] const std::optional<EventId>& causal_record_id() const noexcept {
     return causal_record_id_;
   }
@@ -166,7 +171,7 @@ class LifecycleRecord {
         acceptance_sequence_(sequence),
         provenance_(draft.provenance()),
         event_(draft.event() ? std::optional<EconomicEvent>{*draft.event()} : std::nullopt),
-        causal_record_id_(draft.causal_record_id()) {}
+        causal_record_id_(draft.causal_record_id()), cancellation_at_(draft.cancellation_at()) {}
 
   EventId record_id_;
   EconomicEventId economic_event_id_;
@@ -177,6 +182,7 @@ class LifecycleRecord {
   Provenance provenance_;
   std::optional<EconomicEvent> event_;
   std::optional<EventId> causal_record_id_;
+  std::optional<Timestamp> cancellation_at_;
 };
 
 enum class LifecycleDiagnosticCategory {
@@ -231,6 +237,7 @@ class LifecycleError {
     return luca::category_name(category_);
   }
   [[nodiscard]] const EventId& record_id() const noexcept { return record_id_; }
+  [[nodiscard]] std::optional<Timestamp> cancellation_at() const noexcept { return cancellation_at_; }
   [[nodiscard]] const std::optional<EventId>& causal_record_id() const noexcept {
     return causal_record_id_;
   }
@@ -248,6 +255,7 @@ class LifecycleError {
   LifecycleDiagnosticCategory category_;
   EventId record_id_;
   std::optional<EventId> causal_record_id_;
+  std::optional<Timestamp> cancellation_at_;
   std::string message_;
 };
 
@@ -552,6 +560,7 @@ class LifecycleLedger {
     std::unordered_map<std::string, std::size_t> chain_by_economic_id;
     for (const auto& record : records_) {
       if (record.recorded_at() > recorded_through) continue;
+      if (record.cancellation_at() && *record.cancellation_at() > economic_as_of) continue;
       const auto& id = record.economic_event_id().value();
       auto found = chain_by_economic_id.find(id);
       if (found == chain_by_economic_id.end()) {
@@ -661,7 +670,13 @@ class LifecycleLedger {
                    record, "reversal must start a new economic-event identity");
     }
 
-    if (record.action() == LifecycleAction::cancel) return std::nullopt;
+    if (record.action() == LifecycleAction::cancel) {
+      if (record.cancellation_at() && target.effective_at() &&
+          *record.cancellation_at() < *target.effective_at())
+        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                     record, "void cannot precede the target economic date");
+      return std::nullopt;
+    }
     if (!record.event() || !target.event() ||
         record.event()->index() != target.event()->index()) {
       return error(LifecycleDiagnosticCategory::incompatible_event_relationship,

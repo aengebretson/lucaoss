@@ -1,3 +1,4 @@
+#include "luca/period.hpp"
 #include "transactions.hpp"
 #include <condition_variable>
 #include <deque>
@@ -507,6 +508,22 @@ struct Worker::Impl {
     check_group(db, job, group);
     ensure(db.one("SELECT revision FROM ledger_state WHERE id=1")["revision"] == revision,
            "LEDGER_REVISION_CHANGED", true);
+    Json period_error = nullptr;
+    const auto closed = db.one("SELECT through_ns FROM period_closes ORDER BY through_ns DESC LIMIT 1");
+    if (prepared && !closed.is_null()) {
+      const Timestamp boundary{std::chrono::nanoseconds{closed["through_ns"].get<std::int64_t>()}};
+      for (const auto& record : prepared->records()) {
+        const auto* target = record.causal_record_id() ? ledger.find(*record.causal_record_id()) : nullptr;
+        if (!target && record.causal_record_id())
+          for (const auto& prior : prepared->records())
+            if (prior.record_id() == *record.causal_record_id()) target = &prior;
+        if (changes_closed_period(record,target,boundary)) {
+          period_error = issue("PERIOD_CLOSED", "", "This change would alter a closed accounting period.");
+          period_error["classification"] = "invalid";
+          break;
+        }
+      }
+    }
     auto run = "run-" + uuid();
     Json admission = {{"run_id", run},
                       {"kind", "admission"},
@@ -516,15 +533,15 @@ struct Worker::Impl {
                       {"validation_run_id", group["run_id"]},
                       {"engine_version", "luca/0.1"},
                       {"ledger_revision_examined", revision},
-                      {"outcome", prepared ? "committed" : "rejected"},
+                      {"outcome", prepared && period_error.is_null() ? "committed" : "rejected"},
                       {"finished_at", timestamp(s->now())}};
     db.exec("INSERT INTO validation_runs(id,import_id,group_id,body) VALUES (?,?,?,?)",
             {run, job["import_id"], group["id"], admission.dump()});
     Json vd = Json::object(), cd = Json::object(), ids = Json::array();
     for (const auto &row : rows)
       ids.push_back(row["id"]);
-    if (!prepared) {
-      auto error = core_error(prepared.error());
+    if (!prepared || !period_error.is_null()) {
+      auto error = period_error.is_null() ? core_error(prepared.error()) : period_error;
       const bool blocked = error["classification"] == "dependency";
       s->diagnostic(db, job["import_id"], error, nullptr, group["id"], run,
                     error["classification"]);
