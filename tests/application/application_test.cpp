@@ -96,6 +96,22 @@ int main() {
         take(readonly.call(Operation::import_status, scope)));
   check(take(resumed.call(Operation::policy_result,
                           {{"book_id", "b"}, {"evidence_id", evidence.at("id")}})) == evidence);
+  auto edit_request=request;edit_request["idempotency_key"]="atomic-edit";
+  edit_request["payload_utf8"]=Json{{"record_id","void"},{"economic_event_id","e1"},{"account_id","a"},{"action","cancel"},{"causal_record_id","r1"},{"void_at","2026-01-02T00:00:00Z"}}.dump()+"\n"+
+    Json{{"record_id","r2"},{"economic_event_id","e1"},{"account_id","a"},{"action","correct"},{"causal_record_id","void"},
+      {"event",{{"type","cash_movement"},{"effective_at","2026-01-01T00:00:00Z"},{"currency","USD"},{"amount","150"}}}}.dump()+"\n";
+  take(app.call(Operation::submit_import,edit_request));take(app.drain("b"));
+  auto restored_store=take(luca::ingestion::SqliteStore::open(temp,config));
+  SqliteApplication restored_app({{restored_store,{{"a","firm","custody"}},"m",true,false,false,{}}});
+  const auto capabilities=take(restored_app.call(Operation::capabilities,{{"book_id","b"}}));
+  Json lots_request={{"book_id","b"},{"accepted_through","3"},{"policy_through","1"},
+    {"effective_at","2026-02-01T00:00:00Z"},{"recorded_through","2099-01-01T00:00:00Z"},
+    {"collection","trades"},{"mapping_digest",capabilities.at("mapping_digest")}};
+  auto lots=take(restored_app.call(Operation::lots,lots_request));
+  check(lots.at("items").empty());
+  lots_request["accepted_through"]="2";
+  auto split=restored_app.call(Operation::lots,lots_request);
+  check(!split && split.error().code=="INPUT_REVISION_SPLITS_COMMIT"); // financial replay reached the paired replacement
   check(!app.call(static_cast<Operation>(999), Json::object()));
   check(document(static_cast<Operation>(999),
                  std::unexpected(luca::ingestion::Failure{"INVALID_ARGUMENTS"}))

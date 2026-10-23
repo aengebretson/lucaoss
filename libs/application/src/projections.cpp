@@ -128,6 +128,11 @@ Json project(const BookBinding &b, const Json &a, bool lots) {
   auto state = take(b.store.book_state());
   const auto through = sequence(a.at("accepted_through"));
   require(through <= state.at("last_sequence").get<std::uint64_t>(), "RESULT_SEQUENCE_UNAVAILABLE");
+  if(through && through<state.at("last_sequence").get<std::uint64_t>()) {
+    const auto before=take(b.store.ledger_records(through-1,1));
+    const auto after_boundary=take(b.store.ledger_records(through,1));
+    require(before.size()==1 && after_boundary.size()==1 && before[0].at("commit_id")!=after_boundary[0].at("commit_id"),"INPUT_REVISION_SPLITS_COMMIT");
+  }
   const auto after = a.contains("after") ? sequence(a.at("after")) : 0;
   const auto capabilities = take(b.store.capabilities());
   const auto maximum =
@@ -190,7 +195,7 @@ Json project(const BookBinding &b, const Json &a, bool lots) {
           serialization::decode_lifecycle_record(unhex(row.at("canonical").get<std::string>()));
       require(decoded && decoded->acceptance_sequence == ledger.records().size() + 1,
               "LEDGER_CORRUPT");
-      require(bool(ledger.accept(decoded->draft)), "LEDGER_CORRUPT");
+      require(bool(ledger.restore_record(decoded->draft, decoded->acceptance_sequence)), "LEDGER_CORRUPT");
     }
   }
   auto resolution = ledger.resolve(*recorded, *at);

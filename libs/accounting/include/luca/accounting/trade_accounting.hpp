@@ -152,8 +152,13 @@ project_trade_accounting(const LifecycleLedger &ledger, std::span<const Resolved
     for (const auto &t : lots->trades)
       trades[t.record_id] = &t;
     std::map<std::string, std::vector<const LifecycleRecord *>> economic_history;
+    std::set<std::string> gated_history;
+    for (const auto& r:ledger.records())
+      if ((r.cancellation_at() && *r.cancellation_at()>context.economic_as_of) ||
+          (r.causal_record_id() && gated_history.contains(r.causal_record_id()->value())))
+        gated_history.insert(r.record_id().value());
     for (const auto &r : ledger.records())
-      if (r.recorded_at() <= context.recorded_through &&
+      if (!gated_history.contains(r.record_id().value()) && r.recorded_at() <= context.recorded_through &&
           (!r.cancellation_at() || *r.cancellation_at() <= context.economic_as_of))
         economic_history[r.economic_event_id().value()].push_back(&r);
     std::map<std::string, std::vector<const LotRelief *>> reliefs_by_close;

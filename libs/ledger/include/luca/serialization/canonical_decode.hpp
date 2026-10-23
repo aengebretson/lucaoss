@@ -1104,7 +1104,7 @@ read_lifecycle_ledger(decode_detail::Reader &reader) {
           reader.error(DecodeDiagnosticCategory::deterministic_ordering,
                        "lifecycle acceptance sequence must be contiguous and begin at one"));
     }
-    auto accepted = ledger.accept(decoded->draft);
+    auto accepted = ledger.restore_record(decoded->draft, decoded->acceptance_sequence);
     if (!accepted) {
       return std::unexpected(reader.error(lifecycle_category(accepted.error().category()),
                                           accepted.error().message()));
