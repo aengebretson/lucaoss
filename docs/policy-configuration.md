@@ -18,8 +18,9 @@ not after the evaluation date wins, then the highest sequence at that date, with
 the explicit policy-history cutoff. Duplicate IDs/sequences fail.
 
 Only `lot_selection=LIFO` is implemented. Recognition is separately configured as
-`unspecified`, `cash`, or `accrual`. Lot results explicitly report
-`recognition_applied=false`; these preferences do not enable cash/accrual journals.
+`unspecified`, `cash`, or `accrual`. Lot results remain economic measures independent of recognition. The separate
+[trade accounting API](trade-accounting.md) applies an explicitly resolved cash
+or accrual basis to journals; `unspecified` refuses journal reporting.
 The digest includes target and selected definitions. Cutoffs remain separate
 evidence. Lot-pool compatibility depends on the economic LIFO algorithm rather
 than account-specific evidence or recognition preferences. Shared custody relief

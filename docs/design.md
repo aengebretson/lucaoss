@@ -1,5 +1,11 @@
 # LUCA Design
 
+Equity trade journals and actual settlement are implemented by the bounded
+[trade accounting contract](trade-accounting.md). It supersedes forecast-date
+cash for this reporting API, preserves independent lot selection and recognition,
+and documents the regenerated-snapshot limitation for voids and period activity.
+
+
 Versioned policy configuration now uses a pure C++ resolver and optional SQLite
 revision/evidence storage. Entity defaults and custody/account overrides resolve
 lot selection independently of recognition preferences. See

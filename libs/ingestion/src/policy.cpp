@@ -52,8 +52,9 @@ Result<Json> SqliteStore::resolve_policy(Json target,std::string at,std::optiona
 }
 Result<Json> SqliteStore::retain_policy_result(Json evidence) const {
   return guarded([&] {
-    ensure(evidence.is_object() && evidence.size()==5,"INVALID_POLICY_RESULT");
-    ensure(evidence.at("projection")=="economic-lifo/1","INVALID_POLICY_RESULT");
+    const bool journals=evidence.value("projection","")=="equity-journals/1";
+    ensure(evidence.is_object() && evidence.size()==(journals?6:5),"INVALID_POLICY_RESULT");
+    ensure(journals || evidence.at("projection")=="economic-lifo/1","INVALID_POLICY_RESULT");
     integer(evidence.at("accepted_through"),0,INT64_MAX);
     token(evidence.at("mapping_version"));
     const auto& policy=evidence.at("policy");auto resolved=take(resolved_policy(policy));
@@ -63,6 +64,10 @@ Result<Json> SqliteStore::retain_policy_result(Json evidence) const {
     ensure(result_digest.size()==64 && result_digest.find_first_not_of("0123456789abcdef")==std::string::npos,"INVALID_RESULT_DIGEST");
     const auto body=evidence.dump(),id=sha(body);
     auto db=impl_->db(true);
+    if(journals) {
+      integer(evidence.at("settlement_through"),0,INT64_MAX);
+      ensure(evidence.at("settlement_through").get<std::uint64_t>()<=db.one("SELECT coalesce(max(sequence),0) AS n FROM settlement_events")["n"].get<std::uint64_t>(),"SETTLEMENT_SEQUENCE_UNAVAILABLE");
+    }
     std::vector<accounting::PolicyRevision> history;
     ensure(evidence.at("accepted_through").get<std::uint64_t>()<=db.one("SELECT last_sequence FROM ledger_state WHERE id=1")["last_sequence"].get<std::uint64_t>(),"RESULT_SEQUENCE_UNAVAILABLE");
     for(const auto& row:db.rows("SELECT body FROM policy_revisions ORDER BY sequence LIMIT 10001"))

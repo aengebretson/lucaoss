@@ -622,7 +622,7 @@ Result<std::optional<WorkResult>> Worker::run_once() {
     w.s->wake();
     auto job = w.claim();
     if (job.is_null())
-      return std::nullopt;
+      return take(w.store.process_settlement());
     WorkResult result{job["id"], job["kind"], "processed", ""};
     try {
       w.s->fault("after_claim");

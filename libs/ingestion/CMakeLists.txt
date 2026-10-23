@@ -1,7 +1,7 @@
 find_package(SQLite3 3.38 REQUIRED)
 find_package(nlohmann_json 3.12.0 EXACT CONFIG REQUIRED)
 find_package(Threads REQUIRED)
-add_library(luca_ingestion_sqlite STATIC src/store.cpp src/processing.cpp src/worker.cpp src/policy.cpp)
+add_library(luca_ingestion_sqlite STATIC src/store.cpp src/processing.cpp src/worker.cpp src/policy.cpp src/settlements.cpp)
 add_library(luca::ingestion_sqlite ALIAS luca_ingestion_sqlite)
 set_target_properties(luca_ingestion_sqlite PROPERTIES EXPORT_NAME ingestion_sqlite)
 target_compile_features(luca_ingestion_sqlite PUBLIC cxx_std_23)
