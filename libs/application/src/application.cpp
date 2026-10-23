@@ -1,6 +1,7 @@
 #include "internal.hpp"
 #include "schemas.hpp"
 #include <charconv>
+#include <mutex>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -9,10 +10,24 @@
 namespace luca::application {
 using namespace detail;
 namespace {
-constexpr std::string_view names[] = {
-    "books",         "capabilities",     "accounts",    "submit_import",  "import_status",
-    "read_records",  "read_diagnostics", "read_record", "policy_history", "resolve_policy",
-    "policy_result", "transactions",     "lots"};
+constexpr std::string_view names[] = {"books",
+                                      "capabilities",
+                                      "accounts",
+                                      "submit_import",
+                                      "import_status",
+                                      "read_records",
+                                      "read_diagnostics",
+                                      "read_record",
+                                      "policy_history",
+                                      "resolve_policy",
+                                      "policy_result",
+                                      "transactions",
+                                      "lots",
+                                      "accounting_report",
+                                      "submit_settlement",
+                                      "submit_refund",
+                                      "settlement_status",
+                                      "query_transactions"};
 const Json &catalog() {
   static const auto value = Json::parse(foundations_schemas).at("tools");
   return value;
@@ -92,12 +107,15 @@ std::string_view name(Operation op) {
 struct SqliteApplication::Impl {
   std::vector<BookBinding> books;
   std::vector<std::jthread> workers;
+  mutable std::mutex report_mutex;
   explicit Impl(std::vector<BookBinding> input) : books(std::move(input)) {
     std::set<std::string> seen;
     for (const auto &b : books) {
       auto c = take(b.store.capabilities());
       require(seen.insert(c.at("book_id")).second, "DUPLICATE_BOOK_BINDING");
       require(!b.submit || !b.submit_sources.empty(), "INVALID_APPLICATION_BINDING");
+      require(!b.settlement_actor.empty() && b.settlement_actor.size() <= 128,
+              "INVALID_APPLICATION_BINDING");
       require(b.mapping_version.size() <= 256, "INVALID_APPLICATION_BINDING");
       std::set<std::string> accounts;
       for (const auto &a : b.accounts)
@@ -125,7 +143,11 @@ Json SqliteApplication::tools() const {
   const bool inspect = std::any_of(impl_->books.begin(), impl_->books.end(),
                                    [](const auto &b) { return b.inspect; });
   for (const auto &t : catalog())
-    if (t.at("name") == "luca_books" || (t.at("name") == "luca_submit_import" ? submit : inspect))
+    if (t.at("name") == "luca_books" ||
+        ((t.at("name") == "luca_submit_import" || t.at("name") == "luca_submit_settlement" ||
+          t.at("name") == "luca_submit_refund")
+             ? submit
+             : inspect))
       tools.push_back(t);
   return tools;
 }
@@ -148,7 +170,9 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       return Json{{"items", rows}};
     }
     const auto &b = impl_->book(a.at("book_id").get<std::string>());
-    require(op == Operation::submit_import ? b.submit : b.inspect, "PERMISSION_DENIED");
+    const bool mutation = op == Operation::submit_import || op == Operation::submit_settlement ||
+                          op == Operation::submit_refund;
+    require(mutation ? b.submit : b.inspect, "PERMISSION_DENIED");
     const auto &store = b.store;
     const auto id = a.value("import_id", std::string{});
     switch (op) {
@@ -163,7 +187,9 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       result["source_ids"] = b.submit_sources;
       result["operations"] = Json::array();
       for (const auto &t : tools())
-        if (b.submit || t.at("name") != "luca_submit_import")
+        if (b.submit ||
+            (t.at("name") != "luca_submit_import" && t.at("name") != "luca_submit_settlement" &&
+             t.at("name") != "luca_submit_refund"))
           result["operations"].push_back(t.at("name"));
       auto state = take(store.book_state());
       for (auto &[key, value] : state.items())
@@ -171,6 +197,10 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
           value = std::to_string(value.get<std::int64_t>());
       result["ledger_state"] = state;
       result["report_jobs_available"] = false;
+      result["report_execution"] = "synchronous_bounded_replay";
+      result["max_projection_settlements"] = 10000;
+      result["max_report_page_bytes"] = 1024 * 1024;
+      result["max_concurrent_reports_per_instance"] = 1;
       result["mapping_version"] = b.mapping_version;
       return result;
     }
@@ -219,6 +249,44 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
                                   sequence(a.at("through_sequence")));
     case Operation::policy_result:
       return store.policy_result(a.at("evidence_id"));
+    case Operation::submit_settlement:
+    case Operation::submit_refund: {
+      auto request = a.at("request");
+      const auto source = request.at("source").at("source_id").get<std::string>();
+      require(std::find(b.submit_sources.begin(), b.submit_sources.end(), source) !=
+                  b.submit_sources.end(),
+              "SOURCE_NOT_AUTHORIZED");
+      require(std::any_of(b.accounts.begin(), b.accounts.end(),
+                          [&](const auto &v) {
+                            return v.account == request.at("account").get<std::string>();
+                          }),
+              "ACCOUNT_NOT_AUTHORIZED");
+      if (op == Operation::submit_settlement)
+        request["reverses"] = nullptr;
+      auto received =
+          store.receive_settlement(a.at("idempotency_key"), request, b.settlement_actor);
+      if (!received && received.error().code == "STORAGE_UNAVAILABLE")
+        return std::unexpected(ingestion::Failure{"OUTCOME_UNKNOWN", true});
+      auto receipt = take(std::move(received));
+      receipt["durable_acceptance"] = true;
+      receipt["completion"] = "pending_or_in_progress";
+      return receipt;
+    }
+    case Operation::settlement_status: {
+      auto result = take(store.settlement_status(a.at("idempotency_key")));
+      if (result.contains("event"))
+        for (const auto *key : {"sequence", "ledger_through"})
+          result["event"][key] = std::to_string(result["event"][key].get<std::uint64_t>());
+      return result;
+    }
+    case Operation::accounting_report:
+    case Operation::query_transactions: {
+      std::unique_lock lock(impl_->report_mutex, std::try_to_lock);
+      if (!lock.owns_lock())
+        return std::unexpected(ingestion::Failure{"REPORT_BUSY", true});
+      return op == Operation::accounting_report ? detail::accounting_report(b, a)
+                                                : detail::query_transactions(b, a);
+    }
     case Operation::transactions:
     case Operation::lots:
       return detail::project(b, a, op == Operation::lots);
@@ -275,15 +343,17 @@ int exit_code(const ingestion::Failure &e) {
     return 4;
   if (e.code.starts_with("INVALID_") || e.code == "UNSUPPORTED_CONTEXT_OR_FORMAT" ||
       e.code == "LIMIT_EXCEEDED" || e.code == "PROJECTION_LIMIT_EXCEEDED" ||
+      e.code == "PAGE_BYTE_LIMIT_EXCEEDED" || e.code == "INPUT_REVISION_INCOMPATIBLE" ||
+      e.code == "INPUT_REVISION_SPLITS_COMMIT" || e.code == "RECOGNITION_POLICY_REQUIRED" ||
       e.code == "LOT_ACCOUNT_REQUIRED" || e.code == "ENTITY_POLICY_REQUIRED")
     return 2;
   if (e.code == "PERMISSION_DENIED" || e.code == "BOOK_NOT_AUTHORIZED" ||
-      e.code == "SOURCE_NOT_AUTHORIZED")
+      e.code == "SOURCE_NOT_AUTHORIZED" || e.code == "ACCOUNT_NOT_AUTHORIZED")
     return 3;
   if (e.retryable)
     return 5;
-  if (e.code == "NOT_FOUND" || e.code.find("CONFLICT") != std::string::npos ||
-      e.code.find("CURSOR") != std::string::npos ||
+  if (e.code == "NOT_FOUND" || e.code.ends_with("_NOT_FOUND") ||
+      e.code.find("CONFLICT") != std::string::npos || e.code.find("CURSOR") != std::string::npos ||
       e.code.find("UNAVAILABLE") != std::string::npos || e.code == "POLICY_RESULT_NOT_FOUND")
     return 4;
   return 8;
@@ -303,11 +373,14 @@ Json document(Operation op, Result<Json> result) {
         {"code", e.code},
         {"retryable", e.retryable},
         {"exit_code", code},
-        {"outcome", code == 9                        ? "unknown"
-                    : op == Operation::submit_import ? "not_accepted"
-                                                     : "read_failed"},
-        {"retry", code == 9 ? "Retry the identical book, metadata, payload and idempotency key to "
-                              "recover the receipt."
+        {"outcome", code == 9 ? "unknown"
+                    : (op == Operation::submit_import || op == Operation::submit_settlement ||
+                       op == Operation::submit_refund)
+                        ? "not_accepted"
+                        : "read_failed"},
+        {"retry", code == 9
+                      ? "Retry the identical book, request, trusted actor and idempotency key to "
+                        "recover the receipt."
                   : e.retryable
                       ? "Retry with bounded backoff; preserve the same idempotency key and payload."
                       : "Inspect code and correct the request or configuration before retrying."}};

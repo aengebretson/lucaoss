@@ -30,17 +30,19 @@ int main() {
                   {{"v1",
                     {{"adapter", "luca.transactions.jsonl/1"},
                      {"normalization", "source-book-identity/1"},
-                     {"rules", "cash-equity/1"},
+                     {"rules", "cash-equity/2"},
                      {"engine", "luca/0.1"},
                      {"reference_snapshot", "r"}}}}}};
-  std::atomic<bool> fault = true;
+  std::atomic<bool> fault = true, settlement_fault = true;
   luca::ingestion::Hooks hooks;
   hooks.checkpoint = [&](std::string_view point) {
     if (point == "after_receipt_commit" && fault.exchange(false))
       throw std::runtime_error("injected uncertain outcome");
+    if (point == "settlement_receipt_after_commit" && settlement_fault.exchange(false))
+      throw std::runtime_error("injected uncertain settlement receipt");
   };
   auto store = take(luca::ingestion::SqliteStore::open(temp, config, hooks));
-  take(store.register_reference("r", {{"accounts", {"a"}}, {"instruments", Json::array()}}));
+  take(store.register_reference("r", {{"accounts", {"a"}}, {"instruments", {"ABC"}}}));
   SqliteApplication app({{store, {}, "", true, true, true, {"s"}}});
   Json request = {{"book_id", "b"},
                   {"idempotency_key", "k"},
@@ -96,6 +98,62 @@ int main() {
         take(readonly.call(Operation::import_status, scope)));
   check(take(resumed.call(Operation::policy_result,
                           {{"book_id", "b"}, {"evidence_id", evidence.at("id")}})) == evidence);
+  SqliteApplication financial({{store, {{"a", "firm", "custody"}}, "m", true, true, true, {"s"}}});
+  auto buy = request;
+  buy["idempotency_key"] = "buy";
+  buy["payload_utf8"] = Json{{"record_id", "buy"},
+                             {"economic_event_id", "buy-event"},
+                             {"action", "originate"},
+                             {"account_id", "a"},
+                             {"event",
+                              {{"type", "equity_trade"},
+                               {"effective_at", "2026-01-02T00:00:00Z"},
+                               {"settlement_date", "2026-01-05"},
+                               {"quote_currency", "USD"},
+                               {"instrument_id", "ABC"},
+                               {"quantity", "1"},
+                               {"price", "100"},
+                               {"charges", Json::array()}}}}
+                            .dump() +
+                        "\n";
+  take(financial.call(Operation::submit_import, buy));
+  take(financial.drain("b"));
+  auto accepted = take(store.ledger_records());
+  check(accepted.size() == 2);
+  Json settlement = {{"book_id", "b"},
+                     {"idempotency_key", "payment"},
+                     {"request",
+                      {{"account", "a"},
+                       {"trade_record", accepted[1]["record_id"]},
+                       {"cash", "-40"},
+                       {"currency", "USD"},
+                       {"effective_at", "2026-01-07T00:00:00Z"},
+                       {"source", {{"source_id", "s"}, {"reference", "synthetic"}}}}}};
+  auto unknown = financial.call(Operation::submit_settlement, settlement);
+  check(!unknown && unknown.error().code == "OUTCOME_UNKNOWN");
+  auto settlement_receipt = take(financial.call(Operation::submit_settlement, settlement));
+  check(take(financial.call(Operation::submit_settlement, settlement)) == settlement_receipt);
+  take(financial.drain("b"));
+  auto payment = take(financial.call(Operation::settlement_status,
+                                     {{"book_id", "b"}, {"idempotency_key", "payment"}}));
+  check(payment["state"] == "committed");
+  take(store.close_period("close", "2026-01-31T23:59:59Z", 2, "tester", true, 1, 1));
+  auto refund = settlement;
+  refund["idempotency_key"] = "closed-refund";
+  refund["request"]["cash"] = "40";
+  refund["request"]["reverses"] = "payment";
+  take(financial.call(Operation::submit_refund, refund));
+  take(financial.drain("b"));
+  auto rejected = take(financial.call(Operation::settlement_status,
+                                      {{"book_id", "b"}, {"idempotency_key", "closed-refund"}}));
+  check(rejected["state"] == "invalid" && rejected["code"] == "PERIOD_CLOSED");
+  refund["idempotency_key"] = "open-refund";
+  refund["request"]["effective_at"] = "2026-02-03T00:00:00Z";
+  take(financial.call(Operation::submit_refund, refund));
+  take(financial.drain("b"));
+  check(take(financial.call(Operation::settlement_status,
+                            {{"book_id", "b"}, {"idempotency_key", "open-refund"}}))["state"] ==
+        "committed");
   check(!app.call(static_cast<Operation>(999), Json::object()));
   check(document(static_cast<Operation>(999),
                  std::unexpected(luca::ingestion::Failure{"INVALID_ARGUMENTS"}))

@@ -20,6 +20,7 @@ Result<Json> SqliteStore::receive_settlement(std::string key, Json request,
     db.exec("INSERT INTO settlement_requests VALUES (?,?,'pending',?)",
             {key, submitted.dump(), Json{{"id", key}, {"state", "pending"}}.dump()});
     db.commit();
+    impl_->fault("settlement_receipt_after_commit");
     return Json{{"id", key}, {"state", "received"}};
   });
 }

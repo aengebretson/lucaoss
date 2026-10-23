@@ -1,5 +1,9 @@
 # Implemented CLI and stdio MCP foundations
 
+The additive [reporting increment](cli-mcp-reporting.md) exposes bounded accounting
+reports, filtered accepted history, settlement and refund operations. Earlier
+foundation limitations below describe the original slice.
+
 This bounded implementation adds the optional `luca::application_sqlite` C++
 facade, `luca` CLI and `luca-mcp` stdio executable. It reuses the native ingestion
 store/worker, canonical codec, policy resolver and economic LIFO projection.
