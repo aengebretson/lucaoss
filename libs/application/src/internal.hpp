@@ -17,6 +17,7 @@ Json submit_version(const BookBinding &, const Json &, bool deletion);
 Json transaction_evidence(const BookBinding &, const Json &);
 Json transaction_row(Json);
 Json accounting_report(const BookBinding &, const Json &);
+Json query_pnl(const BookBinding &, const Json &);
 Json query_transactions(const BookBinding &, const Json &);
 Json project(const BookBinding &, const Json &, bool lots);
 } // namespace luca::application::detail

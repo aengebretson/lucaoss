@@ -5,6 +5,8 @@ knowledge. See [immutable transaction versions](immutable-transaction-versions.m
 
 # LUCA Design
 
+Implemented follow-up: [bounded period P&L queries](cli-mcp-pnl.md) consume the reviewed period contract; closed-book period retention remains unavailable.
+
 The additive [period accounting contract](period-accounting.md) implements
 recorded-date corrections, dated void/replacement adjustments, classified
 activity, daily/period realized P&L and bounded comparative cash/equity statements.

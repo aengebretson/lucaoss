@@ -42,7 +42,8 @@ enum class Operation {
   query_transactions,
   edit_transaction,
   delete_transaction,
-  transaction_evidence
+  transaction_evidence,
+  query_pnl
 };
 // All responses are owned documents in the existing optional storage boundary.
 // The pure financial targets acquire no JSON/storage/transport dependencies.

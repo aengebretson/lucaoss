@@ -1,5 +1,7 @@
 # Immutable transaction versions through shared application operations
 
+Implemented follow-up: [bounded period P&L queries](cli-mcp-pnl.md) consume the reviewed period contract; closed-book period retention remains unavailable.
+
 This increment composes the bounded [reporting application](cli-mcp-reporting.md)
 with the independently reviewed [immutable version core](immutable-transaction-versions.md)
 from [PR 30](https://github.com/aengebretson/lucaoss/pull/30), originally

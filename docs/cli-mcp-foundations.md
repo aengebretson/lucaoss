@@ -1,5 +1,7 @@
 # Implemented CLI and stdio MCP foundations
 
+Implemented follow-up: [bounded period P&L queries](cli-mcp-pnl.md) consume the reviewed period contract; closed-book period retention remains unavailable.
+
 The dependent [immutable-version adapter increment](cli-mcp-versions.md) adds
 schema-6 replay compatibility, edit/delete and hash-verified source evidence.
 Earlier limits in this guide describe its original implemented slice.

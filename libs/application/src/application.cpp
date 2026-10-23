@@ -30,7 +30,8 @@ constexpr std::string_view names[] = {"books",
                                       "query_transactions",
                                       "edit_transaction",
                                       "delete_transaction",
-                                      "transaction_evidence"};
+                                      "transaction_evidence",
+                                      "query_pnl"};
 const Json &catalog() {
   static const auto value = Json::parse(foundations_schemas).at("tools");
   return value;
@@ -199,6 +200,12 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       result["max_projection_settlements"] = 10000;
       result["max_report_page_bytes"] = 1024 * 1024;
       result["max_concurrent_reports_per_instance"] = 1;
+      result["period_retention_available"] = false;
+      result["max_period_records"] = 1000;
+      result["max_period_settlements"] = 1000;
+      result["max_period_policies"] = 256;
+      result["max_period_boundaries"] = 512;
+      result["max_period_replay_work"] = 200000;
       result["mapping_version"] = b.mapping_version;
       return result;
     }
@@ -283,10 +290,13 @@ Result<Json> SqliteApplication::call(Operation op, Json a) const {
       return result;
     }
     case Operation::accounting_report:
-    case Operation::query_transactions: {
+    case Operation::query_transactions:
+    case Operation::query_pnl: {
       std::unique_lock lock(impl_->report_mutex, std::try_to_lock);
       if (!lock.owns_lock())
         return std::unexpected(ingestion::Failure{"REPORT_BUSY", true});
+      if (op == Operation::query_pnl)
+        return detail::query_pnl(b, a);
       return op == Operation::accounting_report ? detail::accounting_report(b, a)
                                                 : detail::query_transactions(b, a);
     }
@@ -346,6 +356,7 @@ int exit_code(const ingestion::Failure &e) {
     return 4;
   if (e.code.starts_with("INVALID_") || e.code == "UNSUPPORTED_CONTEXT_OR_FORMAT" ||
       e.code == "LIMIT_EXCEEDED" || e.code == "PROJECTION_LIMIT_EXCEEDED" ||
+      e.code == "PERIOD_REPLAY_LIMIT_EXCEEDED" || e.code == "UNSUPPORTED_REPORTING_TIMEZONE" ||
       e.code == "PAGE_BYTE_LIMIT_EXCEEDED" || e.code == "INPUT_REVISION_INCOMPATIBLE" ||
       e.code == "INPUT_REVISION_SPLITS_COMMIT" || e.code == "RECOGNITION_POLICY_REQUIRED" ||
       e.code == "LOT_ACCOUNT_REQUIRED" || e.code == "ENTITY_POLICY_REQUIRED")

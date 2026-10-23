@@ -1,0 +1,1 @@
+{"trades": 100, "settlements": 100, "effects": 251, "elapsed_ms": 226.337, "report_id": "period:071f05a6214186daf41fb81a9d6320bb0244b14ce9c2c45df224aff7449fe64d", "measurement": "pure in-memory period accounting with actual cash and full effect evidence; excludes storage/transport/ingestion"}
