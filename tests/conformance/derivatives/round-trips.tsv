@@ -1,0 +1,5 @@
+# profile\tquantity\tentry\texit\topening_charges\tclosing_charges\tgross_pnl\tnet_pnl
+SPXW	2	10.00	12.50	0	0	500	500
+SPX	-2	12.50	10.00	0	0	500	500
+SPXW	2	10.00	12.50	2	2	500	496
+SPXW	1	0	0	0	0	0	0

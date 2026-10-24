@@ -444,3 +444,15 @@ query metadata uses the shared version helper. Hash-verified source evidence is 
 bounded read, independent of authoritative canonical calculations. See
 [CLI/MCP immutable versions](cli-mcp-versions.md). Period accounting remains a
 separate reviewed contract.
+
+### Explicit derivative reporting boundary
+
+The opt-in [derivative-accounting/1 contract](derivative-accounting.md) takes a
+validated immutable contract definition, typed market/model/official observations,
+report-only immutable lifecycle revisions, actual cash/collateral evidence and
+explicit policies. SPX/SPXW premium accounting uses explicit named profiles; ES contract economics
+are defined for a separately reviewed accounting increment; authoritative exact math remains C++. Existing canonical
+events, native admission and equity reports are unchanged. Derivative history
+anchors must bind the new input streams and all period boundary evidence; existing
+equity anchors cannot cover marks/fixings/definition changes. Unsupported products
+and missing valuations remain diagnostics/nulls outside complete totals.
