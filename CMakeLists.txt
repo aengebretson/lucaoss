@@ -468,3 +468,8 @@ if(LUCA_BUILD_BENCHMARKS)
   add_executable(luca_lot_benchmark tests/benchmarks/lot_benchmark.cpp)
   target_link_libraries(luca_lot_benchmark PRIVATE luca::accounting)
 endif()
+
+if(LUCA_BUILD_BENCHMARKS)
+  add_executable(luca_derivative_benchmark tests/benchmarks/derivative_benchmark.cpp)
+  target_link_libraries(luca_derivative_benchmark PRIVATE luca::accounting)
+endif()
