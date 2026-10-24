@@ -46,3 +46,16 @@ Full replay and independent complete pools are supported. Append-and-replay is
 continuation; partial-pool/checkpoint merges are not. Hosts must retain complete
 report inputs, outputs/anchors and rejected requests; native derivative admission
 and adapter adoption require separately reviewed versioned integration.
+
+A final dependent-opening correction regression exposed ordering by recording
+boundary inside selected lots. Corrected visibility still gates at recorded time,
+but selected lot history now folds by source effective time then acceptance
+sequence. The added case corrects the newer opening lot, proving both relief
+identity/realized350 and older remaining lot/unrealized250, not just total600.
+
+Repair validation: independent reviewer reproduced the economic-order issue and
+verified correct relief on both candidates; no blockers remained. Full option-only
+repair build with native integration enabled and `ctest --test-dir
+../output/option-repair-debug --output-on-failure -j 3` passed50/50. The independently
+installed original three-field Rules consumer remains the compatibility baseline
+for the ES extension.

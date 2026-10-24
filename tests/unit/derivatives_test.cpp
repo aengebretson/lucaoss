@@ -87,6 +87,15 @@ void option_lifecycle() {
   check(r.closing.value==money("0"));check(r.closing.unrealized==money("-1000"));
 }
 void history() {
+  auto dependent=book();trade(dependent,"older","1","10",1);trade(dependent,"newer","1","11",2);
+  trade(dependent,"close","-1","12.5",3);
+  add(dependent,"edit-newer",Trade{quantity("1"),price("9"),TradeCharges{}},2,5,Action::correct,"newer","newer");
+  observation(dependent,"mark","12.5",6);
+  auto corrected=report(dependent);
+  check(corrected.closing.realized==money("350"));check(corrected.closing.unrealized==money("250"));
+  check(corrected.closing.reliefs[0].opening_record=="edit-newer");
+  check(corrected.closing.lots[0].lot.opening_record=="older");
+
   auto in=book();trade(in,"buy","2","10",1);trade(in,"sell","-2","12.5",2);
   add(in,"edit",Trade{quantity("-2"),price("13"),TradeCharges{}},2,5,Action::correct,"sell","sell");
   check(report(in,0,4).closing.realized==money("500"));

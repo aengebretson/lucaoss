@@ -238,7 +238,7 @@ inline Result<std::vector<Active>> resolve(const Inputs& in,Timestamp at,Timesta
     if(recognition<=at)out.push_back({selected,recognition});
   }
   std::sort(out.begin(),out.end(),[](const Active& a,const Active& b){
-    return std::pair{a.recognized_at,a.event->sequence}<std::pair{b.recognized_at,b.event->sequence};});
+    return std::pair{a.event->effective_at,a.event->sequence}<std::pair{b.event->effective_at,b.event->sequence};});
   return out;
 }
 inline Result<Snapshot> snapshot(const Inputs& in,Timestamp at,Timestamp known) {
@@ -331,7 +331,7 @@ inline Result<Snapshot> snapshot(const Inputs& in,Timestamp at,Timestamp known) 
     }
     if(quantity) {
       if(terminal)return fail("TERMINAL_OVERCONSUMPTION",e.id);
-      s.lots.push_back({OpenLot{pool,e.id,in.policy.digest,a.recognized_at,e.sequence,sell,known_charges,
+      s.lots.push_back({OpenLot{pool,e.id,in.policy.digest,e.effective_at,e.sequence,sell,known_charges,
           Quantity::from_scaled(quantity),remaining},price,{}});
     }
     auto next_position=detail::narrow(detail::Wide(net_position)+

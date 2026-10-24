@@ -191,8 +191,8 @@ Full replay is supported. Append a complete prefix and recompute for continuatio
 retry/restore of the same inputs gives identical reports. No checkpoint-continuation
 or partial-pool report merge is claimed. Safely schedule independent COMPLETE pools
 in parallel with disjoint account/contract/cash ownership. Inside each pool,
-revisions are accepted in sequence, resolved activity folds by recognition boundary
-then sequence, and lot/terminal/reset order is retained. Merge only presentation
+revisions are accepted in sequence, selected economic activity folds by source effective time
+then sequence (recorded/activation times gate visibility and period effects), and lot/terminal/reset order is retained. Merge only presentation
 rows or validated disjoint journals with identical balance contract. Never sum
 partial lots, time shards, VM resets or derivative snapshots as period income.
 
