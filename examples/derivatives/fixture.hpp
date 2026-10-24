@@ -38,8 +38,9 @@ inline Inputs book(Profile profile=Profile::spxw_pm_european_cash,std::string ac
       day(-10),1,LotSelection::lifo,RecognitionBasis::accrual}};
   auto policy=take(resolve_policy(target,revisions,day(-1),1));
   return {contract(profile),policy,day(-10),{"market-first","1",{MarkType::market,MarkType::official_settlement},std::chrono::days{30}},
-      {ChargeTreatment::capitalize_opening,false,
-       "derivative-rules/1"},{},{},{}};
+      {ChargeTreatment::capitalize_opening,false,"derivative-rules/1",
+       profile==Profile::es_linear_cash?std::optional{FuturesPolicy{VariationTreatment::settlement_to_market,
+           FuturesCharges::expense_on_trade,"es-settlement-to-market/1"}}:std::nullopt},{},{},{}};
 }
 inline void add(Inputs& in,std::string id,Payload payload,int effective,int known=-1,Action action=Action::originate,
     std::string economic="",std::optional<std::string> predecessor={},std::optional<std::string> replaces={}) {

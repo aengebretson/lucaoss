@@ -185,6 +185,77 @@ void period_and_replay() {
   cash.policy=take(resolve_policy(cash.policy.target,revisions,cash.policy.effective_at,1));
   check(!project(cash,{day(0),day(8),day(30),"UTC"}));
 }
+void v1_compatibility() {
+  auto in=book();
+  in.rules={ChargeTreatment::capitalize_opening,false,"derivative-rules/1"}; // PR34 aggregate API
+  trade(in,"buy-two","2","10",1);trade(in,"sell-two","-2","12.5",2);
+  pay(in,"bank-buy","buy-two","-2000",3);pay(in,"bank-sell","sell-two","2500",4);
+  auto r=report(in);
+  // Captured from independently installed PR34 consumer at b96490f.
+  check(r.report_id=="ccd9d438ee84fa3f56d4c5a5040f24636aa902d34253e29d1f6998a87e214a2c");
+  std::string fixture=LUCA_DERIVATIVE_FIXTURE;
+  std::ifstream frozen(fixture.substr(0,fixture.find_last_of('/'))+"/spx-v1-evidence.txt");check(bool(frozen));
+  std::vector<std::string> actual{r.input_digest,r.history_digest,r.closing.digest};
+  for(const auto& e:r.effects)actual.push_back(e.id);
+  std::string expected;for(const auto& value:actual){check(bool(frozen>>expected));check(expected==value);}
+  check(!(frozen>>expected));
+  auto anchor=retain_close(r);check(report(in,8,9,30,anchor).closing.digest==r.closing.digest);
+}
+void futures() {
+  auto in=book(Profile::es_linear_cash);const auto& c=in.contract;
+  auto missing_policy=in;missing_policy.rules.futures.reset();
+  auto policy_error=project(missing_policy,{day(0),day(8),day(30),"UTC"});
+  check(!policy_error && policy_error.error().code=="EXPLICIT_ES_POLICY_REQUIRED");
+  auto incompatible=book();incompatible.rules.futures=in.rules.futures;
+  check(!project(incompatible,{day(0),day(8),day(30),"UTC"}));
+  check(impl::journal_policy_digest(in)!=impl::journal_policy_digest(book()));
+  check(take(quoted_money(c,quantity("1"),price("0.25")))==money("12.5"));
+  check(take(price_change(c,quantity("2"),price("6000"),price("6001")))==money("100"));
+  check(take(impl::futures_change(c,quantity("1"),price("0.0001"),price("0.0003")))==money("0.01"));
+  trade(in,"buy","2","6000",1,"2");
+  observation(in,"settle1","6001",2,MarkType::official_settlement);
+  add(in,"reset1",DailySettlement{"settle1","1",false,day(2)},2);
+  observation(in,"mark","6001.25",3);auto r=report(in,0,4);
+  check(r.closing.realized==money("98"));check(r.closing.unrealized==money("25"));
+  check(r.total_pnl_activity==money("123"));check(r.closing.cash==money("0"));
+  check(r.closing.obligations[0].contractual==money("-2"));check(r.closing.obligations[1].contractual==money("100"));
+  check(r.closing.notional==money("600125"));check(r.closing.value==money("25"));
+  pay(in,"vm","reset1","100",3);pay(in,"fees","buy","-2",3);
+  pay(in,"margin","","-1000",3,CashKind::collateral);r=report(in,0,4);
+  check(r.closing.cash==money("-902"));check(r.closing.collateral==money("1000"));
+  check(r.closing.realized==money("98"));check(r.closing.obligations[1].outstanding==money("0"));
+  observation(in,"settle2","6002",4,MarkType::official_settlement);
+  add(in,"reset2",DailySettlement{"settle2","1",false,day(4)},4);
+  r=report(in,0,5);check(r.closing.realized==money("198"));
+  // preference chooses market before settlement; age is explicit, so mark6001.25
+  // remains selected and residual valuation is -75 after reset6002.
+  check(r.closing.unrealized==money("-75"));check(r.total_pnl_activity==money("123"));
+  in.marks.preference={MarkType::official_settlement,MarkType::market};r=report(in,0,5);
+  check(r.closing.unrealized==money("0"));check(r.total_pnl_activity==money("198"));
+  trade(in,"close","-1","6003",5,"1");r=report(in,0,6);
+  check(r.closing.realized==money("247"));check(r.closing.position==quantity("1"));
+  auto amended=book(Profile::es_linear_cash);trade(amended,"opening","2","6000",1);
+  observation(amended,"official","6001",2,MarkType::official_settlement);
+  add(amended,"daily",DailySettlement{"official","1",false,day(2)},2);
+  observation(amended,"valuation","6001.25",3);pay(amended,"actual-vm","daily","100",3);
+  add(amended,"correct-opening",Trade{quantity("2"),price("5999"),TradeCharges{}},1,5,
+      Action::correct,"opening","opening");
+  auto replayed=report(amended,0,6);check(replayed.closing.realized==money("200"));
+  check(replayed.closing.unrealized==money("25"));check(replayed.closing.cash==money("100"));
+  check(replayed.closing.obligations[1].outstanding==money("100"));
+  check(report(amended,4,6).realized_activity==money("100"));
+  auto short_book=book(Profile::es_linear_cash);trade(short_book,"short","-2","6000",1);
+  trade(short_book,"cover","1","5999.75",2);observation(short_book,"m","5999.5",2);
+  r=report(short_book);check(r.closing.realized==money("12.5"));check(r.closing.unrealized==money("25"));
+  auto negative=book(Profile::es_linear_cash);trade(negative,"buy","1","-1",1);trade(negative,"sell","-1","0",2);
+  check(report(negative).closing.realized==money("50"));
+  auto final=book(Profile::es_linear_cash);trade(final,"buy","1","6000",1);
+  observation(final,"fix","6010",10,MarkType::official_settlement);add(final,"final",DailySettlement{"fix","1",true,day(11)},10);
+  r=report(final,0,12);check(r.closing.position==quantity("0"));check(r.closing.realized==money("500"));
+  auto invalid=final;invalid.observations[0].type=MarkType::model;check(!project(invalid,{day(0),day(12),day(30),"UTC"}));
+  auto missing=book(Profile::es_linear_cash);trade(missing,"buy","1","6000",1);
+  add(missing,"reset",DailySettlement{"absent","1",false,day(2)},2);check(!project(missing,{day(0),day(8),day(30),"UTC"}));
+}
 void fixture_rows() {
   std::ifstream file(LUCA_DERIVATIVE_FIXTURE);check(bool(file));std::string line;int count=0;
   while(std::getline(file,line)) {
@@ -198,6 +269,6 @@ void fixture_rows() {
     auto r=report(in);check(r.closing.realized==money(net));
     check(take(price_change(in.contract,quantity(q),price(entry),price(exit)))==money(gross));++count;
   }
-  check(count==4);
+  check(count==7);
 }
-int main(){fixture_rows();economics();option_pnl();option_lifecycle();history();period_and_replay();std::cout<<"derivative conformance passed\n";}
+int main(){fixture_rows();economics();option_pnl();option_lifecycle();history();period_and_replay();v1_compatibility();futures();std::cout<<"derivative conformance passed\n";}

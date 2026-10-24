@@ -20,7 +20,13 @@ struct OptionTerminal {
   std::string fixing_id, fixing_revision;
   bool operator==(const OptionTerminal&) const = default;
 };
-using Payload=std::variant<Trade,OptionTerminal>;
+struct DailySettlement {
+  std::string observation_id, observation_revision;
+  bool final;
+  Timestamp payment_at;
+  bool operator==(const DailySettlement&) const = default;
+};
+using Payload=std::variant<Trade,OptionTerminal,DailySettlement>;
 enum class Action { originate, correct, void_event };
 struct Revision {
   std::string id, economic_id, contract_digest;
@@ -43,10 +49,19 @@ struct Payment {
   Provenance provenance;
   bool operator==(const Payment&) const = default;
 };
+enum class VariationTreatment { settlement_to_market };
+enum class FuturesCharges { expense_on_trade };
+struct FuturesPolicy {
+  VariationTreatment variation;
+  FuturesCharges charges;
+  std::string version;
+  bool operator==(const FuturesPolicy&) const = default;
+};
 struct Rules {
   ChargeTreatment option_charges;
   bool recognize_unrealized;
   std::string version;
+  std::optional<FuturesPolicy> futures; // explicit ES-only extension, absent for option v1
   bool operator==(const Rules&) const = default;
 };
 struct Inputs {
@@ -152,7 +167,7 @@ inline void revision(std::string& s,const Revision& e) {
         number(s,c.amount.scaled_value());field(s,c.amount.currency().code());}}
     } else if constexpr(std::is_same_v<T,OptionTerminal>) {
       field(s,"option-terminal");number(s,p.signed_quantity.scaled_value());field(s,p.fixing_id);field(s,p.fixing_revision);
-    }
+    } else {field(s,"daily-settlement");field(s,p.observation_id);field(s,p.observation_revision);number(s,p.final);time(s,p.payment_at);}
   },*e.payload);
   provenance(s,e.provenance);
 }
@@ -161,6 +176,15 @@ inline void payment(std::string& s,const Payment& p) {
   number(s,static_cast<int>(p.kind));number(s,p.cash.scaled_value());field(s,p.cash.currency().code());
   time(s,p.effective_at);time(s,p.known_at);number(s,p.refunds.has_value());if(p.refunds)field(s,*p.refunds);
   provenance(s,p.provenance);
+}
+inline std::string journal_policy_digest(const Inputs& in) {
+  auto encoded=in.policy.digest+":"+in.rules.version+":"+std::to_string(in.rules.recognize_unrealized);
+  if(in.rules.futures) {
+    field(encoded,"es-policy");field(encoded,in.rules.futures->version);
+    number(encoded,static_cast<int>(in.rules.futures->variation));
+    number(encoded,static_cast<int>(in.rules.futures->charges));
+  }
+  return hash(encoded);
 }
 inline std::string input_encoding(const Inputs& in) {
   std::string s;field(s,projection_version);field(s,chart_version);field(s,in.contract.digest());
@@ -180,6 +204,11 @@ inline std::string input_encoding(const Inputs& in) {
   for(auto t:in.marks.preference)number(s,static_cast<int>(t));
   field(s,in.rules.version);number(s,static_cast<int>(in.rules.option_charges));
   number(s,in.rules.recognize_unrealized);
+  // Preserve option-v1 encoding exactly when this additive ES policy is absent.
+  if(in.rules.futures) {
+    field(s,"es-policy");field(s,in.rules.futures->version);
+    number(s,static_cast<int>(in.rules.futures->variation));number(s,static_cast<int>(in.rules.futures->charges));
+  }
   number(s,static_cast<std::int64_t>(in.events.size()));for(const auto& e:in.events)revision(s,e);
   number(s,static_cast<std::int64_t>(in.observations.size()));for(const auto& o:in.observations)observation(s,o);
   number(s,static_cast<std::int64_t>(in.payments.size()));for(const auto& c:in.payments)payment(s,c);
@@ -241,9 +270,20 @@ inline Result<std::vector<Active>> resolve(const Inputs& in,Timestamp at,Timesta
     return std::pair{a.event->effective_at,a.event->sequence}<std::pair{b.event->effective_at,b.event->sequence};});
   return out;
 }
+inline Result<Money> futures_change(const Contract& c,Quantity q,Price from,Price to) {
+  if(q.scaled_value()%100000000)return std::unexpected(Diagnostic{"INTEGER_CONTRACTS_REQUIRED",""});
+  // CME normal rounding: per-contract monetary endpoints to cents, ties away
+  // from zero, THEN subtract and multiply integer contracts. No double rounding.
+  auto endpoint=[&](Price p)->detail::Wide {
+    return detail::divide_rounded(detail::Wide(p.scaled_value())*50,1000000,RoundingMode::half_up);
+  };
+  auto result=detail::narrow((endpoint(to)-endpoint(from))*(q.scaled_value()/100000000)*10000);
+  if(!result)return std::unexpected(Diagnostic{"AMOUNT_OVERFLOW",c.terms().instrument.value()});
+  return Money::from_scaled(*result,c.terms().currency);
+}
 inline Result<Snapshot> snapshot(const Inputs& in,Timestamp at,Timestamp known) {
   const auto& c=in.contract;const auto currency=c.terms().currency;
-  const auto zero=Money::from_scaled(0,currency);const bool opt=true;
+  const auto zero=Money::from_scaled(0,currency);const bool opt=option(c.terms().profile);
   Snapshot s{.at=at,.position=Quantity::from_scaled(0),.cost_carrying=zero,.realized=zero,
       .recognized_realized=zero,.cash=zero,.collateral=zero};
   auto fail=[](std::string code,std::string id=""){return std::unexpected(Diagnostic{std::move(code),std::move(id)});};
@@ -254,17 +294,46 @@ inline Result<Snapshot> snapshot(const Inputs& in,Timestamp at,Timestamp known) 
   std::map<std::string,std::size_t> obligations;
   std::map<std::pair<std::string,std::string>,const Observation*> observations;
   for(const auto& o:in.observations)observations.emplace(std::pair{o.id,o.revision},&o);
+  std::set<Timestamp> reset_times;
   std::vector<const Observation*> selected_observations;
   auto add_due=[&](const Revision& e,Money due,Timestamp payment_at)->Result<void>{
     if(!obligations.emplace(e.economic_id,s.obligations.size()).second)return fail("DUPLICATE_OBLIGATION",e.id);
     s.obligations.push_back({e.economic_id,e.id,due,zero,due,payment_at});return {};
   };
-  std::int64_t net_position=0;
+  bool final=false;std::int64_t net_position=0;
   LotPool pool{in.policy.target.book,in.policy.target.legal_entity,in.policy.target.custodian_account,
                c.terms().instrument.value(),std::string(currency.code())};
   for(const auto& a:*active) {
     const auto& e=*a.event;
     if(!e.payload)return fail("INVALID_REVISION_PAYLOAD",e.id);
+    if(final)return fail("EVENT_AFTER_FINAL_SETTLEMENT",e.id);
+    if(const auto* reset=std::get_if<DailySettlement>(&*e.payload)) {
+      if(opt)return fail("UNSUPPORTED_OPTION_DAILY_SETTLEMENT",e.id);
+      auto it=observations.find(std::pair{reset->observation_id,reset->observation_revision});
+      if(it==observations.end())return fail("OFFICIAL_SETTLEMENT_REQUIRED",e.id);
+      const auto& o=*it->second;
+      if(reset->payment_at<e.effective_at ||
+         (reset->final && reset->payment_at!=c.terms().boundaries.payment) ||
+         o.type!=MarkType::official_settlement || o.effective_at!=e.effective_at ||
+         o.known_at>known || o.known_at>e.known_at || !reset_times.insert(e.effective_at).second ||
+         (reset->final && e.effective_at!=c.terms().boundaries.expiration) ||
+         (!reset->final && e.effective_at>=c.terms().boundaries.expiration))
+        return fail("INVALID_OFFICIAL_SETTLEMENT",e.id);
+      {std::string key;field(key,o.id);field(key,o.revision);s.observation_evidence.push_back(key);}
+      selected_observations.push_back(&o);
+      auto amount=zero;
+      for(auto& lot:s.lots) {
+        auto q=lot.lot.remaining_quantity.scaled_value()*(lot.lot.short_position?-1:1);
+        auto delta=futures_change(c,Quantity::from_scaled(q),lot.basis,o.price);
+        if(!delta)return std::unexpected(delta.error());
+        if(auto r=accumulate(amount,*delta);!r)return std::unexpected(r.error());
+        lot.basis=o.price;lot.resets.push_back(e.id);
+      }
+      if(auto r=accumulate(s.realized,amount);!r)return std::unexpected(r.error());
+      if(auto r=add_due(e,amount,reset->payment_at);!r)return std::unexpected(r.error());
+      if(reset->final){s.lots.clear();net_position=0;final=true;}
+      continue;
+    }
     const auto* trade=std::get_if<Trade>(&*e.payload);
     const auto* terminal=std::get_if<OptionTerminal>(&*e.payload);
     if(terminal && !opt)return fail("UNSUPPORTED_FUTURES_OPTION_TERMINAL",e.id);
@@ -307,23 +376,27 @@ inline Result<Snapshot> snapshot(const Inputs& in,Timestamp at,Timestamp known) 
       if(auto r=accumulate(charge_total,charge.amount);!r)return std::unexpected(r.error());
     }
     if(!known_charges)diag("CHARGES_INCOMPLETE",e.id);
-    auto principal=quoted_money(c,Quantity::from_scaled(quantity),price);
+    auto principal=opt?quoted_money(c,Quantity::from_scaled(quantity),price):Result<Money>{zero};
     if(!principal)return std::unexpected(principal.error());
     LotAmounts remaining{*principal,charges};auto due=zero;
     if(opt){auto signed_principal=sell?Result<Money>{*principal}:negate(*principal);
       if(!signed_principal)return std::unexpected(signed_principal.error());
       auto r=minus(*signed_principal,charge_total);if(!r)return std::unexpected(r.error());due=*r;}
+    else {auto r=negate(charge_total);if(!r)return std::unexpected(r.error());due=*r;
+      if(auto r2=accumulate(s.realized,due);!r2)return std::unexpected(r2.error());}
     while(quantity>0 && !s.lots.empty() && s.lots.back().lot.short_position!=sell) {
       auto& basis=s.lots.back();auto& lot=basis.lot;
       auto take=std::min(quantity,lot.remaining_quantity.scaled_value());
       auto opening=lot_detail::split(lot.remaining,take,lot.remaining_quantity.scaled_value());
       auto closing=lot_detail::split(remaining,take,quantity);
       if(!opening || !closing)return fail("LOT_ALLOCATION_ERROR",e.id);
-      auto gross=lot.short_position?minus(opening->principal,closing->principal):minus(closing->principal,opening->principal);
+      auto gross=opt?(lot.short_position?minus(opening->principal,closing->principal):minus(closing->principal,opening->principal)):
+          futures_change(c,Quantity::from_scaled(take*(lot.short_position?-1:1)),basis.basis,price);
       if(!gross)return std::unexpected(gross.error());
       auto net=*gross;
       if(opt){auto r=lot_detail::net_pnl(net,*opening,*closing);if(!r)return fail("AMOUNT_OVERFLOW",e.id);net=*r;}
       if(auto r=accumulate(s.realized,net);!r)return std::unexpected(r.error());
+      if(!opt)if(auto r=accumulate(due,*gross);!r)return std::unexpected(r.error());
       s.reliefs.push_back({pool,lot.opening_record,e.id,in.policy.digest,lot.short_position,
           lot.charges_known && known_charges,Quantity::from_scaled(take),*opening,*closing,*gross,net});
       lot.remaining_quantity=Quantity::from_scaled(lot.remaining_quantity.scaled_value()-take);
@@ -410,6 +483,11 @@ inline Result<Snapshot> snapshot(const Inputs& in,Timestamp at,Timestamp known) 
       auto u=minus(*v,s.cost_carrying);if(!u)return std::unexpected(u.error());s.unrealized=*u;
       // Premium observation does not contain the underlying level.
       s.diagnostics.push_back({"OPTION_UNDERLYING_NOTIONAL_REQUIRES_SEPARATE_INPUT",""});
+    } else {auto u=zero;for(const auto& lot:s.lots){
+      auto q=lot.lot.remaining_quantity.scaled_value()*(lot.lot.short_position?-1:1);
+      auto delta=futures_change(c,Quantity::from_scaled(q),lot.basis,price);if(!delta)return std::unexpected(delta.error());
+      if(auto r=accumulate(u,*delta);!r)return std::unexpected(r.error());}
+      s.value=u;s.unrealized=u;auto n=quoted_money(c,s.position,price);if(!n)return std::unexpected(n.error());s.notional=*n;
     }
   }
   if(position && at>=c.terms().boundaries.expiration)diag("TERMINAL_LIFECYCLE_INCOMPLETE");
@@ -490,7 +568,7 @@ inline Result<std::optional<JournalEntry>> journal(const Inputs& in,
   if(ids.empty())return std::unexpected(Diagnostic{"JOURNAL_EVENT_LINEAGE_REQUIRED",""});
   auto lineage=JournalLineage::create(ids,economic,sources);
   auto policy=AccountingPolicyIdentity::create(AccountingPolicyId{std::string(projection_version)},
-      hash(in.policy.digest+":"+in.rules.version+":"+std::to_string(in.rules.recognize_unrealized)));
+      journal_policy_digest(in));
   auto date=JournalDate::create(std::chrono::year_month_day{std::chrono::floor<std::chrono::days>(at)});
   auto settlement=JournalSettlementContext::create({},{},std::string(chart_version));
   if(!lineage || !policy || !date || !settlement)return std::unexpected(Diagnostic{"JOURNAL_CONTEXT",""});
@@ -529,9 +607,14 @@ inline Result<Report> project(const Inputs& in,Context context,
   if(context.from==Timestamp::min() || context.from>=context.until)return fail("INVALID_PERIOD");
   if(in.events.size()>limits.rows || in.observations.size()>limits.rows || in.payments.size()>limits.rows)
     return fail("DERIVATIVE_REPLAY_LIMIT_EXCEEDED");
-  if(!impl::option(in.contract.terms().profile))return fail("UNSUPPORTED_FUTURES_ACCOUNTING");
   if(in.rules.version!="derivative-rules/1" || in.rules.option_charges!=ChargeTreatment::capitalize_opening)
     return fail("UNSUPPORTED_DERIVATIVE_RULES");
+  if(impl::option(in.contract.terms().profile)) {
+    if(in.rules.futures)return fail("FUTURES_POLICY_ON_OPTION");
+  } else if(!in.rules.futures || in.rules.futures->version!="es-settlement-to-market/1" ||
+      in.rules.futures->variation!=VariationTreatment::settlement_to_market ||
+      in.rules.futures->charges!=FuturesCharges::expense_on_trade)
+    return fail("EXPLICIT_ES_POLICY_REQUIRED");
   if(in.policy.recognition!=RecognitionBasis::accrual)return fail("DERIVATIVE_ACCRUAL_POLICY_REQUIRED");
   if(in.policy_known_at>context.known_through)return fail("POLICY_NOT_KNOWN");
   auto resolved=resolve_policy(in.policy.target,in.policy.revisions,in.policy.effective_at,in.policy.through_sequence);
@@ -601,7 +684,7 @@ inline Result<Report> project(const Inputs& in,Context context,
   auto entry=impl::journal(in,closing->balances,closing->at,context.known_through,"derivative-snapshot:"+report_id,*closing,*closing);
   if(!entry)return std::unexpected(entry.error());if(*entry)closing_journals.push_back(**entry);
   auto policy=AccountingPolicyIdentity::create(AccountingPolicyId{std::string(projection_version)},
-      impl::hash(in.policy.digest+":"+in.rules.version+":"+std::to_string(in.rules.recognize_unrealized)));
+      impl::journal_policy_digest(in));
   if(!policy)return fail("JOURNAL_POLICY_INVARIANT");
   auto balance_context=JournalBalanceContract::create({BookId{in.policy.target.book},input_digest,
       "luca/0.1",std::string(projection_version),*policy,context.known_through,closing->at,

@@ -6,10 +6,6 @@ header-only C++23 value APIs, with immutable caller inputs, owned results and
 `std::expected<T,Diagnostic>`. There is no market model, I/O, clock, reference-data
 lookup, ledger admission, policy change or persistence in this operation.
 
-This first increment implements SPX/SPXW premium accounting. ES definitions and
-raw exact economics are present, but ES accounting is explicitly excluded pending
-the separately reviewed settlement-to-market increment.
-
 ## Supported contracts and dimensions
 
 `Contract::create(Terms)` validates instrument/underlying identity, immutable
@@ -55,7 +51,7 @@ admission rule.
 Money. For ES cash settlement, the separate normal-futures rounding rule first
 converts EACH one-contract monetary endpoint to USD cents (ties away from zero),
 subtracts, then multiplies whole signed contracts. This avoids per-lot/reset drift.
-The separately reviewed ES increment will implement that convention for residual valuation and VM.
+ES residual valuation uses the same endpoint convention so it reconciles to VM.
 The raw `price_change` and settlement formula coincide for cent-exact endpoints;
 sub-cent endpoints intentionally differ. SPX quoted premiums/ticks and official
 fixing levels are exact under the supplied scope. Charge allocation reuses existing
@@ -113,10 +109,21 @@ or duplicate consumption fails. A worthless terminal event records zero cash and
 extinguishes the lot. Missing lifecycle evidence leaves a position with attention;
 a zero market mark alone never expires it.
 
-ES contract economics are validated, but this increment returns
-`UNSUPPORTED_FUTURES_ACCOUNTING` from the accounting projection. The separately
-reviewed ES increment will establish settlement-to-market resets and payment
-boundaries. No futures event is accepted through this premium-option path.
+The ES policy is explicitly settlement-to-market, chosen by the user on2026-10-23.
+Rules append an optional `FuturesPolicy{variation,charges,version}`; ES requires
+`es-settlement-to-market/1`, while options reject this ES-only policy. The original
+three-field option Rules aggregate and its absent-ES encoding remain unchanged.
+The installed PR34 consumer report identity is a cross-increment regression;
+adding ES does not reinterpret retained option inputs or require their migration.
+Futures trade charges expense on execution; trade entry creates NO full-notional
+cash posting. Opposing trades relieve LIFO basis lots, realize remaining price
+change and create only net P&L/charge obligations. DailySettlement requires an
+official value at its source effective boundary plus explicit payment_at; it
+realizes change since each remaining basis and resets it. Final settlement at
+contract expiration extinguishes the remaining position; final payment_at must
+match contract terms. Daily resets do not assert bank cash. Remaining valuation
+is from reset basis, not original entry, so VM and unrealized P&L do not duplicate.
+Duplicate reset times fail. Collateral-to-market is unsupported.
 
 Existing cash-basis recognition and within-period policy changes are intentionally
 rejected (`DERIVATIVE_ACCRUAL_POLICY_REQUIRED`, `INTRAPERIOD_POLICY_CHANGE_UNSUPPORTED`).
@@ -178,7 +185,8 @@ it. A ClosedAnchor retains original inputs, bounds, knowledge, report ID, closin
 state and WHOLE period history digest. Open-period queries verify immutable
 prefixes and replay the retained period, including zero-effect evidence and
 interior marks that are superseded by close. Changed evidence or historical results
-fail `CLOSED_INPUT_EVIDENCE_CHANGED`/`CLOSED_HISTORY_EXCEPTION`. Source backdating
+fail `CLOSED_INPUT_EVIDENCE_CHANGED`/`CLOSED_HISTORY_EXCEPTION` with retained
+expected/actual fingerprints. Source backdating
 of an open-period recorded-time correction does not rewrite closed activity.
 Overlapping closed queries require the original retained report. No current-period
 repair, reopen or mutation is synthesized. Hosts retain the complete report AND
