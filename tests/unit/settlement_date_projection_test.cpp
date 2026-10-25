@@ -225,7 +225,11 @@ void boundaries_and_diagnostics() {
   }
   // Cutoffs are inclusive and independent; cash is immediate even with an earlier settlement date.
   const auto contribution = cash("cash", effective, "source", "1");
-  const auto inclusive = project_one(contribution, {recorded, effective, 2026y / May / 1d});
+  LifecycleLedger inclusive_ledger;
+  accept(inclusive_ledger,
+         LifecycleRecordDraft::originate(EconomicEventId{"inclusive"}, recorded, contribution));
+  const auto inclusive = project_settlement_date_journals(
+      inclusive_ledger.resolve(recorded, effective), {recorded, effective, 2026y / May / 1d});
   assert(inclusive && inclusive->entries().size() == 1);
   error(project_one(contribution, {recorded - 1ns, cutoff, settle}), Category::invalid_context, "cash");
   error(project_one(contribution, {cutoff, effective - 1ns, settle}), Category::invalid_context, "cash");

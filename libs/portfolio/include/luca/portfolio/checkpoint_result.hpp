@@ -38,28 +38,6 @@ using CheckpointApplicationError =
                  CashProjectionError, SettlementProjectionError, CheckpointError,
                  CheckpointResultConstructionError>;
 
-namespace checkpoint_result_detail {
-
-[[nodiscard]] inline LifecycleRecordDraft draft_from(const LifecycleRecord &record) {
-  switch (record.action()) {
-  case LifecycleAction::originate:
-    return LifecycleRecordDraft::originate(record.economic_event_id(), record.recorded_at(),
-                                           *record.event());
-  case LifecycleAction::correct:
-    return LifecycleRecordDraft::correct(record.economic_event_id(), *record.supersedes_record_id(),
-                                         record.recorded_at(), *record.event());
-  case LifecycleAction::cancel:
-    return LifecycleRecordDraft::cancel(record.record_id(), record.economic_event_id(),
-                                        *record.supersedes_record_id(), record.account(),
-                                        record.recorded_at(), record.provenance(), record.cancellation_at());
-  case LifecycleAction::reverse:
-    return LifecycleRecordDraft::reverse(record.economic_event_id(), *record.reverses_record_id(),
-                                         record.recorded_at(), *record.event());
-  }
-  std::terminate();
-}
-
-} // namespace checkpoint_result_detail
 
 // Continue the existing ordered financial fold under exactly the same context.
 // Reconstituting the full history below derives evidence only; the authoritative
@@ -93,7 +71,7 @@ apply_checkpoint_suffix_with_manifest(const CheckpointResumeRequest &request,
   drafts.reserve(count);
   for (const auto records : {accepted_prefix, proposed_suffix}) {
     for (const auto &record : records)
-      drafts.push_back(checkpoint_result_detail::draft_from(record));
+      drafts.push_back(lifecycle_detail::draft_from(record));
   }
 
   LifecycleLedger full_ledger;

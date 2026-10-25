@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <expected>
 #include <functional>
 #include <limits>
@@ -260,75 +261,307 @@ class LifecycleError {
   std::string message_;
 };
 
+struct LifecycleEvaluationContext {
+  Timestamp recorded_through;
+  Timestamp economic_as_of;
+  Timestamp correction_recorded_through = Timestamp::max();
+  bool operator==(const LifecycleEvaluationContext &) const = default;
+};
+
+namespace lifecycle_detail {
+struct Resolver;
+struct RelationshipError {
+  LifecycleDiagnosticCategory category;
+  std::string message;
+};
+
+[[nodiscard]] inline bool exact_opposite(std::int64_t candidate, std::int64_t target) noexcept {
+  if (target == std::numeric_limits<std::int64_t>::min())
+    return false;
+  return candidate == -target;
+}
+
+[[nodiscard]] inline std::optional<RelationshipError>
+validate_relationship(const LifecycleRecord &record, const LifecycleRecord &target,
+                      const LifecycleRecord *original = nullptr) {
+  const auto error = [](LifecycleDiagnosticCategory category, std::string message) {
+    return RelationshipError{category, std::move(message)};
+  };
+  if (record.account() != target.account())
+    return error(LifecycleDiagnosticCategory::incompatible_account,
+                 "lifecycle relationship crosses accounts");
+  const bool replacement =
+      record.action() == LifecycleAction::correct && target.action() == LifecycleAction::cancel &&
+      target.cancellation_at() && record.recorded_at() == target.recorded_at() &&
+      record.acceptance_sequence().value() == target.acceptance_sequence().value() + 1 &&
+      record.effective_at() && *record.effective_at() <= *target.cancellation_at();
+  if ((target.action() == LifecycleAction::cancel && !replacement) ||
+      target.action() == LifecycleAction::reverse) {
+    return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                 "cancellations and reversals are terminal");
+  }
+
+  if (record.action() == LifecycleAction::correct || record.action() == LifecycleAction::cancel) {
+    if (record.economic_event_id() != target.economic_event_id()) {
+      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                   "correction or cancellation changed economic-event identity");
+    }
+  } else if (record.economic_event_id() == target.economic_event_id()) {
+    return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                 "reversal must start a new economic-event identity");
+  }
+
+  if (record.action() == LifecycleAction::cancel) {
+    if (record.cancellation_at() && target.effective_at() &&
+        *record.cancellation_at() < *target.effective_at())
+      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                   "void cannot precede the target economic date");
+    return std::nullopt;
+  }
+  const auto *payload_target = replacement ? original : &target;
+  if (!payload_target || !record.event() || !payload_target->event() ||
+      record.event()->index() != payload_target->event()->index()) {
+    return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                 "lifecycle event types differ");
+  }
+
+  if (const auto *cash = std::get_if<CashMovement>(record.event())) {
+    const auto &target_cash = std::get<CashMovement>(*payload_target->event());
+    if (cash->amount().currency() != target_cash.amount().currency()) {
+      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                   "cash relationship changes currency");
+    }
+    if (record.action() == LifecycleAction::reverse &&
+        !exact_opposite(cash->amount().scaled_value(), target_cash.amount().scaled_value())) {
+      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                   "cash reversal is not the exact offset");
+    }
+  } else {
+    const auto &trade = std::get<EquityTrade>(*record.event());
+    const auto &target_trade = std::get<EquityTrade>(*payload_target->event());
+    if (trade.instrument() != target_trade.instrument() ||
+        trade.quote_currency() != target_trade.quote_currency()) {
+      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                   "equity relationship changes its natural key");
+    }
+    if (record.action() == LifecycleAction::reverse &&
+        (trade.charges().has_value() || target_trade.charges().has_value() ||
+         trade.price() != target_trade.price() ||
+         !exact_opposite(trade.quantity().scaled_value(),
+                         target_trade.quantity().scaled_value()))) {
+      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                   "equity reversal does not exactly offset quantity and price");
+    }
+  }
+
+  if (record.action() == LifecycleAction::reverse &&
+      record.effective_at() < target.effective_at()) {
+    return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                 "reversal economically predates its target");
+  }
+  return std::nullopt;
+}
+
+// Shared activation rules for complete history and individual indexed chains.
+// Selection preserves acceptance order; ordinary payload economic cutoffs are
+// applied after the active chain head has been chosen.
+class Activation {
+public:
+  explicit Activation(LifecycleEvaluationContext context) : context_(context) {}
+  [[nodiscard]] bool effective_void(const LifecycleRecord &record) const {
+    return record.cancellation_at() && *record.cancellation_at() <= context_.economic_as_of &&
+           context_.correction_recorded_through != Timestamp::max();
+  }
+  [[nodiscard]] bool includes(const LifecycleRecord &record) {
+    if (record.recorded_at() > context_.recorded_through)
+      return false;
+    const bool deferred_correction =
+        (record.action() == LifecycleAction::correct ||
+         (record.action() == LifecycleAction::cancel && !record.cancellation_at())) &&
+        record.recorded_at() > context_.correction_recorded_through;
+    if ((record.cancellation_at() && *record.cancellation_at() > context_.economic_as_of) ||
+        deferred_correction ||
+        (!effective_void(record) && record.causal_record_id() &&
+         gated_.contains(record.causal_record_id()->value()))) {
+      gated_.insert(record.record_id().value());
+      return false;
+    }
+    return true;
+  }
+
+private:
+  LifecycleEvaluationContext context_;
+  std::set<std::string_view> gated_;
+};
+
+[[nodiscard]] inline LifecycleRecordDraft draft_from(const LifecycleRecord &record) {
+  switch (record.action()) {
+  case LifecycleAction::originate:
+    return LifecycleRecordDraft::originate(record.economic_event_id(), record.recorded_at(),
+                                           *record.event());
+  case LifecycleAction::correct:
+    return LifecycleRecordDraft::correct(record.economic_event_id(), *record.supersedes_record_id(),
+                                         record.recorded_at(), *record.event());
+  case LifecycleAction::cancel:
+    return LifecycleRecordDraft::cancel(
+        record.record_id(), record.economic_event_id(), *record.supersedes_record_id(),
+        record.account(), record.recorded_at(), record.provenance(), record.cancellation_at());
+  case LifecycleAction::reverse:
+    return LifecycleRecordDraft::reverse(record.economic_event_id(), *record.reverses_record_id(),
+                                         record.recorded_at(), *record.event());
+  }
+  std::terminate();
+}
+} // namespace lifecycle_detail
+
 using LifecycleRecordReference = std::reference_wrapper<const LifecycleRecord>;
 
 class ResolvedLifecycleChain {
- public:
-  [[nodiscard]] const EconomicEventId& economic_event_id() const noexcept {
+public:
+  [[nodiscard]] const EconomicEventId &economic_event_id() const noexcept {
     return head().economic_event_id();
   }
   [[nodiscard]] std::span<const LifecycleRecordReference> lineage() const noexcept {
     return lineage_;
   }
-  [[nodiscard]] const LifecycleRecord& head() const noexcept {
-    return lineage_.back().get();
-  }
+  [[nodiscard]] const LifecycleRecord &head() const noexcept { return lineage_.back().get(); }
   // Active here means active at the knowledge cutoff. An active chain whose
   // payload is after the economic cutoff is absent from active_events().
-  [[nodiscard]] bool active() const noexcept {
-    return head().action() != LifecycleAction::cancel;
-  }
+  [[nodiscard]] bool active() const noexcept { return head().action() != LifecycleAction::cancel; }
 
- private:
-  friend class LifecycleLedger;
+private:
+  friend struct lifecycle_detail::Resolver;
   explicit ResolvedLifecycleChain(std::vector<LifecycleRecordReference> lineage)
       : lineage_(std::move(lineage)) {}
   std::vector<LifecycleRecordReference> lineage_;
 };
 
 class ResolvedLifecycleEvent {
- public:
-  [[nodiscard]] const LifecycleRecord& record() const noexcept { return record_.get(); }
-  [[nodiscard]] const EconomicEvent& event() const noexcept { return *record().event(); }
+public:
+  [[nodiscard]] const LifecycleRecord &record() const noexcept { return record_.get(); }
+  [[nodiscard]] const EconomicEvent &event() const noexcept { return *record().event(); }
   [[nodiscard]] std::span<const LifecycleRecordReference> lineage() const noexcept {
     return lineage_;
   }
-  [[nodiscard]] const LifecycleRecord* reversed_record() const noexcept {
-    return reversed_record_;
-  }
+  [[nodiscard]] const LifecycleRecord *reversed_record() const noexcept { return reversed_record_; }
 
- private:
-  friend class LifecycleLedger;
+private:
+  friend struct lifecycle_detail::Resolver;
   ResolvedLifecycleEvent(LifecycleRecordReference record,
                          std::vector<LifecycleRecordReference> lineage,
-                         const LifecycleRecord* reversed_record)
-      : record_(record),
-        lineage_(std::move(lineage)),
-        reversed_record_(reversed_record) {}
+                         const LifecycleRecord *reversed_record)
+      : record_(record), lineage_(std::move(lineage)), reversed_record_(reversed_record) {}
 
   LifecycleRecordReference record_;
   std::vector<LifecycleRecordReference> lineage_;
-  const LifecycleRecord* reversed_record_;
+  const LifecycleRecord *reversed_record_;
 };
 
 class LifecycleResolution {
- public:
-  [[nodiscard]] std::span<const ResolvedLifecycleChain> chains() const noexcept {
-    return chains_;
+public:
+  [[nodiscard]] const LifecycleEvaluationContext &evaluation_context() const noexcept {
+    return context_;
   }
+  [[nodiscard]] std::span<const ResolvedLifecycleChain> chains() const noexcept { return chains_; }
   [[nodiscard]] std::span<const ResolvedLifecycleEvent> active_events() const noexcept {
     return active_events_;
   }
 
- private:
-  friend class LifecycleLedger;
-  LifecycleResolution(std::vector<ResolvedLifecycleChain> chains,
+private:
+  friend struct lifecycle_detail::Resolver;
+  LifecycleResolution(LifecycleEvaluationContext context,
+                      std::vector<ResolvedLifecycleChain> chains,
                       std::vector<ResolvedLifecycleEvent> active_events)
-      : chains_(std::move(chains)), active_events_(std::move(active_events)) {}
+      : context_(context), chains_(std::move(chains)), active_events_(std::move(active_events)) {}
 
+  LifecycleEvaluationContext context_;
   std::vector<ResolvedLifecycleChain> chains_;
   std::vector<ResolvedLifecycleEvent> active_events_;
 };
+
+namespace lifecycle_detail {
+struct Resolver {
+  template <class FindRecord>
+  [[nodiscard]] static LifecycleResolution resolve(std::span<const LifecycleRecord> records,
+                                                   LifecycleEvaluationContext context,
+                                                   FindRecord find_record) {
+    struct WorkingChain {
+      std::vector<LifecycleRecordReference> lineage;
+    };
+
+    std::vector<WorkingChain> working;
+    std::unordered_map<std::string, std::size_t> chain_by_economic_id;
+    Activation activation{context};
+    for (const auto &record : records) {
+      if (!activation.includes(record))
+        continue;
+      const bool effective_void = activation.effective_void(record);
+      const auto &id = record.economic_event_id().value();
+      auto found = chain_by_economic_id.find(id);
+      if (found == chain_by_economic_id.end()) {
+        const auto index = working.size();
+        working.push_back(WorkingChain{{std::cref(record)}});
+        chain_by_economic_id.emplace(id, index);
+      } else {
+        auto &lineage = working[found->second].lineage;
+        if (effective_void) {
+          std::vector<LifecycleRecordReference> deferred_ancestors;
+          auto *ancestor =
+              record.causal_record_id() ? find_record(*record.causal_record_id()) : nullptr;
+          while (ancestor &&
+                 ancestor->acceptance_sequence() > lineage.back().get().acceptance_sequence()) {
+            deferred_ancestors.push_back(std::cref(*ancestor));
+            ancestor =
+                ancestor->causal_record_id() ? find_record(*ancestor->causal_record_id()) : nullptr;
+          }
+          for (auto it = deferred_ancestors.rbegin(); it != deferred_ancestors.rend(); ++it)
+            lineage.push_back(*it);
+        }
+        lineage.emplace_back(std::cref(record));
+      }
+    }
+
+    std::vector<ResolvedLifecycleChain> chains;
+    std::vector<ResolvedLifecycleEvent> active_events;
+    chains.reserve(working.size());
+    active_events.reserve(working.size());
+    for (auto &chain : working) {
+      const auto &head = chain.lineage.back().get();
+      const auto effective_at = head.effective_at();
+      if (head.action() != LifecycleAction::cancel && effective_at &&
+          *effective_at <= context.economic_as_of) {
+        const LifecycleRecord *reversed_record = nullptr;
+        if (head.reverses_record_id())
+          reversed_record = find_record(*head.reverses_record_id());
+        active_events.push_back(
+            ResolvedLifecycleEvent{std::cref(head), chain.lineage, reversed_record});
+      }
+      chains.push_back(ResolvedLifecycleChain{std::move(chain.lineage)});
+    }
+    std::sort(active_events.begin(), active_events.end(),
+              [](const ResolvedLifecycleEvent &lhs, const ResolvedLifecycleEvent &rhs) {
+                const auto left_time = lhs.record().effective_at();
+                const auto right_time = rhs.record().effective_at();
+                if (left_time != right_time)
+                  return left_time < right_time;
+                return lhs.record().acceptance_sequence() < rhs.record().acceptance_sequence();
+              });
+    return LifecycleResolution{context, std::move(chains), std::move(active_events)};
+  }
+  // The span is a validated acceptance-order prefix or self-contained suffix.
+  [[nodiscard]] static LifecycleResolution resolve(std::span<const LifecycleRecord> records,
+                                                   LifecycleEvaluationContext context) {
+    std::unordered_map<std::string_view, const LifecycleRecord *> index;
+    index.reserve(records.size());
+    for (const auto &record : records)
+      index.emplace(record.record_id().value(), &record);
+    return resolve(records, context, [&index](const EventId &id) -> const LifecycleRecord * {
+      const auto found = index.find(id.value());
+      return found == index.end() ? nullptr : found->second;
+    });
+  }
+};
+} // namespace lifecycle_detail
 
 // Owned, validated suffix bound to one in-memory prefix identity. An exact ledger
 // copy shares that prefix identity; any successful append invalidates old plans.
@@ -486,51 +719,36 @@ class LifecycleLedger {
       const auto candidate = pending_records.find(record.causal_record_id()->value());
       const auto& target = candidate != pending_records.end() ? *candidate->second
           : *find(*record.causal_record_id());
-      const auto target_key =
-          std::pair{target.recorded_at(), target.acceptance_sequence()};
-      const auto record_key =
-          std::pair{record.recorded_at(), record.acceptance_sequence()};
+      const auto target_key = std::pair{target.recorded_at(), target.acceptance_sequence()};
+      const auto record_key = std::pair{record.recorded_at(), record.acceptance_sequence()};
       if (target_key >= record_key) {
-        return std::unexpected(error(
-            LifecycleDiagnosticCategory::causal_reference_unavailable, record,
-            "causal target is not earlier in recorded and acceptance order"));
-      }
-      if (record.account() != target.account()) {
-        return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_account,
-                                     record,
-                                     "lifecycle relationship crosses accounts"));
+        return std::unexpected(
+            error(LifecycleDiagnosticCategory::causal_reference_unavailable, record,
+                  "causal target is not earlier in recorded and acceptance order"));
       }
       if (successor_index_.contains(target.record_id().value()) ||
           successors.contains(target.record_id().value())) {
-        return std::unexpected(error(
-            LifecycleDiagnosticCategory::conflicting_lifecycle_successor, record,
-            "causal target already has a lifecycle successor"));
+        return std::unexpected(error(LifecycleDiagnosticCategory::conflicting_lifecycle_successor,
+                                     record, "causal target already has a lifecycle successor"));
       }
-      if (const auto relationship_error = validate_relationship(record, target))
-        return std::unexpected(*relationship_error);
-      if (target.action() == LifecycleAction::cancel && record.action() == LifecycleAction::correct) {
-        if(!restoring && !pending_records.contains(target.record_id().value()))
+      const LifecycleRecord *original = nullptr;
+      if (target.action() == LifecycleAction::cancel &&
+          record.action() == LifecycleAction::correct) {
+        if (!restoring && !pending_records.contains(target.record_id().value()))
           return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-              record, "replacement must atomically include its dated void"));
-        const auto* original = target.causal_record_id() ? find(*target.causal_record_id()) : nullptr;
-        if (!original && target.causal_record_id()) {
-          const auto found = pending_records.find(target.causal_record_id()->value());
-          if (found != pending_records.end()) original = found->second;
+                                       record,
+                                       "replacement must atomically include its dated void"));
+        if (target.causal_record_id()) {
+          original = find(*target.causal_record_id());
+          if (!original) {
+            const auto found = pending_records.find(target.causal_record_id()->value());
+            if (found != pending_records.end())
+              original = found->second;
+          }
         }
-        if (!original || !original->event() || !record.event() ||
-            original->event()->index() != record.event()->index())
-          return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-              record, "replacement must retain the original event type"));
-        if (const auto* a = std::get_if<EquityTrade>(record.event())) {
-          const auto& b = std::get<EquityTrade>(*original->event());
-          if (a->instrument() != b.instrument() || a->quote_currency() != b.quote_currency())
-            return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                record, "replacement changed the trade natural key"));
-        } else if (std::get<CashMovement>(*record.event()).amount().currency() !=
-                   std::get<CashMovement>(*original->event()).amount().currency())
-          return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-              record, "replacement changed currency"));
       }
+      if (const auto invalid = lifecycle_detail::validate_relationship(record, target, original))
+        return std::unexpected(error(invalid->category, record, invalid->message));
       successors.emplace(target.record_id().value(), records_.size());
     }
 
@@ -605,84 +823,21 @@ class LifecycleLedger {
   // its retrospective correction semantics. Corrections (including linked
   // replacements) activate only after their recorded gate and any dated
   // predecessor gate. Undated cancellations use the same recorded gate.
-  [[nodiscard]] LifecycleResolution resolve(Timestamp recorded_through,
-                                            Timestamp economic_as_of,
+  [[nodiscard]] LifecycleResolution resolve(Timestamp recorded_through, Timestamp economic_as_of,
                                             Timestamp correction_recorded_through) const {
-    struct WorkingChain {
-      std::vector<LifecycleRecordReference> lineage;
-    };
-
-    std::vector<WorkingChain> working;
-    std::unordered_map<std::string, std::size_t> chain_by_economic_id;
-    std::set<std::string> gated;
-    for (const auto& record : records_) {
-      if (record.recorded_at() > recorded_through) continue;
-      const bool deferred_correction =
-          (record.action() == LifecycleAction::correct ||
-           (record.action() == LifecycleAction::cancel && !record.cancellation_at())) &&
-          record.recorded_at() > correction_recorded_through;
-      // A recognized dated void removes the economic identity even if a
-      // corrected target has not reached its recorded recognition boundary.
-      // The legacy two-cutoff resolver keeps its existing descendant gating.
-      const bool effective_void = record.cancellation_at() &&
-          *record.cancellation_at() <= economic_as_of && correction_recorded_through != Timestamp::max();
-      if ((record.cancellation_at() && *record.cancellation_at() > economic_as_of) ||
-          deferred_correction || (!effective_void && record.causal_record_id() && gated.contains(record.causal_record_id()->value()))) {
-        gated.insert(record.record_id().value()); continue;
-      }
-      const auto& id = record.economic_event_id().value();
-      auto found = chain_by_economic_id.find(id);
-      if (found == chain_by_economic_id.end()) {
-        const auto index = working.size();
-        working.push_back(WorkingChain{{std::cref(record)}});
-        chain_by_economic_id.emplace(id, index);
-      } else {
-        auto& lineage = working[found->second].lineage;
-        if (effective_void) {
-          std::vector<LifecycleRecordReference> deferred_ancestors;
-          auto* ancestor = record.causal_record_id() ? find(*record.causal_record_id()) : nullptr;
-          while (ancestor && ancestor->acceptance_sequence() > lineage.back().get().acceptance_sequence()) {
-            deferred_ancestors.push_back(std::cref(*ancestor));
-            ancestor = ancestor->causal_record_id() ? find(*ancestor->causal_record_id()) : nullptr;
-          }
-          for (auto it = deferred_ancestors.rbegin(); it != deferred_ancestors.rend(); ++it) lineage.push_back(*it);
-        }
-        lineage.emplace_back(std::cref(record));
-      }
-    }
-
-    std::vector<ResolvedLifecycleChain> chains;
-    std::vector<ResolvedLifecycleEvent> active_events;
-    chains.reserve(working.size());
-    active_events.reserve(working.size());
-    for (auto& chain : working) {
-      const auto& head = chain.lineage.back().get();
-      const auto effective_at = head.effective_at();
-      if (head.action() != LifecycleAction::cancel && effective_at &&
-          *effective_at <= economic_as_of) {
-        const LifecycleRecord* reversed_record = nullptr;
-        if (head.reverses_record_id()) reversed_record = find(*head.reverses_record_id());
-        active_events.push_back(
-            ResolvedLifecycleEvent{std::cref(head), chain.lineage, reversed_record});
-      }
-      chains.push_back(ResolvedLifecycleChain{std::move(chain.lineage)});
-    }
-    std::sort(active_events.begin(), active_events.end(),
-              [](const ResolvedLifecycleEvent& lhs,
-                 const ResolvedLifecycleEvent& rhs) {
-                const auto left_time = lhs.record().effective_at();
-                const auto right_time = rhs.record().effective_at();
-                if (left_time != right_time) return left_time < right_time;
-                return lhs.record().acceptance_sequence() <
-                       rhs.record().acceptance_sequence();
-              });
-    return LifecycleResolution{std::move(chains), std::move(active_events)};
+    return resolve(
+        LifecycleEvaluationContext{recorded_through, economic_as_of, correction_recorded_through});
   }
 
- private:
-  [[nodiscard]] static LifecycleError error(
-      LifecycleDiagnosticCategory category, const LifecycleRecordDraft& draft,
-      std::string message) {
+  [[nodiscard]] LifecycleResolution resolve(LifecycleEvaluationContext context) const {
+    return lifecycle_detail::Resolver::resolve(records_, context,
+                                               [this](const EventId &id) { return find(id); });
+  }
+
+private:
+  [[nodiscard]] static LifecycleError error(LifecycleDiagnosticCategory category,
+                                            const LifecycleRecordDraft &draft,
+                                            std::string message) {
     return LifecycleError{category, draft.record_id(), draft.causal_record_id(),
                           std::move(message)};
   }
@@ -719,91 +874,6 @@ class LifecycleLedger {
       }
       if (current && state[current->record_id().value()] == 1) return current;
       for (const auto* item : path) state[item->record_id().value()] = 2;
-    }
-    return std::nullopt;
-  }
-
-  [[nodiscard]] static bool exact_opposite(std::int64_t candidate,
-                                           std::int64_t target) noexcept {
-    if (target == std::numeric_limits<std::int64_t>::min()) return false;
-    return candidate == -target;
-  }
-
-  [[nodiscard]] static std::optional<LifecycleError> validate_relationship(
-      const LifecycleRecord& record, const LifecycleRecord& target) {
-    const bool replacement = record.action() == LifecycleAction::correct &&
-        target.action() == LifecycleAction::cancel && target.cancellation_at() &&
-        record.recorded_at() == target.recorded_at() &&
-        record.acceptance_sequence().value() == target.acceptance_sequence().value() + 1 &&
-        record.effective_at() && *record.effective_at() <= *target.cancellation_at();
-    if ((target.action() == LifecycleAction::cancel && !replacement) ||
-        target.action() == LifecycleAction::reverse) {
-      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                   record, "cancellations and reversals are terminal");
-    }
-
-    if (record.action() == LifecycleAction::correct ||
-        record.action() == LifecycleAction::cancel) {
-      if (record.economic_event_id() != target.economic_event_id()) {
-        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                     record,
-                     "correction or cancellation changed economic-event identity");
-      }
-    } else if (record.economic_event_id() == target.economic_event_id()) {
-      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                   record, "reversal must start a new economic-event identity");
-    }
-
-    if (record.action() == LifecycleAction::cancel) {
-      if (record.cancellation_at() && target.effective_at() &&
-          *record.cancellation_at() < *target.effective_at())
-        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                     record, "void cannot precede the target economic date");
-      return std::nullopt;
-    }
-    // The dated void and replacement share one economic identity. Payload
-    // validation against the original version occurs in prepare_batch below.
-    if (replacement) return std::nullopt;
-    if (!record.event() || !target.event() ||
-        record.event()->index() != target.event()->index()) {
-      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                   record, "lifecycle event types differ");
-    }
-
-    if (const auto* cash = std::get_if<CashMovement>(record.event())) {
-      const auto& target_cash = std::get<CashMovement>(*target.event());
-      if (cash->amount().currency() != target_cash.amount().currency()) {
-        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                     record, "cash relationship changes currency");
-      }
-      if (record.action() == LifecycleAction::reverse &&
-          !exact_opposite(cash->amount().scaled_value(),
-                          target_cash.amount().scaled_value())) {
-        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                     record, "cash reversal is not the exact offset");
-      }
-    } else {
-      const auto& trade = std::get<EquityTrade>(*record.event());
-      const auto& target_trade = std::get<EquityTrade>(*target.event());
-      if (trade.instrument() != target_trade.instrument() ||
-          trade.quote_currency() != target_trade.quote_currency()) {
-        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                     record, "equity relationship changes its natural key");
-      }
-      if (record.action() == LifecycleAction::reverse &&
-          (trade.charges().has_value() || target_trade.charges().has_value() ||
-          trade.price() != target_trade.price() ||
-           !exact_opposite(trade.quantity().scaled_value(),
-                           target_trade.quantity().scaled_value()))) {
-        return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                     record, "equity reversal does not exactly offset quantity and price");
-      }
-    }
-
-    if (record.action() == LifecycleAction::reverse &&
-        record.effective_at() < target.effective_at()) {
-      return error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                   record, "reversal economically predates its target");
     }
     return std::nullopt;
   }

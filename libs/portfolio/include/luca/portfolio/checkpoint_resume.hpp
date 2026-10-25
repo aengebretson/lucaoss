@@ -283,82 +283,6 @@ canonical_record_sequence_digest(std::span<const LifecycleRecord> records) {
   return {};
 }
 
-[[nodiscard]] inline bool exact_opposite(std::int64_t candidate, std::int64_t target) noexcept {
-  return target != std::numeric_limits<std::int64_t>::min() && candidate == -target;
-}
-
-[[nodiscard]] inline std::expected<void, CheckpointResumeError>
-verify_event_relationship(const LifecycleRecord &record, const LifecycleRecord &target) {
-  if (target.action() == LifecycleAction::cancel || target.action() == LifecycleAction::reverse) {
-    return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                   "cancellations and reversals are terminal lifecycle records");
-  }
-  if (record.account() != target.account()) {
-    return failure(CheckpointResumeDiagnosticCategory::incompatible_account,
-                   "lifecycle relationship crosses account identity");
-  }
-
-  if (record.action() == LifecycleAction::correct || record.action() == LifecycleAction::cancel) {
-    if (record.economic_event_id() != target.economic_event_id()) {
-      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                     "correction or cancellation changes economic-event identity");
-    }
-  } else if (record.action() != LifecycleAction::reverse) {
-    return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                   "an originating record must not have a causal target");
-  } else if (record.economic_event_id() == target.economic_event_id()) {
-    return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                   "reversal must start a distinct economic-event identity");
-  }
-
-  if (record.action() == LifecycleAction::cancel) {
-    if (record.cancellation_at() && target.effective_at() && *record.cancellation_at() < *target.effective_at())
-      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship, "void precedes target");
-    return {};
-  }
-  if (record.event() == nullptr || target.event() == nullptr ||
-      record.event()->index() != target.event()->index()) {
-    return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                   "lifecycle relationship changes event type");
-  }
-
-  if (const auto *cash = std::get_if<CashMovement>(record.event())) {
-    const auto &target_cash = std::get<CashMovement>(*target.event());
-    if (cash->amount().currency() != target_cash.amount().currency()) {
-      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                     "cash lifecycle relationship changes currency");
-    }
-    if (record.action() == LifecycleAction::reverse &&
-        !exact_opposite(cash->amount().scaled_value(), target_cash.amount().scaled_value())) {
-      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                     "cash reversal is not the exact offset");
-    }
-  } else {
-    const auto &trade = std::get<EquityTrade>(*record.event());
-    const auto &target_trade = std::get<EquityTrade>(*target.event());
-    if (trade.instrument() != target_trade.instrument() ||
-        trade.quote_currency() != target_trade.quote_currency()) {
-      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                     "equity lifecycle relationship changes its natural key");
-    }
-    if (record.action() == LifecycleAction::reverse &&
-        (trade.charges().has_value() || target_trade.charges().has_value() ||
-          trade.price() != target_trade.price() ||
-         !exact_opposite(trade.quantity().scaled_value(),
-                         target_trade.quantity().scaled_value()))) {
-      return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                     "equity reversal does not exactly offset quantity and price");
-    }
-  }
-
-  if (record.action() == LifecycleAction::reverse &&
-      record.effective_at() < target.effective_at()) {
-    return failure(CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
-                   "reversal economically predates its target");
-  }
-  return {};
-}
-
 [[nodiscard]] inline std::expected<void, CheckpointResumeError>
 verify_suffix_relationships(std::span<const LifecycleRecord> prefix,
                             std::span<const LifecycleRecord> suffix) {
@@ -419,8 +343,15 @@ verify_suffix_relationships(std::span<const LifecycleRecord> prefix,
         return failure(CheckpointResumeDiagnosticCategory::conflicting_lifecycle_successor,
                        "causal target has more than one lifecycle successor");
       }
-      if (auto valid = verify_event_relationship(record, *target->second); !valid)
-        return valid;
+      const auto *original = target->second->causal_record_id()
+                                 ? records.at(target->second->causal_record_id()->value())
+                                 : nullptr;
+      if (const auto invalid =
+              lifecycle_detail::validate_relationship(record, *target->second, original))
+        return failure(invalid->category == LifecycleDiagnosticCategory::incompatible_account
+                           ? CheckpointResumeDiagnosticCategory::incompatible_account
+                           : CheckpointResumeDiagnosticCategory::incompatible_event_relationship,
+                       invalid->message);
     }
     records.emplace(record.record_id().value(), &record);
   }
@@ -455,39 +386,24 @@ verify_manifest_lineage(const CheckpointManifest &manifest,
                    "manifest source lineage differs from the accepted prefix");
   }
 
-  std::unordered_map<std::string_view, const LifecycleRecord *> selected_heads;
-  for (const auto &record : prefix) {
-    if (record.recorded_at() <= manifest.evaluation_context().recorded_through() &&
-        (!record.cancellation_at() || *record.cancellation_at() <= manifest.evaluation_context().economic_as_of()))
-      selected_heads[record.economic_event_id().value()] = &record;
-  }
-  std::vector<const LifecycleRecord *> active;
-  active.reserve(selected_heads.size());
-  for (const auto &[economic_id, record] : selected_heads) {
-    static_cast<void>(economic_id);
-    if (record->action() != LifecycleAction::cancel && record->event() != nullptr &&
-        *record->effective_at() <= manifest.evaluation_context().economic_as_of())
-      active.push_back(record);
-  }
-  std::ranges::sort(active, [](const LifecycleRecord *left, const LifecycleRecord *right) {
-    return std::pair{*left->effective_at(), left->acceptance_sequence().value()} <
-           std::pair{*right->effective_at(), right->acceptance_sequence().value()};
-  });
-
+  const auto &context = manifest.evaluation_context();
+  const auto resolution = lifecycle_detail::Resolver::resolve(
+      prefix, {context.recorded_through(), context.economic_as_of()});
+  const auto active = resolution.active_events();
   const auto active_ids = manifest.lineage().active_record_ids();
   if (active.empty() || active.size() != active_ids.size()) {
     return failure(CheckpointResumeDiagnosticCategory::incompatible_prefix,
                    "manifest active lineage differs from the context-selected prefix");
   }
   for (std::size_t index = 0; index < active.size(); ++index) {
-    if (active[index]->record_id() != active_ids[index]) {
+    if (active[index].record().record_id() != active_ids[index]) {
       return failure(CheckpointResumeDiagnosticCategory::incompatible_prefix,
                      "manifest active lineage is not the resolved prefix lineage");
     }
   }
 
   const auto &watermark = manifest.resolved_event_watermark();
-  const auto *last = active.back();
+  const auto *last = &active.back().record();
   if (watermark.record_id() != last->record_id() ||
       watermark.acceptance_sequence() != last->acceptance_sequence().value() ||
       watermark.effective_at() != *last->effective_at()) {

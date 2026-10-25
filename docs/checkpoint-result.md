@@ -52,6 +52,15 @@ reversal retains its target and adds its own terminal economic event. Prefix
 changes require full replay or an earlier compatible checkpoint. Advancing
 knowledge, economic or settlement cutoffs remains incompatible.
 
+Continuation now seeds the same checked accumulators used by ordinary and
+lifecycle replay. It resolves the validated suffix directly, without rebuilding
+suffix or per-event ledgers, and finishes sparse output once. Event valuation
+errors still precede aggregate overflow checks; intermediate overflow cannot be
+offset by a later event. Compatibility and full replay share lifecycle selection
+and relationship rules, including linked dated voids/replacements before and at
+their activation boundary. A dated suffix relationship remains subject to the
+existing restriction against targeting checkpoint-prefix knowledge.
+
 ## Evidence construction
 
 After the existing application succeeds, the helper reconstitutes the full
@@ -117,9 +126,10 @@ intermediate overflow, construction errors and input immutability.
 [Portable cases](../tests/conformance/checkpoint-result/README.md) declare
 synthetic inputs and expected state/lineage independently of storage and hosts.
 
-The standalone project compiles the consumer and unit checks without root
-custom build commands. Execution of tests, examples and conformance checks is
-paused: successful compilation is not acceptance evidence. Root CMake test
-registration and any umbrella-header inclusion are coordinator integration
-work; the direct public header is immediately usable. There are no new
-external dependencies, financial schema changes or deployment requirements.
+The root build registers the checkpoint unit suites. The dated replacement
+regression consumes the portable columns in
+`tests/conformance/checkpoint-dated-replacement/cases.tsv`: year, month, day,
+hour (UTC), expected selected record ID and exact cash amount. It checks both
+prefix- and suffix-local amendments against full replay before activation and at
+the inclusive activation boundary. There are no new external dependencies,
+financial schema changes or deployment requirements.

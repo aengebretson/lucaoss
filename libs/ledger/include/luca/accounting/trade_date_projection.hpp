@@ -325,7 +325,7 @@ append_entry(std::vector<PendingEntry> &pending, JournalEntry entry,
 
 // Projects the ordered active set selected by LifecycleLedger::resolve under
 // the one concrete fixture.trade-date.v1 policy. The supplied cutoffs are
-// recorded in the result and checked against every selected lifecycle record;
+// required to match resolution, recorded in the result and checked against every selected record;
 // the function performs no lifecycle selection and no I/O.
 [[nodiscard]] inline std::expected<TradeDateProjectionResult, TradeDateProjectionError>
 project_trade_date_journals(const LifecycleResolution &resolution,
@@ -506,6 +506,12 @@ project_trade_date_journals(const LifecycleResolution &resolution,
   entries.reserve(pending.size());
   for (auto &pending_entry : pending)
     entries.push_back(std::move(pending_entry.entry));
+
+  const auto &selected_context = resolution.evaluation_context();
+  if (selected_context.recorded_through != context.recorded_through ||
+      selected_context.economic_as_of != context.economic_as_of)
+    return std::unexpected(error(TradeDateProjectionDiagnosticCategory::invalid_context,
+                                 "journal cutoffs must match lifecycle resolution"));
 
   return TradeDateProjectionResult{std::move(*policy),
                                    context,

@@ -158,14 +158,9 @@ project_selected(const LifecycleLedger &ledger, std::span<const ResolvedPolicy> 
         for (const auto &r : chain.lineage())
           economic_history[r.get().economic_event_id().value()].push_back(&r.get());
     } else {
-      std::set<std::string> gated_history;
-      for (const auto& r:ledger.records())
-        if ((r.cancellation_at() && *r.cancellation_at()>context.economic_as_of) ||
-            (r.causal_record_id() && gated_history.contains(r.causal_record_id()->value())))
-          gated_history.insert(r.record_id().value());
+      lifecycle_detail::Activation activation{{context.recorded_through, context.economic_as_of}};
       for (const auto &r : ledger.records())
-        if (!gated_history.contains(r.record_id().value()) && r.recorded_at() <= context.recorded_through &&
-            (!r.cancellation_at() || *r.cancellation_at() <= context.economic_as_of))
+        if (activation.includes(r))
           economic_history[r.economic_event_id().value()].push_back(&r);
     }
     std::map<std::string, std::vector<const LotRelief *>> reliefs_by_close;

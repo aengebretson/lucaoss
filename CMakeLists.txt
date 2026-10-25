@@ -274,6 +274,8 @@ if(LUCA_BUILD_TESTS)
 
   add_executable(pacioli_checkpoint_result_test tests/unit/checkpoint_result_test.cpp)
   target_link_libraries(pacioli_checkpoint_result_test PRIVATE luca::portfolio)
+  target_compile_definitions(pacioli_checkpoint_result_test PRIVATE
+    LUCA_DATED_CHECKPOINT_CASES="${CMAKE_CURRENT_SOURCE_DIR}/tests/conformance/checkpoint-dated-replacement/cases.tsv")
   add_test(NAME pacioli_checkpoint_result_test COMMAND pacioli_checkpoint_result_test)
 
   add_executable(pacioli_settlement_date_projection_test

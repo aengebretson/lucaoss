@@ -119,6 +119,16 @@ int main() {
   const auto short_exact = observation("fund-a", "AAPL", quantity("-100"));
   assert(reconcile_positions(std::span{&short_expected, 1}, std::span{&short_exact, 1},
                              {as_of})->empty());
+  const std::vector<Position> duplicate_expected{short_expected, short_expected};
+  const auto duplicate_projection =
+      reconcile_positions(duplicate_expected, std::span{&short_exact, 1}, {as_of});
+  assert(!duplicate_projection &&
+         duplicate_projection.error() == PositionReconciliationError::duplicate_projected_key);
+  const auto duplicate_without_observations = reconcile_positions(duplicate_expected, {}, {as_of});
+  assert(!duplicate_without_observations &&
+         duplicate_without_observations.error() ==
+             PositionReconciliationError::duplicate_projected_key);
+
   const auto short_observed = observation("fund-a", "AAPL", quantity("-90"));
   const auto short_break = reconcile_positions(
       std::span{&short_expected, 1}, std::span{&short_observed, 1}, {as_of});

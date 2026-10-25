@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <expected>
+#include <fstream>
 #include <limits>
 #include <optional>
 #include <ranges>
@@ -596,6 +597,69 @@ void economic_order_and_source_order_are_explicit() {
   check(result.manifest.resolved_event_watermark().acceptance_sequence() == 4);
 }
 
+void dated_replacement_checkpoint_conformance() {
+  std::ifstream cases{LUCA_DATED_CHECKPOINT_CASES};
+  check(cases.good());
+  int year;
+  unsigned month, day, hour;
+  std::string active_id, amount;
+  std::size_t count = 0;
+  while (cases >> year >> month >> day >> hour >> active_id >> amount) {
+    ++count;
+    const auto evaluation = require(CheckpointEvaluationContext::create(
+        context().recorded_through(), timestamp(year, month, day, std::chrono::hours{hour}),
+        context().settlement_as_of_date()));
+    for (const bool amendments_in_prefix : {true, false}) {
+      LifecycleLedger ledger;
+      append_prefix(ledger);
+      const auto append_amendments = [&] {
+        accept(ledger, LifecycleRecordDraft::originate(
+                           EconomicEventId{"dated-economic"}, timestamp(2026, 1, 3, 10h),
+                           cash_event("dated-original", "acct-main", timestamp(2026, 1, 3, 9h),
+                                      "10", "dated-source")));
+        const auto recorded = timestamp(2026, 1, 4, 10h);
+        const std::array amendments{
+            LifecycleRecordDraft::cancel(EventId{"dated-void"}, EconomicEventId{"dated-economic"},
+                                         EventId{"dated-original"}, AccountId{"acct-main"},
+                                         recorded, provenance("void-source"),
+                                         timestamp(2026, 2, 1, 0h)),
+            LifecycleRecordDraft::correct(
+                EconomicEventId{"dated-economic"}, EventId{"dated-void"}, recorded,
+                cash_event("dated-replacement", "acct-main", timestamp(2026, 1, 3, 9h), "20",
+                           "replacement-source"))};
+        require(ledger.accept_batch(amendments));
+      };
+      if (amendments_in_prefix)
+        append_amendments();
+      const auto state = project_state(ledger, evaluation);
+      const auto manifest = make_manifest(ledger, state, evaluation);
+      const auto request = make_request(manifest);
+      const auto prefix_size = ledger.size();
+      if (!amendments_in_prefix)
+        append_amendments();
+      else
+        accept(ledger, LifecycleRecordDraft::originate(
+                           EconomicEventId{"after-dated-economic"}, timestamp(2026, 1, 5, 10h),
+                           cash_event("after-dated", "acct-main", timestamp(2026, 1, 5, 9h), "5",
+                                      "after-source")));
+      const auto result = require(apply_checkpoint_suffix_with_manifest(
+          request, manifest, state, ledger.records().first(prefix_size),
+          ledger.records().subspan(prefix_size)));
+      verify_evidence(result, ledger, manifest);
+      const auto resolution =
+          ledger.resolve(evaluation.recorded_through(), evaluation.economic_as_of());
+      const auto selected = std::ranges::find_if(resolution.active_events(), [&](const auto &e) {
+        return e.record().economic_event_id() == EconomicEventId{"dated-economic"};
+      });
+      check(selected != resolution.active_events().end());
+      check(selected->record().record_id() == EventId{active_id});
+      check(std::get<CashMovement>(selected->event()).amount() ==
+            require(Money::parse(amount, currency("USD"))));
+    }
+  }
+  check(cases.eof() && count == 2);
+}
+
 void factory_failure_retains_its_diagnostic() {
   auto fixture = ordinary_fixture();
   // UTF-8 decomposed e + acute is accepted by the event value, but v1
@@ -616,6 +680,7 @@ void factory_failure_retains_its_diagnostic() {
 } // namespace
 
 int main() {
+  dated_replacement_checkpoint_conformance();
   full_replay_and_multiple_continuations();
   context_selection_and_watermark_are_not_last_acceptance();
   explicit_context_inputs_are_preserved();

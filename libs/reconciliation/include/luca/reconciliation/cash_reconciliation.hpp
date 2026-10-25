@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -32,6 +33,8 @@ enum class CashReconciliationError {
   observation_time_mismatch,
   observation_settlement_date_mismatch,
   amount_overflow,
+  duplicate_projected_key,
+  invalid_context,
 };
 
 class CashBreak {
@@ -108,6 +111,8 @@ struct CashReconciliationKeyHash {
 reconcile_cash(std::span<const CashBalance> expected,
                std::span<const CashObservation> observed,
                CashReconciliationContext context) {
+  if (!context.settlement_as_of_date.ok())
+    return std::unexpected(CashReconciliationError::invalid_context);
   std::unordered_map<CashKey, std::size_t, detail::CashReconciliationKeyHash>
       observation_index;
   observation_index.reserve(observed.size());
@@ -122,6 +127,12 @@ reconcile_cash(std::span<const CashBalance> expected,
     if (!observation_index.emplace(observed[index].key(), index).second)
       return std::unexpected(CashReconciliationError::duplicate_observation);
   }
+
+  std::unordered_set<CashKey, detail::CashReconciliationKeyHash> projected_keys;
+  projected_keys.reserve(expected.size());
+  for (const auto &row : expected)
+    if (!projected_keys.insert(row.key()).second)
+      return std::unexpected(CashReconciliationError::duplicate_projected_key);
 
   std::vector<bool> seen(observed.size());
   std::vector<CashBreak> breaks;

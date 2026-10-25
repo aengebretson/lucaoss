@@ -252,6 +252,36 @@ evaluation rules. This is a reviewable design contract, not an implemented publi
 API; its supported two-cutoff evaluation is intentionally narrower than general
 bitemporal querying.
 
+### Shared lifecycle and projection contracts
+
+Lifecycle admission and checkpoint compatibility use one relationship validator,
+including atomic dated void/replacement rules. Resolution, checkpoint lineage,
+settlement admission and equity accounting share the same activation rules.
+Checkpoint lineage is selected by the lifecycle resolver rather than independently
+reconstructing active heads. A void scheduled after the economic cutoff also gates
+its linked replacement; the original remains selected until that boundary.
+
+`LifecycleLedger::resolve(LifecycleEvaluationContext)` provides named recorded,
+economic and optional correction-recognition cutoffs. The positional overloads
+remain supported. `LifecycleResolution::evaluation_context()` retains those
+cutoffs alongside its borrowed records; ledger mutation can still invalidate the
+references. Journal contexts must match both recorded and economic selection.
+`project_lifecycle(resolution, SettlementDate)` derives the economic cutoff from
+the resolution. The compatibility context overload rejects a changed economic
+cutoff. Cash and settlement projections and cash reconciliation reject invalid
+calendar dates, including on empty input. Settlement eligibility remains explicit
+and independent of economic selection.
+
+Ordinary replay, lifecycle replay and checkpoint continuation reuse the same
+checked position, cash and obligation transitions. Lifecycle replay consumes its
+ordered active events directly. Continuation seeds each accumulator once from the
+verified checkpoint and applies the selected suffix in order, then emits sorted
+sparse output once. Intermediate overflow, per-event valuation/rounding and
+independent projection diagnostics are preserved. Checkpoint continuation still
+rejects lifecycle changes targeting the prefix and context changes requiring
+replay. Position and cash reconciliation reject duplicate projected keys rather
+than comparing multiple expected rows with one observation.
+
 ## Incremental state and snapshots
 
 Pure event replay from inception is correct but can become impractical at scale. LUCA should support both full replay and versioned state checkpoints.
