@@ -726,18 +726,9 @@ class LifecycleLedger {
             error(LifecycleDiagnosticCategory::causal_reference_unavailable, record,
                   "causal target is not earlier in recorded and acceptance order"));
       }
-      if (successor_index_.contains(target.record_id().value()) ||
-          successors.contains(target.record_id().value())) {
-        return std::unexpected(error(LifecycleDiagnosticCategory::conflicting_lifecycle_successor,
-                                     record, "causal target already has a lifecycle successor"));
-      }
       const LifecycleRecord *original = nullptr;
       if (target.action() == LifecycleAction::cancel &&
           record.action() == LifecycleAction::correct) {
-        if (!restoring && !pending_records.contains(target.record_id().value()))
-          return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
-                                       record,
-                                       "replacement must atomically include its dated void"));
         if (target.causal_record_id()) {
           original = find(*target.causal_record_id());
           if (!original) {
@@ -747,7 +738,21 @@ class LifecycleLedger {
           }
         }
       }
-      if (const auto invalid = lifecycle_detail::validate_relationship(record, target, original))
+      const auto invalid = lifecycle_detail::validate_relationship(record, target, original);
+      if (invalid && invalid->category == LifecycleDiagnosticCategory::incompatible_account)
+        return std::unexpected(error(invalid->category, record, invalid->message));
+      if (successor_index_.contains(target.record_id().value()) ||
+          successors.contains(target.record_id().value())) {
+        return std::unexpected(error(LifecycleDiagnosticCategory::conflicting_lifecycle_successor,
+                                     record, "causal target already has a lifecycle successor"));
+      }
+      if (target.action() == LifecycleAction::cancel &&
+          record.action() == LifecycleAction::correct && !restoring &&
+          !pending_records.contains(target.record_id().value()))
+        return std::unexpected(error(LifecycleDiagnosticCategory::incompatible_event_relationship,
+                                     record,
+                                     "replacement must atomically include its dated void"));
+      if (invalid)
         return std::unexpected(error(invalid->category, record, invalid->message));
       successors.emplace(target.record_id().value(), records_.size());
     }

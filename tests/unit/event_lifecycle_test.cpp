@@ -384,6 +384,28 @@ void stable_causal_diagnostics() {
     expect_error(result,
                  LifecycleDiagnosticCategory::conflicting_lifecycle_successor,
                  "cash-cancel");
+    const auto cross_account = ledger.accept(LifecycleRecordDraft::cancel(
+        EventId{"cross-account-cancel"}, EconomicEventId{"cash-economic"},
+        EventId{"cash-v1"}, AccountId{"fund-b"}, recorded + 2ns,
+        provenance("source-c")));
+    expect_error(cross_account, LifecycleDiagnosticCategory::incompatible_account,
+                 "cross-account-cancel");
+    assert(ledger.size() == 2);
+  }
+  {
+    LifecycleLedger ledger;
+    accept_successfully(ledger, LifecycleRecordDraft::originate(
+        EconomicEventId{"cash-economic"}, recorded,
+        cash("cash-v1", "fund-a", effective, "10", "source-a")));
+    accept_successfully(ledger, LifecycleRecordDraft::cancel(
+        EventId{"cash-void"}, EconomicEventId{"cash-economic"},
+        EventId{"cash-v1"}, AccountId{"fund-a"}, recorded + 1ns,
+        provenance("source-b")));
+    const auto result = ledger.accept(LifecycleRecordDraft::correct(
+        EconomicEventId{"cash-economic"}, EventId{"cash-void"}, recorded + 2ns,
+        cash("cross-account-replacement", "fund-b", effective, "12", "source-c")));
+    expect_error(result, LifecycleDiagnosticCategory::incompatible_account,
+                 "cross-account-replacement");
     assert(ledger.size() == 2);
   }
 }
