@@ -68,6 +68,17 @@ int main() {
   assert(reconcile_cash(std::span{&expected, 1}, std::span{&exact, 1}, context)
              ->empty());
 
+  const std::vector<CashBalance> duplicate_expected{expected, expected};
+  const auto duplicate_projection =
+      reconcile_cash(duplicate_expected, std::span{&exact, 1}, context);
+  assert(!duplicate_projection &&
+         duplicate_projection.error() == CashReconciliationError::duplicate_projected_key);
+  const auto duplicate_without_observations = reconcile_cash(duplicate_expected, {}, context);
+  assert(!duplicate_without_observations && duplicate_without_observations.error() ==
+                                                CashReconciliationError::duplicate_projected_key);
+  const auto invalid_context = reconcile_cash({}, {}, {as_of, std::chrono::year{2026} / 2 / 30});
+  assert(!invalid_context && invalid_context.error() == CashReconciliationError::invalid_context);
+
   const auto mismatch =
       observation("fund-a", "999950", usd, as_of, settlement_as_of, "mismatch");
   const auto mismatch_result =

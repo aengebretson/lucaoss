@@ -66,6 +66,8 @@ int main() {
   static_assert(std::is_same_v<decltype(std::declval<const CashBalance&>().amount()), Money>);
 
   Ledger empty;
+  const auto invalid_context = project_cash(empty.entries(), {t3, date(2, 30)});
+  assert(!invalid_context && invalid_context.error() == CashProjectionError::invalid_context);
   assert(project_cash(empty.entries(), CashProjectionContext{
       .as_of = t3,
       .settlement_as_of_date = date(12, 31)})->empty());

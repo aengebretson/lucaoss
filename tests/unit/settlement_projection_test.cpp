@@ -51,6 +51,8 @@ void expect_one(const std::expected<std::vector<SettlementObligation>,
 
 int main() {
   Ledger empty;
+  const auto invalid_context = project_settlement_obligations(empty.entries(), {t3, date(2, 30)});
+  assert(!invalid_context && invalid_context.error() == SettlementProjectionError::invalid_context);
   assert(project_settlement_obligations(empty.entries(), context(t3, 1, 1))->empty());
 
   Ledger cash;

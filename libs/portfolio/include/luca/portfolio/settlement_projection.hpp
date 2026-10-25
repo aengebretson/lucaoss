@@ -7,6 +7,7 @@
 #include <chrono>
 #include <concepts>
 #include <expected>
+#include <optional>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -15,20 +16,76 @@
 
 namespace luca {
 
-enum class SettlementProjectionError { valuation_overflow, amount_overflow };
+enum class SettlementProjectionError {
+  valuation_overflow,
+  amount_overflow,
+  invalid_context,
+  context_mismatch
+};
 
 struct SettlementProjectionContext {
   Timestamp as_of;
   std::chrono::year_month_day settlement_as_of_date;
 };
 
-// Open obligations are positive magnitudes. Economic selection and ordering are
-// delegated to the ledger; results are sorted explicitly for public output.
-[[nodiscard]] inline
-std::expected<std::vector<SettlementObligation>, SettlementProjectionError>
-project_settlement_obligations(std::span<const LedgerEntry> entries,
-                               SettlementProjectionContext context) {
-  const auto ordered = economic_entries_through(entries, context.as_of);
+namespace portfolio_detail {
+class SettlementFold {
+public:
+  explicit SettlementFold(SettlementDate date, std::span<const SettlementObligation> initial = {})
+      : date_(date) {
+    for (const auto &row : initial)
+      amounts_.emplace(row.key(), row.amount());
+  }
+  [[nodiscard]] std::expected<std::optional<SettlementObligation>, SettlementProjectionError>
+  change(const EconomicEvent &event) const {
+    const auto *trade = std::get_if<EquityTrade>(&event);
+    if (!trade || trade->settlement_date() <= date_)
+      return std::nullopt;
+    const auto cash = trade_cash(*trade);
+    if (!cash)
+      return std::unexpected(SettlementProjectionError::valuation_overflow);
+    const auto direction =
+        cash->scaled_value() < 0 ? SettlementDirection::payable : SettlementDirection::receivable;
+    auto magnitude = *cash;
+    if (magnitude.scaled_value() < 0) {
+      const auto positive = Money::from_scaled(0, magnitude.currency()).subtract(magnitude);
+      if (!positive)
+        return std::unexpected(SettlementProjectionError::valuation_overflow);
+      magnitude = *positive;
+    }
+    return SettlementObligation{trade->header().account(), trade->settlement_date(), direction,
+                                magnitude};
+  }
+  [[nodiscard]] std::expected<void, SettlementProjectionError> apply(const EconomicEvent &event) {
+    const auto obligation = change(event);
+    if (!obligation)
+      return std::unexpected(obligation.error());
+    return *obligation ? add(**obligation) : std::expected<void, SettlementProjectionError>{};
+  }
+  [[nodiscard]] std::expected<void, SettlementProjectionError>
+  add(const SettlementObligation &row) {
+    const auto &key = row.key();
+    const auto magnitude = row.amount();
+    const auto [existing, inserted] = amounts_.try_emplace(key, magnitude);
+    if (inserted)
+      return {};
+    const auto sum = existing->second.add(magnitude);
+    if (!sum)
+      return std::unexpected(SettlementProjectionError::amount_overflow);
+    existing->second = *sum;
+    return {};
+  }
+  [[nodiscard]] std::vector<SettlementObligation> finish() const {
+    std::vector<SettlementObligation> obligations;
+    obligations.reserve(amounts_.size());
+    for (const auto &[key, amount] : amounts_)
+      if (amount.scaled_value() != 0)
+        obligations.emplace_back(key.account(), key.settlement_date(), key.direction(), amount);
+    std::ranges::sort(obligations, {}, &SettlementObligation::key);
+    return obligations;
+  }
+
+private:
   struct KeyHash {
     std::size_t operator()(const SettlementObligationKey& key) const noexcept {
       auto seed = std::hash<std::string>{}(key.account().value());
@@ -42,60 +99,23 @@ project_settlement_obligations(std::span<const LedgerEntry> entries,
       return seed;
     }
   };
-  std::unordered_map<SettlementObligationKey, Money, KeyHash> amounts;
+  SettlementDate date_;
+  std::unordered_map<SettlementObligationKey, Money, KeyHash> amounts_;
+};
+} // namespace portfolio_detail
 
-  for (const auto entry : ordered) {
-    const auto result = std::visit(
-        [&amounts, context](const auto& event)
-            -> std::expected<void, SettlementProjectionError> {
-          using Event = std::remove_cvref_t<decltype(event)>;
-          if constexpr (std::same_as<Event, EquityTrade>) {
-            if (event.settlement_date().value() <= context.settlement_as_of_date)
-              return {};
-
-            const auto gross = trade_cash(event);
-            if (!gross)
-              return std::unexpected(SettlementProjectionError::valuation_overflow);
-
-            const auto direction = gross->scaled_value() < 0
-                                       ? SettlementDirection::payable
-                                       : SettlementDirection::receivable;
-            Money magnitude = *gross;
-            if (magnitude.scaled_value() < 0) {
-              const auto positive = Money::from_scaled(0, magnitude.currency())
-                                        .subtract(magnitude);
-              if (!positive)
-                return std::unexpected(SettlementProjectionError::valuation_overflow);
-              magnitude = *positive;
-            }
-
-            SettlementObligationKey key{event.header().account(),
-                                        event.settlement_date(),
-                                        event.quote_currency(), direction};
-            const auto existing = amounts.find(key);
-            if (existing == amounts.end()) {
-              amounts.emplace(std::move(key), magnitude);
-            } else {
-              const auto sum = existing->second.add(magnitude);
-              if (!sum)
-                return std::unexpected(SettlementProjectionError::amount_overflow);
-              existing->second = *sum;
-            }
-          }
-          return {};
-        }, entry.get().event());
-    if (!result) return std::unexpected(result.error());
-  }
-
-  std::vector<SettlementObligation> obligations;
-  obligations.reserve(amounts.size());
-  for (const auto& [key, amount] : amounts)
-    if (amount.scaled_value() != 0)
-      obligations.emplace_back(key.account(), key.settlement_date(), key.direction(), amount);
-  std::sort(obligations.begin(), obligations.end(), [](const auto& lhs, const auto& rhs) {
-    return lhs.key() < rhs.key();
-  });
-  return obligations;
+// Open obligations are positive magnitudes, ordered by their public keys.
+[[nodiscard]] inline std::expected<std::vector<SettlementObligation>, SettlementProjectionError>
+project_settlement_obligations(std::span<const LedgerEntry> entries,
+                               SettlementProjectionContext context) {
+  const auto date = SettlementDate::create(context.settlement_as_of_date);
+  if (!date)
+    return std::unexpected(SettlementProjectionError::invalid_context);
+  portfolio_detail::SettlementFold fold{*date};
+  for (const auto entry : economic_entries_through(entries, context.as_of))
+    if (auto applied = fold.apply(entry.get().event()); !applied)
+      return std::unexpected(applied.error());
+  return fold.finish();
 }
 
-}  // namespace luca
+} // namespace luca

@@ -14,6 +14,7 @@
 #include <variant>
 #include <vector>
 
+#include "luca/accounting/settlement_date_projection.hpp"
 #include "luca/portfolio.hpp"
 
 using namespace luca;
@@ -289,6 +290,95 @@ void deterministic_across_acceptance_paths() {
   expect_cash(individual, "32");
 }
 
+void ordinary_and_lifecycle_replay_agree() {
+  Ledger ordinary;
+  LifecycleLedger lifecycle;
+  const auto eur = *Currency::from_code("EUR");
+  for (int i = 0; i < 120; ++i) {
+    const auto id = "differential-" + std::to_string(i);
+    const auto denomination = i % 2 ? usd : eur;
+    const Timestamp effective{nanoseconds{(i * 17) % 11}};
+    const Timestamp recorded{nanoseconds{100 + i}};
+    const auto h = *EventHeader::create(EventId{id}, AccountId{i % 3 ? "fund-a" : "fund-b"},
+                                        effective, provenance(id.c_str()));
+    const EconomicEvent event = [&]() -> EconomicEvent {
+      if (i % 4 == 0)
+        return CashMovement::create(h,
+                                    Money::from_scaled((i % 8 ? -1 : 1) * (i + 1), denomination));
+      return *EquityTrade::create(h, InstrumentId{i % 5 ? "AAPL" : "MSFT"},
+                                  Quantity::from_scaled((i % 2 ? -1 : 1) * 100000000),
+                                  Price::from_scaled(123456789 + i), denomination,
+                                  *SettlementDate::create(date(1, i % 3 + 1)),
+                                  TradeCharges{{id, "commission", "broker", "", "reported",
+                                                Money::from_scaled(1, denomination)}});
+    }();
+    assert(ordinary.append(event));
+    accept(lifecycle, LifecycleRecordDraft::originate(EconomicEventId{id}, recorded, event));
+  }
+  for (const auto cutoff : {Timestamp{0ns}, Timestamp{5ns}, Timestamp{10ns}})
+    for (const unsigned day : {1U, 2U, 3U}) {
+      const auto settlement = date(1, day);
+      const auto resolution = lifecycle.resolve({Timestamp::max(), cutoff});
+      const auto actual = project_lifecycle(resolution, *SettlementDate::create(settlement));
+      assert(actual.positions == project_positions(ordinary.entries(), cutoff));
+      assert(actual.settled_cash == project_cash(ordinary.entries(), {cutoff, settlement}));
+      assert(actual.open_settlement_obligations ==
+             project_settlement_obligations(ordinary.entries(), {cutoff, settlement}));
+    }
+}
+
+void journal_context_is_bound_to_resolution() {
+  const LifecycleLedger empty;
+  const auto resolution = empty.resolve({Timestamp{8h}, Timestamp{4h}});
+  // Empty active sets cannot reveal missing inputs by inspecting events alone.
+  for (const auto economic : {Timestamp{3h}, Timestamp{4h}, Timestamp{5h}})
+    for (const auto known : {Timestamp{7h}, Timestamp{8h}, Timestamp{9h}}) {
+      if (economic == Timestamp{4h} && known == Timestamp{8h})
+        continue;
+      const auto trade_date =
+          project_trade_date_journals(resolution, {known, economic, date(1, 1)});
+      const auto settlement_date =
+          project_settlement_date_journals(resolution, {known, economic, date(1, 1)});
+      assert(!trade_date && trade_date.error().category() ==
+                                TradeDateProjectionDiagnosticCategory::invalid_context);
+      assert(!settlement_date && settlement_date.error().category() ==
+                                     SettlementDateProjectionDiagnosticCategory::invalid_context);
+    }
+}
+
+void incompatible_context_is_rejected() {
+  LifecycleLedger ledger;
+  accept(ledger, LifecycleRecordDraft::originate(
+                     EconomicEventId{"context-economic"}, Timestamp{8h},
+                     cash("context-record", Timestamp{4h}, "10", "context-source")));
+  const auto resolution = ledger.resolve(LifecycleEvaluationContext{
+      .recorded_through = Timestamp{8h}, .economic_as_of = Timestamp{4h}});
+  assert(resolution.evaluation_context().recorded_through == Timestamp{8h});
+  assert(resolution.evaluation_context().economic_as_of == Timestamp{4h});
+  const auto derived_context = project_lifecycle(resolution, *SettlementDate::create(date(1, 1)));
+  const auto explicit_context = project(resolution, Timestamp{4h}, date(1, 1));
+  assert(derived_context.positions == explicit_context.positions);
+  assert(derived_context.settled_cash == explicit_context.settled_cash);
+  assert(derived_context.open_settlement_obligations ==
+         explicit_context.open_settlement_obligations);
+  for (const auto cutoff : {Timestamp{3h}, Timestamp{5h}}) {
+    const auto result = project(resolution, cutoff, date(1, 1));
+    assert(!result.positions &&
+           result.positions.error() == PositionProjectionError::context_mismatch);
+    assert(!result.settled_cash &&
+           result.settled_cash.error() == CashProjectionError::context_mismatch);
+    assert(!result.open_settlement_obligations && result.open_settlement_obligations.error() ==
+                                                      SettlementProjectionError::context_mismatch);
+  }
+  const auto invalid_date = project(resolution, Timestamp{4h}, date(2, 30));
+  assert(invalid_date.positions && invalid_date.positions->empty());
+  assert(!invalid_date.settled_cash &&
+         invalid_date.settled_cash.error() == CashProjectionError::invalid_context);
+  assert(!invalid_date.open_settlement_obligations &&
+         invalid_date.open_settlement_obligations.error() ==
+             SettlementProjectionError::invalid_context);
+}
+
 void projection_errors_remain_exact() {
   constexpr Timestamp effective_at{4h};
   constexpr Timestamp recorded_at{8h};
@@ -360,6 +450,9 @@ int main() {
       std::is_same_v<decltype(LifecycleProjectionResult::open_settlement_obligations),
                      std::expected<std::vector<SettlementObligation>, SettlementProjectionError>>);
 
+  ordinary_and_lifecycle_replay_agree();
+  journal_context_is_bound_to_resolution();
+  incompatible_context_is_rejected();
   late_cash_correction_and_cancellation();
   equity_correction_and_reversal();
   deterministic_across_acceptance_paths();

@@ -9,6 +9,7 @@
 #include <span>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -28,6 +29,7 @@ enum class PositionReconciliationError {
   duplicate_observation,
   observation_time_mismatch,
   quantity_overflow,
+  duplicate_projected_key,
 };
 
 class PositionBreak {
@@ -106,6 +108,12 @@ reconcile_positions(std::span<const Position> expected,
     if (!observation_index.emplace(observed[index].key(), index).second)
       return std::unexpected(PositionReconciliationError::duplicate_observation);
   }
+
+  std::unordered_set<PositionKey, detail::PositionKeyHash> projected_keys;
+  projected_keys.reserve(expected.size());
+  for (const auto &row : expected)
+    if (!projected_keys.insert(row.key()).second)
+      return std::unexpected(PositionReconciliationError::duplicate_projected_key);
 
   std::vector<bool> seen(observed.size());
   std::vector<PositionBreak> breaks;
